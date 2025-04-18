@@ -1,0 +1,19 @@
+{
+  "name": "req-scrap",
+  "version": "1.0.0",
+  "description": "Web scraping API using puppeteer, express and express-basic-auth",
+  "main": "index.js",
+  "scripts": {
+    "start": "node .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["puppeteer", "web-scraping", "express", "api"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-basic-auth": "^1.2.1",
+    "puppeteer": "^22.6.0"
+  }
+}
