@@ -79,6 +79,8 @@ export default async function (req, res, next) {
                 { title, steps }, 
                 new Extension(browser, page, TIMEOUT_MODES[timeoutMode], SPEED_MODES[speedMode])
             );
+
+            console.log('Executing record title:', title)
             await runner.run();
 
             // Prepare the success response with collected data
