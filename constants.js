@@ -1,0 +1,156 @@
+/**
+ * Application Constants
+ * 
+ * This file defines constants used throughout the application
+ */
+
+/**
+ * Scraper Speed Modes
+ * 
+ * TURBO: No delay between steps - fastest mode
+ * FAST: Minimal delay for quick scraping
+ * NORMAL: Moderate delay for balanced scraping
+ * SLOW: Medium delay to reduce detection risk
+ * SLOWEST: Significant delay for careful scraping
+ * CRAWL: Very slow speed like crawling
+ * STEALTH: Maximum delay for absolute stealth
+ */
+export const SPEED_MODES = {
+  TURBO: 0,      // 0ms delay between steps
+  FAST: 500,     // 500ms delay between steps
+  NORMAL: 1000,  // 1000ms (1 second) delay between steps
+  SLOW: 1500,    // 1500ms (1.5 seconds) delay between steps
+  SLOWEST: 2000, // 2000ms (2 seconds) delay between steps
+  CRAWL: 2500,   // 2500ms (2.5 seconds) delay between steps
+  STEALTH: 3000  // 3000ms (3 seconds) delay between steps
+};
+
+/**
+ * Speed Mode Names as Enum
+ */
+export const SPEED_MODE_NAMES = {
+  TURBO: 'TURBO',
+  FAST: 'FAST',
+  NORMAL: 'NORMAL',
+  SLOW: 'SLOW',
+  SLOWEST: 'SLOWEST',
+  CRAWL: 'CRAWL',
+  STEALTH: 'STEALTH'
+};
+
+/**
+ * Default speed mode if none is specified
+ */
+export const DEFAULT_SPEED_MODE = 'NORMAL';
+
+/**
+ * Timeout Configuration
+ * 
+ * SHORT: 10 seconds for shorter operations
+ * NORMAL: 30 seconds default timeout
+ * LONG: 60 seconds for longer operations
+ */
+export const TIMEOUT_MODES = {
+  SHORT: 10000,      // 10 seconds for shorter operations
+  NORMAL: 30000,    // 30 seconds default timeout
+  LONG: 60000,       // 60 seconds for longer operations
+};
+
+/**
+ * Timeout Mode Names as Enum
+ */
+export const TIMEOUTS_MODE_NAMES = {
+  SHORT: 'SHORT',
+  NORMAL: 'NORMAL',
+  LONG: 'LONG',
+};
+
+/**
+ * Default timeout mode if none is specified
+ */
+export const DEFAULT_TIMEOUT_MODE = 'NORMAL';
+
+/**
+ * Browser Configuration
+ * 
+ * HEADLESS: Whether the browser runs in headless mode
+ * USER_AGENT: The user agent string for the browser
+ * ACCEPT_LANGUAGE: Language preferences for the browser
+ * ARGS: Additional arguments for browser configuration
+ */
+export const BROWSER_CONFIG = {
+  HEADLESS: false,
+  USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36',
+  ACCEPT_LANGUAGE: 'en-US,en;q=0.9',
+  ARGS: {
+    NO_SANDBOX: '--no-sandbox',
+    DISABLE_SETUID_SANDBOX: '--disable-setuid-sandbox',
+  }
+};
+
+/**
+ * API Configuration
+ * 
+ * JSON_LIMIT: Maximum size for JSON payloads
+ * CORS: Cross-Origin Resource Sharing settings
+ */
+export const API_CONFIG = {
+  JSON_LIMIT: '50mb',
+  CORS: {
+    ORIGIN: '*',
+    METHODS: ['GET', 'POST'],
+    ALLOWED_HEADERS: ['Content-Type', 'Authorization']
+  }
+};
+
+/**
+ * Authentication Defaults
+ * 
+ * USERNAME: Default username for authentication
+ * PASSWORD: Default password for authentication
+ */
+export const AUTH_DEFAULTS = {
+  USERNAME: 'admin',
+  PASSWORD: 'admin'
+};
+
+/**
+ * API Routes
+ * 
+ * HEALTH: Route for health check
+ * SCRAPER: Base route for scraper operations
+ */
+export const ROUTES = {
+  HEALTH: '/health',
+  SCRAPER: '/'
+};
+
+/**
+ * Step Types for Scraper
+ * 
+ * NAVIGATE: Navigate to a URL
+ * CLICK: Perform a click action
+ * WAIT: Wait for a specified duration
+ * SET_VIEWPORT: Set the browser viewport size
+ */
+export const STEP_TYPES = {
+  NAVIGATE: 'navigate',
+  CLICK: 'click',
+  WAIT: 'wait',
+  SET_VIEWPORT: 'setViewport'
+};
+
+/**
+ * Proxy Protocol Types
+ * 
+ * HTTP: HTTP protocol for proxy
+ * HTTPS: HTTPS protocol for proxy
+ * SOCKS4: SOCKS4 protocol for proxy
+ * SOCKS5: SOCKS5 protocol for proxy
+ */
+export const PROXY_PROTOCOLS = {
+  HTTP: 'http',
+  HTTPS: 'https',
+  SOCKS4: 'socks4',
+  SOCKS5: 'socks5'
+};

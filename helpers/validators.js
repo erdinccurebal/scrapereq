@@ -8,6 +8,9 @@
 // Node modules
 import Joi from 'joi';
 
+// Import constants
+import { SPEED_MODE_NAMES, TIMEOUTS_MODE_NAMES, STEP_TYPES, PROXY_PROTOCOLS } from '../constants.js';
+
 /**
  * Scraper Request Validation Schema
  * 
@@ -18,11 +21,33 @@ const scraperRequestSchema = Joi.object({
     // Title of the scraping task - required for identification
     title: Joi.string().required(),
     
+    // Speed mode for controlling scraper execution pace (TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH)
+    speedMode: Joi.string().valid(
+        SPEED_MODE_NAMES.TURBO,
+        SPEED_MODE_NAMES.FAST, 
+        SPEED_MODE_NAMES.NORMAL, 
+        SPEED_MODE_NAMES.SLOW,
+        SPEED_MODE_NAMES.SLOWEST,
+        SPEED_MODE_NAMES.CRAWL,
+        SPEED_MODE_NAMES.STEALTH
+    ),
+
+    timeoutMode: Joi.string().valid(
+        TIMEOUTS_MODE_NAMES.SHORT,
+        TIMEOUTS_MODE_NAMES.NORMAL,
+        TIMEOUTS_MODE_NAMES.LONG
+    ),
+    
     // Array of steps to be executed by the scraper
     steps: Joi.array().items(
         Joi.object({
             // Step type (navigate, click, wait, etc.)
-            type: Joi.string().valid('navigate', 'click', 'wait', 'setViewport'),
+            type: Joi.string().valid(
+                STEP_TYPES.NAVIGATE, 
+                STEP_TYPES.CLICK, 
+                STEP_TYPES.WAIT, 
+                STEP_TYPES.SET_VIEWPORT
+            ),
             
             // Generic value field, used differently based on step type
             value: Joi.string().allow(''),
@@ -54,7 +79,7 @@ const scraperRequestSchema = Joi.object({
     ).custom((steps, helpers) => {
         // Custom validation: Check for at least one navigate step
         const hasNavigateStep = steps.some(step =>
-            (step.type === 'navigate' || step.process === 'navigate') &&
+            (step.type === STEP_TYPES.NAVIGATE || step.process === STEP_TYPES.NAVIGATE) &&
             (step.url || step.value)
         );
 
@@ -63,7 +88,7 @@ const scraperRequestSchema = Joi.object({
         }
 
         // Validate all navigate step URLs to ensure they're properly formatted
-        const navigateSteps = steps.filter(step => step.type === 'navigate' || step.process === 'navigate');
+        const navigateSteps = steps.filter(step => step.type === STEP_TYPES.NAVIGATE || step.process === STEP_TYPES.NAVIGATE);
 
         for (const [index, step] of navigateSteps.entries()) {
             const url = step.url || step.value;
@@ -87,7 +112,12 @@ const scraperRequestSchema = Joi.object({
         port: Joi.number(),
         username: Joi.string(),
         password: Joi.string(),
-        protocol: Joi.string().valid('http', 'https', 'socks4', 'socks5')
+        protocol: Joi.string().valid(
+            PROXY_PROTOCOLS.HTTP, 
+            PROXY_PROTOCOLS.HTTPS, 
+            PROXY_PROTOCOLS.SOCKS4, 
+            PROXY_PROTOCOLS.SOCKS5
+        )
     })
 });
 

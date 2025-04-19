@@ -13,8 +13,14 @@ import setupProxyAuth from '../helpers/setup-proxy-auth.js';
 import { scraperRequestSchema } from '../helpers/validators.js';
 import filterSteps from '../helpers/filter-steps.js';
 
-// Constants for configuration
-const DEFAULT_HIGHER_TIMEOUT = parseInt(process.env.DEFAULT_HIGHER_TIMEOUT || 30000); // 30 seconds timeout for longer operations
+// Import constants
+import { 
+    SPEED_MODES, 
+    DEFAULT_SPEED_MODE, 
+    DEFAULT_TIMEOUT_MODE,
+    TIMEOUT_MODES, 
+    BROWSER_CONFIG 
+} from '../constants.js';
 
 /**
  * Main scraper controller function
@@ -34,7 +40,7 @@ export default async function (req, res, next) {
         // Filter and process the steps to be executed
         const steps = filterSteps(value.steps);
         
-        const { proxy, title } = value;
+        const { proxy, title, speedMode = DEFAULT_SPEED_MODE, timeoutMode = DEFAULT_TIMEOUT_MODE } = value;
 
         // Initialize browser and page variables for cleanup in finally block
         let browser = null;
@@ -43,8 +49,8 @@ export default async function (req, res, next) {
         // Configure proxy settings if provided
         const proxyServer = setupProxyAuth(proxy);
         const launchOptions = {
-            headless: false,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            headless: BROWSER_CONFIG.HEADLESS,
+            args: [BROWSER_CONFIG.ARGS.NO_SANDBOX, BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX],
         };
 
         // Add proxy configuration if available
@@ -58,18 +64,21 @@ export default async function (req, res, next) {
             page = await browser.newPage();
 
             // Set timeout values for better reliability
-            page.setDefaultTimeout(DEFAULT_HIGHER_TIMEOUT);
-            page.setDefaultNavigationTimeout(DEFAULT_HIGHER_TIMEOUT);
+            page.setDefaultTimeout(TIMEOUT_MODES[timeoutMode]);
+            page.setDefaultNavigationTimeout(TIMEOUT_MODES[timeoutMode]);
 
             // Configure page settings to mimic a real browser
             await page.setJavaScriptEnabled(true);
             await page.setExtraHTTPHeaders({
-                'Accept-Language': 'en-US,en;q=0.9',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36'
+                'Accept-Language': BROWSER_CONFIG.ACCEPT_LANGUAGE,
+                'User-Agent': BROWSER_CONFIG.USER_AGENT
             });
 
             // Create and execute the runner with provided steps
-            const runner = await createRunner({ title, steps }, new Extension(browser, page, DEFAULT_HIGHER_TIMEOUT));
+            const runner = await createRunner(
+                { title, steps }, 
+                new Extension(browser, page, TIMEOUT_MODES[timeoutMode], SPEED_MODES[speedMode])
+            );
             await runner.run();
 
             // Prepare the success response with collected data
@@ -94,15 +103,17 @@ export default async function (req, res, next) {
  * Provides hooks for execution lifecycle with logging
  */
 class Extension extends PuppeteerRunnerExtension {
-    constructor(browser, page, timeout) {
+    constructor(browser, page, timeout, speedMode) {
         super(browser, page);
         this.timeout = timeout;
+        this.speedMode = speedMode || SPEED_MODES.NORMAL; // Default to NORMAL if not specified
     }
 
     // Hook executed before all steps run
     async beforeAllSteps(flow) {
         await super.beforeAllSteps(flow);
         console.log('Starting scraper execution');
+        console.log(`Speed Mode: ${this.speedMode}ms delay`);
     }
 
     // Hook executed before each individual step
@@ -114,6 +125,13 @@ class Extension extends PuppeteerRunnerExtension {
     // Hook executed after each individual step
     async afterEachStep(step, flow) {
         await super.afterEachStep(step, flow);
+        
+        // Apply the speed mode delay after each step
+        if (this.speedMode > 0) {
+            console.log(`Applying speed mode delay: ${this.speedMode}ms`);
+            await new Promise(resolve => setTimeout(resolve, this.speedMode));
+        }
+        
         console.log('After execution step:', step);
     }
 
