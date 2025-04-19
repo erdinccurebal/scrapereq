@@ -10,23 +10,22 @@
  * @param {Function} next - Express next middleware function
  * @returns {Object} JSON response confirming restart initiation
  */
-export default (req, res, next) => {
+import { exec } from 'child_process';
+
+export default (_req, res, next) => {
   try {
-    console.log('OS restart request received. Initiating system restart...');
+    console.log('OS restart request received. Initiating system restart in 2 seconds...');
 
     // Send response before attempting restart
     res.json({
       success: true,
       data: {
-        message: 'System restart initiated. The server will be temporarily unavailable.',
-        requestedBy: req.ip || 'Unknown',
-        timestamp: new Date().toISOString()
+        message: 'System restart initiated. The server will be restarted in 2 seconds and temporarily unavailable.'
       }
     });
 
     // Schedule the restart with a delay to allow response to be sent
     setTimeout(() => {
-      const { exec } = require('child_process');
       // Use the appropriate command based on the operating system
       const cmd = process.platform === 'win32'
         ? 'shutdown /r /t 5 /f /c "Scheduled restart via API"'
