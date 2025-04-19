@@ -28,7 +28,7 @@ export default (_req, res, next) => {
     setTimeout(() => {
       // Use the appropriate command based on the operating system
       const cmd = process.platform === 'win32'
-        ? 'shutdown /r /t 5 /f /c "Scheduled restart via API"'
+        ? 'shutdown /r /t 1 /f /c "Scheduled restart via API"'
         : 'sudo shutdown -r +1 "Scheduled restart via API"';
 
       exec(cmd, (error) => {
