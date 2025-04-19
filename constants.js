@@ -70,6 +70,11 @@ export const TIMEOUTS_MODE_NAMES = {
  */
 export const DEFAULT_TIMEOUT_MODE = 'NORMAL';
 
+// Headless mode configuration
+// In development mode, headless mode is disabled for debugging purposes
+// In production mode, headless mode is enabled for performance
+const HEADLESS = process.env.NODE_ENV === 'development' ? false : true;
+
 /**
  * Browser Configuration
  * 
@@ -79,7 +84,7 @@ export const DEFAULT_TIMEOUT_MODE = 'NORMAL';
  * ARGS: Additional arguments for browser configuration
  */
 export const BROWSER_CONFIG = {
-  HEADLESS: false,
+  HEADLESS,
   USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36',
   ACCEPT_LANGUAGE: 'en-US,en;q=0.9',
   ARGS: {
@@ -183,5 +188,5 @@ export const LOGGER_CONFIG = {
 export const HEALTH_CHECK_CONFIG = {
   TIMEOUT: TIMEOUT_MODES.NORMAL,  // 30 seconds timeout for health check operations
   TEST_URL: 'https://www.google.com', // URL to test puppeteer functionality
-  HEADLESS: true   // Run health check browser in headless mode
+  HEADLESS   // Run health check browser in headless mode
 };
