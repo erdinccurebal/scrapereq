@@ -14,7 +14,7 @@ import { scraperRequestSchema } from '../helpers/validators.js';
 import filterSteps from '../helpers/filter-steps.js';
 
 // Constants for configuration
-const DEFAULT_HIGHER_TIMEOUT = 30000; // 30 seconds timeout for longer operations
+const DEFAULT_HIGHER_TIMEOUT = parseInt(process.env.DEFAULT_HIGHER_TIMEOUT || 30000); // 30 seconds timeout for longer operations
 
 /**
  * Main scraper controller function

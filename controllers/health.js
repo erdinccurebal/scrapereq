@@ -4,71 +4,66 @@
  * Often used by monitoring tools and load balancers
  * Returns system information and status metrics
  */
+// Import package.json as JSON module for version information
 import packageJson from '../package.json' with { type: "json" };
+
+// Node core modules
 import os from 'os';
 import process from 'process';
+
+// Custom helpers
 import checkPuppeteerHealth from '../helpers/puppeteer-health.js';
 
+/**
+ * Health check controller function - GET /health endpoint handler
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ * @returns {Object} JSON response with health status information
+ */
 export default async function (req, res, next) {
     try {
         // Get system info
         const uptime = process.uptime();
-        const memoryUsage = process.memoryUsage();
-        
+
         // Format uptime to be more readable
         const uptimeFormatted = formatUptime(uptime);
-        
-        // Calculate memory usage in MB
-        const memoryUsageMB = {
-            rss: (memoryUsage.rss / 1024 / 1024).toFixed(2), // Resident Set Size
-            heapTotal: (memoryUsage.heapTotal / 1024 / 1024).toFixed(2),
-            heapUsed: (memoryUsage.heapUsed / 1024 / 1024).toFixed(2),
-            external: (memoryUsage.external / 1024 / 1024).toFixed(2)
-        };
 
-        // Check if the detailed flag is set to true in query params
-        const detailed = req.query.detailed === 'true';
-        
-        // Basic health info
-        const healthInfo = {
-            status: 'ok',
-            timestamp: new Date().toISOString(),
-            service: 'req-scrap',
-            version: packageJson.version,
-            uptime: uptimeFormatted
-        };
-
-        // Add detailed system info if requested
-        if (detailed) {
-            healthInfo.system = {
-                platform: process.platform,
-                nodeVersion: process.version,
-                cpus: os.cpus().length,
-                memoryTotal: `${(os.totalmem() / 1024 / 1024 / 1024).toFixed(2)} GB`,
-                memoryFree: `${(os.freemem() / 1024 / 1024 / 1024).toFixed(2)} GB`,
-                load: os.loadavg()
-            };
-            
-            healthInfo.process = {
-                pid: process.pid,
-                memory: memoryUsageMB
-            };
-            
-            // Add Puppeteer health check if detailed and check-puppeteer flag is true
-            if (req.query['check-puppeteer'] === 'true') {
-                try {
-                    healthInfo.puppeteer = await checkPuppeteerHealth();
-                } catch (puppeteerError) {
-                    healthInfo.puppeteer = {
-                        success: false,
-                        error: puppeteerError.message
-                    };
-                }
+        // Prepare comprehensive health check response
+        const result = {
+            success: true, // Overall status indicator
+            data: {
+                project: {
+                    name: packageJson.name,
+                    description: packageJson.description,
+                    version: packageJson.version,
+                    author: packageJson.author,
+                    license: packageJson.license,
+                },
+                app: {
+                    environment: res.app.get('env'),
+                    port: req.app.get('port'),
+                    host: res.app.get('host'),
+                    uptime: uptimeFormatted,
+                    pid: process.pid,
+                    puppeteer: null
+                },
+                system: {
+                    timestamp: new Date().toISOString(),
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    platform: os.platform(),
+                    arch: os.arch(),
+                    release: os.release(),
+                    cpus: os.cpus().length,
+                    totalmem: (os.totalmem() / 1024 / 1024).toFixed(2), // Total memory in MB
+                    freemem: (os.freemem() / 1024 / 1024).toFixed(2), // Free memory in MB
+                },
             }
-        }
-        
-        // Return health information
-        res.status(200).json(healthInfo);
+        };
+
+        result.data.app.puppeteer = await checkPuppeteerHealth();
+
+        res.json(result);
     } catch (error) {
         next(error); // Pass the error to the error handler
     }
@@ -84,12 +79,12 @@ function formatUptime(uptime) {
     const hours = Math.floor((uptime % 86400) / 3600);
     const minutes = Math.floor((uptime % 3600) / 60);
     const seconds = Math.floor(uptime % 60);
-    
+
     const parts = [];
     if (days > 0) parts.push(`${days}d`);
     if (hours > 0) parts.push(`${hours}h`);
     if (minutes > 0) parts.push(`${minutes}m`);
     if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
-    
+
     return parts.join(' ');
 }
