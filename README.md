@@ -1,105 +1,151 @@
-# Req Scrap
+# Req-Scrap
 
-A Puppeteer-based API service for web scraping.
+A powerful and flexible web scraping API built with Express.js and Puppeteer.
+
+## Overview
+
+Req-Scrap is a RESTful API service that allows you to perform web scraping operations by defining a series of steps that are executed by a headless browser. It provides a clean and secure way to extract data from websites with advanced features like proxy support, customizable scraping speeds, and robust error handling.
 
 ## Features
 
-- Secure API service using Express and Express Basic Auth
-- Web scraping with Puppeteer
-- Easy definition of complex scraping steps using Replay package
-- CORS support and enhanced security measures with Helmet
-- Comprehensive health check features
+- **Step-Based Scraping**: Define your scraping workflow as a series of steps (navigate, click, wait, etc.)
+- **Speed Control**: Multiple speed modes to control execution pace (TURBO, FAST, NORMAL, SLOW, etc.)
+- **Proxy Support**: Configure proxies with authentication for web requests
+- **Security**: Built-in basic authentication, helmet protection, and CORS configuration
+- **Reliability**: Comprehensive error handling and health check endpoints
+- **Customizable**: Adjustable timeouts and browser configurations
+- **API Monitoring**: Detailed health check endpoint with system information
+
+## Tech Stack
+
+- **Node.js**: JavaScript runtime
+- **Express.js**: Web application framework
+- **Puppeteer**: Headless Chrome browser automation
+- **@puppeteer/replay**: Record and replay browser interactions
+- **Joi**: Request validation
+- **Morgan**: HTTP request logging
+- **Helmet**: Security middleware
+- **CORS**: Cross-Origin Resource Sharing support
+- **dotenv**: Environment configuration
 
 ## Installation
 
+1. Clone the repository:
 ```bash
-# Install dependencies
-npm install
+git clone https://github.com/yourusername/req-scrap.git
+cd req-scrap
+```
 
-# Start the application
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create a `.env` file in the root directory (optional for custom configuration):
+```
+PORT=3000
+HOST=localhost
+NODE_ENV=development
+AUTH_USERNAME=admin
+AUTH_PASSWORD=secretpassword
+```
+
+4. Start the application:
+```bash
 npm start
 ```
 
-## Environment Variables
-
-You can define the following variables in a `.env` file:
-
-```
-AUTH_USERNAME=your_username
-AUTH_PASSWORD=your_password
-PORT=3000
-```
-
-## API Usage
+## API Endpoints
 
 ### Health Check
-
 ```
 GET /health
 ```
+Returns detailed system information and checks if all components are working correctly.
 
-Returns basic health status information.
-
-#### Advanced Health Check:
-
-```
-GET /health?detailed=true
-```
-
-This endpoint returns detailed system information including:
-- Service name and version
-- Uptime
-- Operating system and Node.js version
-- CPU and memory usage information
-- System load average
-
-#### Puppeteer Health Check:
-
-```
-GET /health?detailed=true&check-puppeteer=true
-```
-
-In addition to the information above, this endpoint checks Puppeteer's operational status:
-- Puppeteer version
-- Puppeteer's launch capability
-- Test page accessibility
-- Any error messages if present
-
-### Web Scraping API
-
+### Scraper
 ```
 POST /
 ```
+Main endpoint for web scraping operations.
 
-Accepts requests in JSON format to extract data from websites:
-
+#### Request Body Example
 ```json
 {
-  "title": "Example Scrape",
-  "proxy": {
-    "server": "proxy.example.com:8080",
-    "username": "proxyuser",
-    "password": "proxypass"
-  },
+  "title": "Google Search Example",
+  "speedMode": "NORMAL",
+  "timeoutMode": "NORMAL",
   "steps": [
     {
       "type": "navigate",
-      "url": "https://example.com"
+      "url": "https://www.google.com"
     },
     {
       "type": "click",
-      "target": ".button-class"
+      "selectors": [".search-input"]
+    },
+    {
+      "type": "wait",
+      "value": "1000"
     }
-  ]
+  ],
+  "proxy": {
+    "enabled": false,
+    "server": "proxy.example.com",
+    "port": 8080,
+    "username": "user",
+    "password": "pass",
+    "protocol": "http"
+  }
 }
 ```
 
-## Security
+## Authentication
 
-- Protected API endpoints with Express Basic Auth
-- Security measures for HTTP headers with Helmet package
-- Removal of X-Powered-By header
+The API is secured with basic authentication. Default credentials:
+- Username: `admin`
+- Password: `admin`
+
+You can change these values in the `.env` file or in constants.js.
+
+## Configuration
+
+The application can be configured through:
+- Environment variables (`.env` file)
+- Constants defined in `constants.js`
+
+Key configuration options:
+- Speed modes for controlling scraping pace
+- Timeout values for operations
+- Browser settings (user agent, headless mode, etc.)
+- Proxy settings
+- API security settings
+
+## Project Structure
+
+```
+.
+├── app.js                # Express application setup
+├── constants.js          # Application constants
+├── index.js              # Entry point
+├── routes.js             # API route definitions
+├── controllers/          # Request handlers
+│   ├── error-handler.js  # Error handling middleware
+│   ├── health.js         # Health check endpoint
+│   ├── scraper.js        # Main scraping controller
+│   └── route-not-found-handler.js
+├── helpers/              # Utility functions
+│   ├── filter-steps.js   # Process scraping steps
+│   ├── puppeteer-health.js # Browser health checks
+│   ├── setup-proxy-auth.js # Proxy configuration
+│   └── validators.js     # Request validation schemas
+└── tmp/                  # Temporary files
+```
 
 ## License
 
-ISC
+ISC License
+
+## Author
+
+Erdinç Cürebal

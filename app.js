@@ -3,12 +3,13 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import morgan from 'morgan';
 
 // Import centralized routes
 import routes from './routes.js';
 
 // Import constants
-import { API_CONFIG } from './constants.js';
+import { API_CONFIG, LOGGER_CONFIG } from './constants.js';
 
 // Initialize Express application
 const app = express();
@@ -27,6 +28,16 @@ app.use(cors({
     methods: API_CONFIG.CORS.METHODS,
     allowedHeaders: API_CONFIG.CORS.ALLOWED_HEADERS
 }));
+
+// HTTP request logger middleware with environment-specific format
+// Skip health check requests in production mode
+const morganFormat = process.env.NODE_ENV === 'production' 
+    ? LOGGER_CONFIG.FORMATS.PRODUCTION 
+    : LOGGER_CONFIG.FORMATS.DEVELOPMENT;
+const skipOption = process.env.NODE_ENV === 'production'
+    ? LOGGER_CONFIG.OPTIONS.SKIP_HEALTH
+    : LOGGER_CONFIG.OPTIONS.SKIP_NONE;
+app.use(morgan(morganFormat, { skip: skipOption }));
 
 // JSON parsing middleware - Process request bodies as JSON
 // Sets a limit to handle large payloads

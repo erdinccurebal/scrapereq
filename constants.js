@@ -154,3 +154,34 @@ export const PROXY_PROTOCOLS = {
   SOCKS4: 'socks4',
   SOCKS5: 'socks5'
 };
+
+/**
+ * Logging Configuration
+ * 
+ * FORMATS: Different log formats for different environments
+ * OPTIONS: Additional options for morgan logger
+ */
+export const LOGGER_CONFIG = {
+  FORMATS: {
+    DEVELOPMENT: 'dev',           // Concise colored output for development
+    PRODUCTION: 'combined',       // Apache-style logging for production
+    SHORT: 'short',               // Shorter than default, includes response time
+    TINY: 'tiny',                 // Minimal output
+    CUSTOM: ':method :url :status :res[content-length] - :response-time ms'  // Example custom format
+  },
+  OPTIONS: {
+    SKIP_HEALTH: (req) => req.url.includes('/health'), // Skip logging health check requests
+    SKIP_NONE: () => false,                            // Log all requests
+  }
+};
+
+/**
+ * Health Check Configuration
+ * 
+ * Settings for health check operations
+ */
+export const HEALTH_CHECK_CONFIG = {
+  TIMEOUT: TIMEOUT_MODES.NORMAL,  // 30 seconds timeout for health check operations
+  TEST_URL: 'https://www.google.com', // URL to test puppeteer functionality
+  HEADLESS: true   // Run health check browser in headless mode
+};

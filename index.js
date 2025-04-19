@@ -34,8 +34,7 @@ const server = http.createServer(app);
 
 // Start the server and log when ready
 server.listen(PORT, HOST, () => {
-  console.log(`Server started on port http://${HOST}:${PORT} in ${NODE_ENV} mode`);
-  console.log(`${new Date().toISOString()} - System ready`);
+  console.log(`Server started on port http://${HOST}:${PORT} in ${NODE_ENV} mode.`);
 });
 
 // Global error handling for uncaught exceptions

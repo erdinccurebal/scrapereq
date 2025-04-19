@@ -7,9 +7,10 @@
 // Node modules
 import puppeteer from 'puppeteer';
 
+// Import constants for configuration
+import { HEALTH_CHECK_CONFIG, BROWSER_CONFIG } from '../constants.js';
+
 // Constants for configuration
-const DEFAULT_HIGHER_TIMEOUT = parseInt(process.env.DEFAULT_HIGHER_TIMEOUT || 30000); // 30 seconds timeout for longer operations
-const PUPPETEER_TEST_URL = process.env.DEFAULT_HIGHER_TIMEOUT || 'https://www.google.com';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 /**
@@ -23,17 +24,17 @@ export default async function checkPuppeteerHealth() {
     try {
         // Launch browser with minimal options for quick testing
         browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            headless: HEALTH_CHECK_CONFIG.HEADLESS,
+            args: [BROWSER_CONFIG.ARGS.NO_SANDBOX, BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX]
         });
 
         // Open a new page
         page = await browser.newPage();
 
         // Navigate to a reliable test page (Google)
-        await page.goto(PUPPETEER_TEST_URL, {
+        await page.goto(HEALTH_CHECK_CONFIG.TEST_URL, {
             waitUntil: 'networkidle2',
-            timeout: DEFAULT_HIGHER_TIMEOUT // Shorter timeout for health check
+            timeout: HEALTH_CHECK_CONFIG.TIMEOUT
         });
 
         const resultUrl = page.url();
@@ -42,7 +43,7 @@ export default async function checkPuppeteerHealth() {
         return {
             success: true,
             data: {
-                testUrl: PUPPETEER_TEST_URL,
+                testUrl: HEALTH_CHECK_CONFIG.TEST_URL,
                 resultUrl,
                 resultTitle,
                 message: 'Puppeteer is working correctly.',
@@ -52,7 +53,7 @@ export default async function checkPuppeteerHealth() {
         return {
             success: false,
             data: {
-                testUrl: PUPPETEER_TEST_URL,
+                testUrl: HEALTH_CHECK_CONFIG.TEST_URL,
                 message: 'Puppeteer is not working correctly.',
                 error: {
                     message: error.message,
