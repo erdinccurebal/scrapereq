@@ -22,11 +22,20 @@ export default async function checkPuppeteerHealth() {
     let page = null;
 
     try {
+        // Configure proxy settings if provided
+        const launchOptions = {
+            headless: BROWSER_CONFIG.HEADLESS,
+            args: [BROWSER_CONFIG.ARGS.NO_SANDBOX, BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX],
+        };
+
+        // Chrome path from environment variable if set
+        // This allows for custom Chrome installations or debugging
+        if (process.env.CHROME_PATH) {
+            launchOptions.executablePath = process.env.CHROME_PATH;
+        }
+
         // Launch browser with minimal options for quick testing
-        browser = await puppeteer.launch({
-            headless: HEALTH_CHECK_CONFIG.HEADLESS,
-            args: [BROWSER_CONFIG.ARGS.NO_SANDBOX, BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX]
-        });
+        browser = await puppeteer.launch(launchOptions);
 
         // Open a new page
         page = await browser.newPage();
@@ -50,6 +59,8 @@ export default async function checkPuppeteerHealth() {
             }
         };
     } catch (error) {
+        console.error('Puppeteer Health Check Error:', error.message);
+        console.error('Stack Trace:', error.stack);
         return {
             success: false,
             data: {

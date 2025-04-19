@@ -53,6 +53,12 @@ export default async function (req, res, next) {
             args: [BROWSER_CONFIG.ARGS.NO_SANDBOX, BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX],
         };
 
+        // Chrome path from environment variable if set
+        // This allows for custom Chrome installations or debugging
+        if (process.env.CHROME_PATH) {
+            launchOptions.executablePath = process.env.CHROME_PATH;
+        } 
+
         // Add proxy configuration if available
         if (proxyServer) {
             launchOptions.args.push(`--proxy-server=${proxyServer}`);
