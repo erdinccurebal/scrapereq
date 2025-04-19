@@ -13,7 +13,7 @@
 export default (error, req, res, next) => {
   // Log the complete error to server console for debugging
   console.error(error);
-  
+
   // Create standardized error response structure
   const result = {
     success: false,
@@ -25,7 +25,7 @@ export default (error, req, res, next) => {
     message: null,
     stack: null,
   };
-  
+
   // Format error message based on error type
   if (error.name === 'ValidationError') {
     // Handle Joi validation errors with more details
@@ -37,7 +37,7 @@ export default (error, req, res, next) => {
     // Default message if error doesn't contain one
     data.message = 'Internal Server Error';
   }
-  
+
   // Include stack trace only in development environment
   if (process.env.NODE_ENV === 'development' && error.stack) {
     data.stack = formatStackTrace(error.stack);
@@ -47,10 +47,10 @@ export default (error, req, res, next) => {
   if (data.message || data.stack) {
     result.data = data;
   }
-  
+
   // Send response with appropriate status code
   // Use existing status code if set, otherwise default to 500
-  res.status(res.statusCode || 500).json(result);
+  res.status(500).json(result);
 };
 
 /**
@@ -64,13 +64,13 @@ function formatValidationError(error) {
   if (error.details && Array.isArray(error.details)) {
     return error.details.map(detail => formatErrorMessage(detail.message)).join(', ');
   }
-  
+
   // For custom validation errors
   if (error.message && error.message.includes('ValidationError')) {
     // Clean up the validation error message
     return formatErrorMessage(error.message.replace('ValidationError: ', ''));
   }
-  
+
   return formatErrorMessage(error.message) || 'Validation failed';
 }
 
@@ -82,7 +82,7 @@ function formatValidationError(error) {
  */
 function formatErrorMessage(message) {
   if (!message) return '';
-  
+
   return message
     .replace(/\\"/g, '"')  // Replace escaped quotes with regular quotes
     .replace(/"/g, '\'')   // Replace double quotes with single quotes
@@ -98,7 +98,7 @@ function formatErrorMessage(message) {
  */
 function formatStackTrace(stackTrace) {
   if (!stackTrace) return null;
-  
+
   // Split stack by lines and take first 10 lines
   return stackTrace
     .split('\n')

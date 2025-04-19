@@ -70,6 +70,42 @@ export const TIMEOUTS_MODE_NAMES = {
  */
 export const DEFAULT_TIMEOUT_MODE = 'NORMAL';
 
+/**
+ * Response Types
+ * 
+ * NONE: No response expected
+ * JSON: JSON response expected
+ * RAW: Raw response expected
+ */
+export const RESPONSE_TYPE_NAMES = {
+  NONE: 'NONE',
+  JSON: 'JSON',
+  RAW: 'RAW',
+};
+
+/**
+ * Default response type if none is specified
+ */
+export const DEFAULT_RESPONSE_TYPE = 'NORMAL';
+
+/**
+ * Selector Types
+ * 
+ * CSS: CSS selector type
+ * XPATH: XPath selector type
+ * FULL: Full selector type
+ */
+export const SELECTOR_TYPE_NAMES = {
+  CSS: 'CSS',
+  XPATH: 'XPATH',
+  FULL: 'FULL',
+};
+
+/**
+ * Default selector type if none is specified
+ */
+export const DEFAULT_SELECTOR_TYPE = 'FULL';
+
 // Headless mode configuration
 // In development mode, headless mode is disabled for debugging purposes
 // In production mode, headless mode is enabled for performance
@@ -117,17 +153,6 @@ export const API_CONFIG = {
 export const AUTH_DEFAULTS = {
   USERNAME: 'admin',
   PASSWORD: 'admin'
-};
-
-/**
- * API Routes
- * 
- * HEALTH: Route for health check
- * SCRAPER: Base route for scraper operations
- */
-export const ROUTES = {
-  HEALTH: '/health',
-  SCRAPER: '/'
 };
 
 /**

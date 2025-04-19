@@ -1,0 +1,46 @@
+/**
+ * Operating System Restart Controller
+ * 
+ * Provides an endpoint to safely restart the operating system.
+ * This should be used with caution as it affects the entire system.
+ * Typically used during major maintenance or when the system requires a full restart.
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} _res - Express response object (unused but kept for middleware signature consistency)
+ * @param {Function} next - Express next middleware function
+ * @returns {Object} JSON response confirming restart initiation
+ */
+export default (req, res, next) => {
+  try {
+    console.log('OS restart request received. Initiating system restart...');
+
+    // Send response before attempting restart
+    res.json({
+      success: true,
+      data: {
+        message: 'System restart initiated. The server will be temporarily unavailable.',
+        requestedBy: req.ip || 'Unknown',
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    // Schedule the restart with a delay to allow response to be sent
+    setTimeout(() => {
+      const { exec } = require('child_process');
+      // Use the appropriate command based on the operating system
+      const cmd = process.platform === 'win32'
+        ? 'shutdown /r /t 5 /f /c "Scheduled restart via API"'
+        : 'sudo shutdown -r +1 "Scheduled restart via API"';
+
+      exec(cmd, (error) => {
+        if (error) {
+          console.error('Restart failed:', error);
+          // Cannot send response here as it's already sent
+        }
+      });
+    }, 2000);
+
+  } catch (error) {
+    next(error);
+  }
+};
