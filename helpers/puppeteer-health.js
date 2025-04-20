@@ -10,6 +10,9 @@ import puppeteer from 'puppeteer';
 // Import constants for configuration
 import { HEALTH_CHECK_CONFIG, BROWSER_CONFIG } from '../constants.js';
 
+// Browser semaphore for controlling browser access
+import browserSemaphore from './browser-semaphore.js';
+
 // Constants for configuration
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -22,6 +25,9 @@ export default async function checkPuppeteerHealth() {
     let page = null;
 
     try {
+        // Acquire browser semaphore lock
+        await browserSemaphore.acquire();
+
         // Configure proxy settings if provided
         const launchOptions = {
             headless: BROWSER_CONFIG.HEADLESS,
@@ -76,5 +82,8 @@ export default async function checkPuppeteerHealth() {
         // Clean up resources properly
         if (page) await page.close();
         if (browser) await browser.close();
+        
+        // Release browser semaphore lock
+        browserSemaphore.release();
     }
 }

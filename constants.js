@@ -101,11 +101,6 @@ export const SELECTOR_TYPE_NAMES = {
   FULL: 'FULL',
 };
 
-/**
- * Default selector type if none is specified
- */
-export const DEFAULT_SELECTOR_TYPE = 'FULL';
-
 // Headless mode configuration
 // In development mode, headless mode is disabled for debugging purposes
 // In production mode, headless mode is enabled for performance

@@ -12,6 +12,7 @@ import { createRunner, PuppeteerRunnerExtension } from '@puppeteer/replay';
 import setupProxyAuth from '../helpers/setup-proxy-auth.js';
 import { scraperRequestSchema } from '../helpers/validators.js';
 import filterSteps from '../helpers/filter-steps.js';
+import browserSemaphore from '../helpers/browser-semaphore.js';
 
 // Import constants
 import {
@@ -23,7 +24,6 @@ import {
     DEFAULT_RESPONSE_TYPE,
     RESPONSE_TYPE_NAMES,
     SELECTOR_TYPE_NAMES,
-    DEFAULT_SELECTOR_TYPE
 } from '../constants.js';
 
 /**
@@ -73,6 +73,9 @@ export default async function (req, res, next) {
         }
 
         try {
+            // Acquire browser semaphore lock
+            await browserSemaphore.acquire();
+
             // Launch browser and create a new page
             browser = await puppeteer.launch(launchOptions);
             page = await browser.newPage();
@@ -131,6 +134,9 @@ export default async function (req, res, next) {
             // Clean up resources properly
             if (page) await page.close();
             if (browser) await browser.close();
+
+            // Release browser semaphore lock
+            browserSemaphore.release();
         }
     } catch (error) {
         next(error); // Pass the error to the next middleware for centralized error handling
