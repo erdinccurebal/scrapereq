@@ -24,11 +24,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Environment setup
+        run: cp /root/.env.req-scrap /actions-runner/_work/req-scrap/req-scrap/.env
+
       - name: Run tests (optional)
         run: npm test
-
-      - name: 
-        run: cp /root/.env.req-scrap .env
 
       - name: Service start
         run: systemctl start req-scrap.service
