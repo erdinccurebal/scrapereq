@@ -197,6 +197,7 @@ class Extension extends PuppeteerRunnerExtension {
         super(browser, page);
         this.timeout = timeout;
         this.speedMode = speedMode || SPEED_MODES.NORMAL; // Default to NORMAL if not specified
+        this.currentStepIndex = -1; // Başlangıçta -1, çalışmaya başladığında 0'dan başlayacak
     }
 
     /**
@@ -208,6 +209,7 @@ class Extension extends PuppeteerRunnerExtension {
         await super.beforeAllSteps(flow);
         console.log('Starting scraper execution');
         console.log(`Speed Mode: ${this.speedMode}ms delay`);
+        this.currentStepIndex = -1; // Reset step index before execution starts
     }
 
     /**
@@ -217,8 +219,15 @@ class Extension extends PuppeteerRunnerExtension {
      * @param {Object} flow - The flow object containing step information
      */
     async beforeEachStep(step, flow) {
-        await super.beforeEachStep(step, flow);
-        console.log('Before execution step:', step);
+        try {
+            this.currentStepIndex++; // Increment step index
+            await super.beforeEachStep(step, flow);
+            console.log(`Executing step ${this.currentStepIndex + 1}: ${step.type}`);
+        } catch (error) {
+            // Hata oluştuğunda adım indeksini ekle
+            error.message = `Error at step ${this.currentStepIndex + 1}: ${error.message}`;
+            throw error;
+        }
     }
 
     /**
@@ -229,15 +238,21 @@ class Extension extends PuppeteerRunnerExtension {
      * @param {Object} flow - The flow object containing step information
      */
     async afterEachStep(step, flow) {
-        await super.afterEachStep(step, flow);
+        try {
+            await super.afterEachStep(step, flow);
 
-        // Apply the speed mode delay after each step
-        if (this.speedMode > 0) {
-            console.log(`Applying speed mode delay: ${this.speedMode}ms`);
-            await new Promise(resolve => setTimeout(resolve, this.speedMode));
+            // Apply the speed mode delay after each step
+            if (this.speedMode > 0) {
+                console.log(`Applying speed mode delay: ${this.speedMode}ms`);
+                await new Promise(resolve => setTimeout(resolve, this.speedMode));
+            }
+
+            console.log(`Successfully completed step ${this.currentStepIndex + 1}: ${step.type}`);
+        } catch (error) {
+            // Hata oluştuğunda adım indeksini ekle
+            error.message = `Error after step ${this.currentStepIndex + 1}: ${error.message}`;
+            throw error;
         }
-
-        console.log('After execution step:', step);
     }
 
     /**
@@ -247,6 +262,22 @@ class Extension extends PuppeteerRunnerExtension {
      */
     async afterAllSteps(flow) {
         await super.afterAllSteps(flow);
-        console.log('Scraper execution completed');
+        console.log(`Scraper execution completed. Total steps executed: ${this.currentStepIndex + 1}`);
+    }
+    
+    /**
+     * Override step execution to catch errors with step index information
+     * 
+     * @param {Object} step - The current step being executed
+     * @param {Object} flow - The flow object containing step information
+     */
+    async runStep(step, flow) {
+        try {
+            return await super.runStep(step, flow);
+        } catch (error) {
+            // Adım çalıştırma sırasında oluşan hataya adım indeksini ekle
+            error.message = `Error executing step ${this.currentStepIndex + 1} (${step.type}): ${error.message}`;
+            throw error;
+        }
     }
 }

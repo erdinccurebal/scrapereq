@@ -17,6 +17,8 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 - **API Documentation**: Integrated Swagger documentation
 - **API Monitoring**: Detailed health check endpoint with system information
 - **System Controls**: Application shutdown and OS restart endpoints
+- **Error Tracking**: Detailed error reporting with step index information
+- **Browser Semaphore**: Limited concurrent browser instances for resource management
 
 ## Tech Stack
 
@@ -52,6 +54,7 @@ NODE_ENV=development
 AUTH_USERNAME=admin
 AUTH_PASSWORD=secretpassword
 CHROME_PATH=/path/to/chrome # Optional custom Chrome path
+MAX_CONCURRENT_BROWSERS=3 # Maximum number of concurrent browser instances
 ```
 
 4. Start the application:
@@ -187,6 +190,14 @@ Selectors validation rules:
 - Maximum one `FULL` type selector is allowed regardless of response type
 - Each selector requires `key`, `type`, and `value` properties
 
+## Error Handling
+
+The application provides detailed error information including:
+- Step index where error occurred (1-based indexing)
+- Step type where error occurred
+- Complete error stack for debugging
+- HTTP status codes with appropriate error messages
+
 ## Project Structure
 
 ```
@@ -204,6 +215,7 @@ Selectors validation rules:
 │   ├── route-not-found-handler.js # 404 handler
 │   └── scraper.js        # Main scraping controller
 ├── helpers/              # Utility functions
+│   ├── browser-semaphore.js # Limit concurrent browser instances
 │   ├── filter-steps.js   # Process scraping steps
 │   ├── puppeteer-health.js # Browser health checks
 │   ├── setup-proxy-auth.js # Proxy configuration
@@ -214,6 +226,13 @@ Selectors validation rules:
     └── response-example/      # Example responses
 ```
 
+## Performance Considerations
+
+- Browser instances are limited using a semaphore to prevent resource exhaustion
+- Adjustable speed modes allow optimization between performance and detection avoidance
+- Custom timeouts for different operation types
+- Error tracking with step indexing for faster debugging
+
 ## License
 
 ISC License
@@ -221,3 +240,7 @@ ISC License
 ## Author
 
 Erdinç Cürebal
+
+## Last Updated
+
+April 21, 2025
