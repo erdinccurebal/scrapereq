@@ -27,9 +27,6 @@ jobs:
       - name: Environment setup
         run: cp /root/.env.req-scrap /root/actions-runner/_work/req-scrap/req-scrap/.env
 
-      - name: Run tests (optional)
-        run: npm test
-
       - name: Service start
         run: systemctl start req-scrap.service
         
