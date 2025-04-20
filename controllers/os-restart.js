@@ -14,22 +14,22 @@ import { exec } from 'child_process';
 
 export default (_req, res, next) => {
   try {
-    console.log('OS restart request received. Initiating system restart in 2 seconds...');
+    console.log('OS restart request received. Initiating immediate system restart...');
 
     // Send response before attempting restart
     res.json({
       success: true,
       data: {
-        message: 'System restart initiated. The server will be restarted in 2 seconds and temporarily unavailable.'
+        message: 'System restart initiated. The server will be restarted immediately and temporarily unavailable.'
       }
     });
 
-    // Schedule the restart with a delay to allow response to be sent
+    // Schedule the restart with a minimal delay to allow response to be sent
     setTimeout(() => {
       // Use the appropriate command based on the operating system
       const cmd = process.platform === 'win32'
-        ? 'shutdown /r /t 1 /f /c "Scheduled restart via API"'
-        : 'sudo shutdown -r +1 "Scheduled restart via API"';
+        ? 'shutdown /r /t 0 /f /c "Scheduled restart via API"'
+        : 'sudo shutdown -r now "Scheduled restart via API"';
 
       exec(cmd, (error) => {
         if (error) {
@@ -37,7 +37,7 @@ export default (_req, res, next) => {
           // Cannot send response here as it's already sent
         }
       });
-    }, 2000);
+    }, 1000);
 
   } catch (error) {
     next(error);
