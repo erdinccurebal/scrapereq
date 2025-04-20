@@ -64,13 +64,8 @@ const scraperRequestSchema = Joi.object({
     // Array of steps to be executed by the scraper
     steps: Joi.array().items(
         Joi.object({
-            // Step type (navigate, click, wait, etc.)
-            type: Joi.string().valid(
-                STEP_TYPES.NAVIGATE,
-                STEP_TYPES.CLICK,
-                STEP_TYPES.WAIT,
-                STEP_TYPES.SET_VIEWPORT
-            ),
+            // Step type - artık tüm adım türlerini destekleyen genel bir string değeri
+            type: Joi.string(),
 
             // Generic value field, used differently based on step type
             value: Joi.string().allow(''),
@@ -78,7 +73,7 @@ const scraperRequestSchema = Joi.object({
             // URL for navigation steps
             url: Joi.string().uri().allow(''),
 
-            // CSS selectors for targeting elements
+            // CSS selectors for targeting elements - farklı formatlarda olabilir
             selectors: Joi.array(),
 
             // Click position offset coordinates
@@ -95,14 +90,46 @@ const scraperRequestSchema = Joi.object({
             hasTouch: Joi.boolean(),
             isLandscape: Joi.boolean(),
 
-            // Optional fields for compatibility with recorder output
-            assertedEvents: Joi.array().items(Joi.object()).optional(),
-            target: Joi.string().optional(),
-        }).or('type', 'process')
+            // Timeout value for operations
+            timeout: Joi.number(),
+            
+            // Target for step operations
+            target: Joi.string(),
+
+            // Frame identifier for actions in iframes - string veya array olabilir
+            frame: Joi.alternatives().try(Joi.string(), Joi.array()),
+            
+            // Duration settings for interactions
+            duration: Joi.number(),
+            
+            // Device type for emulation
+            deviceType: Joi.string(),
+            
+            // Mouse button for click actions
+            button: Joi.string(),
+            
+            // Operator for comparison operations
+            operator: Joi.string(),
+            
+            // Count for repeating operations
+            count: Joi.number(),
+            
+            // Visibility flag for element actions
+            visible: Joi.boolean(),
+            
+            // Element attributes for selection
+            attributes: Joi.object(),
+            
+            // Element properties for inspection
+            properties: Joi.object(),
+
+            // Events that should be asserted after step execution
+            assertedEvents: Joi.array().items(Joi.object()),
+        })
     ).custom((steps, helpers) => {
         // Custom validation: Check for at least one navigate step
         const hasNavigateStep = steps.some(step =>
-            (step.type === STEP_TYPES.NAVIGATE || step.process === STEP_TYPES.NAVIGATE) &&
+            (step.type === STEP_TYPES.NAVIGATE) &&
             (step.url || step.value)
         );
 
@@ -111,7 +138,7 @@ const scraperRequestSchema = Joi.object({
         }
 
         // Validate all navigate step URLs to ensure they're properly formatted
-        const navigateSteps = steps.filter(step => step.type === STEP_TYPES.NAVIGATE || step.process === STEP_TYPES.NAVIGATE);
+        const navigateSteps = steps.filter(step => step.type === STEP_TYPES.NAVIGATE);
 
         for (const [index, step] of navigateSteps.entries()) {
             const url = step.url || step.value;
