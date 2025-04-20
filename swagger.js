@@ -19,7 +19,7 @@ const swaggerOptions = {
     info: {
       title: 'Req Scrap',
       version: '1.0.0',
-      description: 'Web scraping API using puppeteer',
+      description: 'Web scraping API using puppeteer.',
       contact: {
         name: 'API Support',
       },
