@@ -162,12 +162,16 @@ export const AUTH_DEFAULTS = {
  * CLICK: Perform a click action
  * WAIT: Wait for a specified duration
  * SET_VIEWPORT: Set the browser viewport size
+ * CHANGE: Change the value of an input element
+ * WAIT_FOR_ELEMENT: Wait for a specific element to appear on the page
  */
 export const STEP_TYPES = {
   NAVIGATE: 'navigate',
   CLICK: 'click',
   WAIT: 'wait',
-  SET_VIEWPORT: 'setViewport'
+  SET_VIEWPORT: 'setViewport',
+  CHANGE: 'change',
+  WAIT_FOR_ELEMENT: 'waitForElement'
 };
 
 /**

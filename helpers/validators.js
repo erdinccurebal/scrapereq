@@ -64,8 +64,15 @@ const scraperRequestSchema = Joi.object({
     // Array of steps to be executed by the scraper
     steps: Joi.array().items(
         Joi.object({
-            // Step type - artık tüm adım türlerini destekleyen genel bir string değeri
-            type: Joi.string(),
+            // Step type - specific allowed types only
+            type: Joi.string().valid(
+                STEP_TYPES.NAVIGATE,
+                STEP_TYPES.CLICK,
+                STEP_TYPES.WAIT,
+                STEP_TYPES.SET_VIEWPORT,
+                STEP_TYPES.CHANGE,
+                STEP_TYPES.WAIT_FOR_ELEMENT
+            ).required(),
 
             // Generic value field, used differently based on step type
             value: Joi.string().allow(''),

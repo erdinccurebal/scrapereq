@@ -267,7 +267,7 @@ router.get("/health", controllerHealth);
  *                     type:
  *                       type: string
  *                       description: Type of browser action
- *                       enum: [navigate, click, wait, setViewport]
+ *                       enum: [navigate, click, wait, setViewport, change, waitForElement]
  *                       example: "navigate"
  *                     url:
  *                       type: string
@@ -307,7 +307,8 @@ router.get("/health", controllerHealth);
  *                       example: "main"
  *                     value:
  *                       type: string
- *                       description: Generic value used by some step types
+ *                       description: Value to set for input fields (for change action)
+ *                       example: "search keyword"
  *                     offsetX:
  *                       type: number
  *                       description: X-coordinate offset for click operations
@@ -316,9 +317,66 @@ router.get("/health", controllerHealth);
  *                       type: number
  *                       description: Y-coordinate offset for click operations
  *                       example: 9
+ *                     frame:
+ *                       type: array
+ *                       description: Frame indices for nested frames
+ *                       items:
+ *                         type: number
+ *                       example: [0]
+ *                     duration:
+ *                       type: number
+ *                       description: Duration of action in milliseconds
+ *                       example: 50
+ *                     deviceType:
+ *                       type: string
+ *                       description: Type of device simulated for interaction
+ *                       example: "mouse"
+ *                     button:
+ *                       type: string
+ *                       description: Mouse button used for click
+ *                       example: "primary"
+ *                     timeout:
+ *                       type: number
+ *                       description: Timeout duration for the step in milliseconds
+ *                       example: 5000
+ *                     operator:
+ *                       type: string
+ *                       description: Comparison operator for waitForElement
+ *                       example: ">="
+ *                     count:
+ *                       type: number
+ *                       description: Element count for waitForElement
+ *                       example: 1
+ *                     visible:
+ *                       type: boolean
+ *                       description: Whether element should be visible for waitForElement
+ *                       example: true
+ *                     attributes:
+ *                       type: object
+ *                       description: Attributes to check for waitForElement
+ *                       example: {"attribute": "value"}
+ *                     properties:
+ *                       type: object
+ *                       description: Properties to check for waitForElement
+ *                       example: {}
  *                     assertedEvents:
  *                       type: array
  *                       description: Expected events after step execution
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           type:
+ *                             type: string
+ *                             description: Type of event
+ *                             example: "navigation"
+ *                           url:
+ *                             type: string
+ *                             description: Expected URL after event
+ *                             example: "https://www.amazon.com/dp/B00IJ0ALYS"
+ *                           title:
+ *                             type: string
+ *                             description: Expected page title after event
+ *                             example: "Product Page"
  *     responses:
  *       200:
  *         description: Scraping completed successfully

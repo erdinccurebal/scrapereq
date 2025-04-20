@@ -8,7 +8,7 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 
 ## Features
 
-- **Step-Based Scraping**: Define your scraping workflow as a series of steps (navigate, click, wait, setViewport, etc.)
+- **Step-Based Scraping**: Define your scraping workflow as a series of steps (navigate, click, wait, setViewport, change, waitForElement, etc.)
 - **Speed Control**: Multiple speed modes to control execution pace (TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH)
 - **Proxy Support**: Configure proxies with authentication for web requests
 - **Security**: Built-in basic authentication, helmet protection, and CORS configuration
@@ -105,6 +105,15 @@ Main endpoint for web scraping operations.
       "type": "setViewport",
       "width": 1366,
       "height": 768
+    },
+    {
+      "type": "change",
+      "selectors": [".search-input"],
+      "value": "example search"
+    },
+    {
+      "type": "waitForElement",
+      "selectors": [".search-results"]
     }
   ],
   "proxy": {
