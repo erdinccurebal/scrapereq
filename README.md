@@ -8,25 +8,28 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 
 ## Features
 
-- **Step-Based Scraping**: Define your scraping workflow as a series of steps (navigate, click, wait, etc.)
-- **Speed Control**: Multiple speed modes to control execution pace (TURBO, FAST, NORMAL, SLOW, etc.)
+- **Step-Based Scraping**: Define your scraping workflow as a series of steps (navigate, click, wait, setViewport, etc.)
+- **Speed Control**: Multiple speed modes to control execution pace (TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH)
 - **Proxy Support**: Configure proxies with authentication for web requests
 - **Security**: Built-in basic authentication, helmet protection, and CORS configuration
 - **Reliability**: Comprehensive error handling and health check endpoints
 - **Customizable**: Adjustable timeouts and browser configurations
+- **API Documentation**: Integrated Swagger documentation
 - **API Monitoring**: Detailed health check endpoint with system information
+- **System Controls**: Application shutdown and OS restart endpoints
 
 ## Tech Stack
 
 - **Node.js**: JavaScript runtime
-- **Express.js**: Web application framework
-- **Puppeteer**: Headless Chrome browser automation
-- **@puppeteer/replay**: Record and replay browser interactions
-- **Joi**: Request validation
+- **Express.js v5.1.0**: Web application framework
+- **Puppeteer v24.6.1**: Headless Chrome browser automation
+- **@puppeteer/replay v3.1.1**: Record and replay browser interactions
+- **Joi v17.13.3**: Request validation
 - **Morgan**: HTTP request logging
-- **Helmet**: Security middleware
+- **Helmet v8.1.0**: Security middleware
+- **Swagger**: API documentation
 - **CORS**: Cross-Origin Resource Sharing support
-- **dotenv**: Environment configuration
+- **dotenv v16.5.0**: Environment configuration
 
 ## Installation
 
@@ -48,6 +51,7 @@ HOST=localhost
 NODE_ENV=development
 AUTH_USERNAME=admin
 AUTH_PASSWORD=secretpassword
+CHROME_PATH=/path/to/chrome # Optional custom Chrome path
 ```
 
 4. Start the application:
@@ -61,7 +65,11 @@ npm start
 ```
 GET /health
 ```
-Returns detailed system information and checks if all components are working correctly.
+Returns detailed system information and checks if all components are working correctly. Includes:
+- Project metadata
+- Application status and uptime
+- Puppeteer browser functionality test
+- System information (OS, memory, CPU)
 
 ### Scraper
 ```
@@ -75,6 +83,11 @@ Main endpoint for web scraping operations.
   "title": "Google Search Example",
   "speedMode": "NORMAL",
   "timeoutMode": "NORMAL",
+  "responseType": "JSON",
+  "selector": {
+    "type": "CSS",
+    "value": "#search"
+  },
   "steps": [
     {
       "type": "navigate",
@@ -87,6 +100,11 @@ Main endpoint for web scraping operations.
     {
       "type": "wait",
       "value": "1000"
+    },
+    {
+      "type": "setViewport",
+      "width": 1366,
+      "height": 768
     }
   ],
   "proxy": {
@@ -99,6 +117,17 @@ Main endpoint for web scraping operations.
   }
 }
 ```
+
+### System Management
+```
+POST /app-shutdown
+```
+Shuts down the application.
+
+```
+POST /os-restart
+```
+Initiates an operating system restart.
 
 ## Authentication
 
@@ -121,6 +150,20 @@ Key configuration options:
 - Proxy settings
 - API security settings
 
+## Response Types
+
+The scraper supports multiple response types:
+- `JSON`: Returns structured JSON with success status and data
+- `RAW`: Returns raw content without formatting
+- `NONE`: No response content (useful for headless operations)
+
+## Selector Types
+
+Data can be extracted using different selector methods:
+- `CSS`: Standard CSS selectors
+- `XPATH`: XPath expressions
+- `FULL`: Retrieves the full page HTML content
+
 ## Project Structure
 
 ```
@@ -129,17 +172,22 @@ Key configuration options:
 ├── constants.js          # Application constants
 ├── index.js              # Entry point
 ├── routes.js             # API route definitions
+├── swagger.js            # Swagger API documentation configuration
 ├── controllers/          # Request handlers
+│   ├── app-shutdown.js   # Application shutdown handler
 │   ├── error-handler.js  # Error handling middleware
 │   ├── health.js         # Health check endpoint
-│   ├── scraper.js        # Main scraping controller
-│   └── route-not-found-handler.js
+│   ├── os-restart.js     # OS restart handler
+│   ├── route-not-found-handler.js # 404 handler
+│   └── scraper.js        # Main scraping controller
 ├── helpers/              # Utility functions
 │   ├── filter-steps.js   # Process scraping steps
 │   ├── puppeteer-health.js # Browser health checks
 │   ├── setup-proxy-auth.js # Proxy configuration
 │   └── validators.js     # Request validation schemas
-└── tmp/                  # Temporary files
+└── tmp/                  # Temporary files & examples
+    ├── request-body-example/ # Example request bodies
+    └── response-example/     # Example responses
 ```
 
 ## License
