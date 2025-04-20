@@ -84,10 +84,18 @@ Main endpoint for web scraping operations.
   "speedMode": "NORMAL",
   "timeoutMode": "NORMAL",
   "responseType": "JSON",
-  "selector": {
-    "type": "CSS",
-    "value": "#search"
-  },
+  "selectors": [
+    {
+      "key": "search_results",
+      "type": "CSS",
+      "value": "#search"
+    },
+    {
+      "key": "page_title",
+      "type": "CSS",
+      "value": "title"
+    }
+  ],
   "steps": [
     {
       "type": "navigate",
@@ -166,12 +174,18 @@ The scraper supports multiple response types:
 - `RAW`: Returns raw content without formatting
 - `NONE`: No response content (useful for headless operations)
 
-## Selector Types
+## Selector Types and Validation Rules
 
 Data can be extracted using different selector methods:
 - `CSS`: Standard CSS selectors
 - `XPATH`: XPath expressions
 - `FULL`: Retrieves the full page HTML content
+
+Selectors validation rules:
+- When `responseType` is set to `NONE`, selectors cannot be provided
+- When `responseType` is set to `RAW`, only one selector can be used
+- Maximum one `FULL` type selector is allowed regardless of response type
+- Each selector requires `key`, `type`, and `value` properties
 
 ## Project Structure
 
@@ -195,8 +209,9 @@ Data can be extracted using different selector methods:
 │   ├── setup-proxy-auth.js # Proxy configuration
 │   └── validators.js     # Request validation schemas
 └── tmp/                  # Temporary files & examples
-    ├── request-body-example/ # Example request bodies
-    └── response-example/     # Example responses
+    ├── browser-records/       # Browser recording examples
+    ├── request-body-example/  # Example request bodies
+    └── response-example/      # Example responses
 ```
 
 ## License

@@ -216,19 +216,36 @@ router.get("/health", controllerHealth);
  *                 type: string
  *                 description: Browser user-agent string
  *                 example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36"
- *               selector:
- *                 type: object
- *                 description: Configuration for data extraction selector
- *                 properties:
- *                   type:
- *                     type: string
- *                     enum: [CSS, XPATH, FULL]
- *                     description: Type of selector to use
- *                     example: "XPATH"
- *                   value:
- *                     type: string
- *                     description: Selector string to locate elements
- *                     example: "/html/body/div[1]/div/div/div[4]/div[1]/div[6]/div/div[1]/div/div/div/form/div/div/div/div/div[3]/div/div[1]/div/div/span[1]/span[2]/span[2]/text()"
+ *               selectors:
+ *                 type: array
+ *                 description: Data extraction selector configurations for scraping
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - key
+ *                     - type
+ *                     - value
+ *                   properties:
+ *                     key:
+ *                       type: string
+ *                       description: Unique identifier for the selector
+ *                       example: "price"
+ *                     type:
+ *                       type: string
+ *                       enum: [CSS, XPATH, FULL]
+ *                       description: Type of selector to use
+ *                       example: "XPATH"
+ *                     value:
+ *                       type: string
+ *                       description: Selector string to locate elements
+ *                       example: "/html/body/div[1]/div/div/div[4]/div[1]/div[6]/div/div[1]/div/div/div/form/div/div/div/div/div[3]/div/div[1]/div/div/span[1]/span[2]/span[2]/text()"
+ *                 example:
+ *                   - key: "price"
+ *                     type: "XPATH"
+ *                     value: "/html/body/div[1]/div/div/div[4]/div[1]/div[6]/div/div[1]/div/div/div/form/div/div/div/div/div[3]/div/div[1]/div/div/span[1]/span[2]/span[2]/text()"
+ *                   - key: "title"
+ *                     type: "CSS"
+ *                     value: "#productTitle"
  *               proxy:
  *                 type: object
  *                 description: Proxy configuration for web requests
@@ -389,8 +406,15 @@ router.get("/health", controllerHealth);
  *                   type: boolean
  *                   example: true
  *                 data:
- *                   type: string
- *                   example: "139"
+ *                   type: object
+ *                   properties:
+ *                     catch:
+ *                       type: object
+ *                       example: {
+ *                         "money": "26 TL",
+ *                         "name": "Whiskas Pouch Kuzulu Yetişkin Kedi Maması 85 G"
+ *                       }
+ *                       description: Scraped data based on provided selectors
  *       400:
  *         description: Invalid request parameters
  *         content:

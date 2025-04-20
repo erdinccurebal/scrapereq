@@ -63,6 +63,10 @@ export default async function (req, res, next) {
 
         result.data.app.puppeteer = await checkPuppeteerHealth();
 
+        if (!result.data.app.puppeteer?.success) {
+            result.success = false; // Set success to false if Puppeteer health check fails
+        }
+
         res.json(result);
     } catch (error) {
         next(error); // Pass the error to the error handler

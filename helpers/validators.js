@@ -31,7 +31,7 @@ const scraperRequestSchema = Joi.object({
         SPEED_MODE_NAMES.CRAWL,
         SPEED_MODE_NAMES.STEALTH
     ),
-    
+
     // Timeout mode for controlling scraper execution time (SHORT, NORMAL, LONG)
     timeoutMode: Joi.string().valid(
         TIMEOUTS_MODE_NAMES.SHORT,
@@ -46,16 +46,50 @@ const scraperRequestSchema = Joi.object({
         RESPONSE_TYPE_NAMES.RAW
     ),
 
-    // Selector type for identifying elements on the page (CSS, XPATH, FULL)
-    // This field is optional and can be used to specify the method of element selection
-    selector: Joi.object({
-        type: Joi.string().valid(
-            SELECTOR_TYPE_NAMES.CSS,
-            SELECTOR_TYPE_NAMES.XPATH,
-            SELECTOR_TYPE_NAMES.FULL
-        ),
-        value: Joi.string(),
-    }),
+    // Array of CSS or XPath selectors for targeting elements on the page
+    // Each selector must have a key, type (CSS/XPath), and value
+    selectors: Joi.array().items(
+        Joi.object({
+            key: Joi.string().required(),
+            type: Joi.string().valid(
+                SELECTOR_TYPE_NAMES.CSS,
+                SELECTOR_TYPE_NAMES.XPATH,
+                SELECTOR_TYPE_NAMES.FULL
+            ).required(),
+            value: Joi.string().required(),
+        })).when('responseType', {
+            is: RESPONSE_TYPE_NAMES.NONE,
+            then: Joi.forbidden().error(new Error('Selectors cannot be provided when responseType is NONE')),
+            otherwise: Joi.array().items(
+                Joi.object({
+                    key: Joi.string().required(),
+                    type: Joi.string().valid(
+                        SELECTOR_TYPE_NAMES.CSS,
+                        SELECTOR_TYPE_NAMES.XPATH,
+                        SELECTOR_TYPE_NAMES.FULL
+                    ).required(),
+                    value: Joi.string().required(),
+                })
+            ).custom((selectors, helpers) => {
+                // Check if there's more than one FULL type selector
+                const fullSelectors = selectors.filter(selector => selector.type === SELECTOR_TYPE_NAMES.FULL);
+                if (fullSelectors.length > 1) {
+                    return helpers.error('array.base', {
+                        message: 'Only one selector with type FULL is allowed'
+                    });
+                }
+
+                // Check if responseType is RAW, only allow one selector
+                const responseType = helpers.state.ancestors[0].responseType;
+                if (responseType === RESPONSE_TYPE_NAMES.RAW && selectors.length > 1) {
+                    return helpers.error('array.base', {
+                        message: 'Only one selector is allowed when responseType is RAW'
+                    });
+                }
+
+                return selectors;
+            })
+        }),
 
     // Optional fields for additional configuration
     acceptLanguage: Joi.string(),
@@ -99,34 +133,34 @@ const scraperRequestSchema = Joi.object({
 
             // Timeout value for operations
             timeout: Joi.number(),
-            
+
             // Target for step operations
             target: Joi.string(),
 
             // Frame identifier for actions in iframes - string veya array olabilir
             frame: Joi.alternatives().try(Joi.string(), Joi.array()),
-            
+
             // Duration settings for interactions
             duration: Joi.number(),
-            
+
             // Device type for emulation
             deviceType: Joi.string(),
-            
+
             // Mouse button for click actions
             button: Joi.string(),
-            
+
             // Operator for comparison operations
             operator: Joi.string(),
-            
+
             // Count for repeating operations
             count: Joi.number(),
-            
+
             // Visibility flag for element actions
             visible: Joi.boolean(),
-            
+
             // Element attributes for selection
             attributes: Joi.object(),
-            
+
             // Element properties for inspection
             properties: Joi.object(),
 
@@ -164,9 +198,9 @@ const scraperRequestSchema = Joi.object({
 
     // Optional proxy configuration for web requests
     proxy: Joi.object({
-        enabled: Joi.boolean(),
-        server: Joi.string(),
-        port: Joi.number(),
+        enabled: Joi.boolean().required(),
+        server: Joi.string().required(),
+        port: Joi.number().required(),
         username: Joi.string(),
         password: Joi.string(),
         protocol: Joi.string().valid(
@@ -174,7 +208,7 @@ const scraperRequestSchema = Joi.object({
             PROXY_PROTOCOLS.HTTPS,
             PROXY_PROTOCOLS.SOCKS4,
             PROXY_PROTOCOLS.SOCKS5
-        )
+        ).required()
     })
 });
 

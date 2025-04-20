@@ -48,7 +48,7 @@ export default async function (req, res, next) {
         // Filter and process the steps to be executed
         const steps = filterSteps(value.steps);
 
-        const { proxy, title, speedMode = DEFAULT_SPEED_MODE, timeoutMode = DEFAULT_TIMEOUT_MODE, responseType = DEFAULT_RESPONSE_TYPE, selector, acceptLanguage = BROWSER_CONFIG.ACCEPT_LANGUAGE, userAgent = BROWSER_CONFIG.USER_AGENT } = value;
+        const { proxy, title, speedMode = DEFAULT_SPEED_MODE, timeoutMode = DEFAULT_TIMEOUT_MODE, responseType = DEFAULT_RESPONSE_TYPE, selectors = [], acceptLanguage = BROWSER_CONFIG.ACCEPT_LANGUAGE, userAgent = BROWSER_CONFIG.USER_AGENT } = value;
 
         // Initialize browser and page variables for cleanup in finally block
         let browser = null;
@@ -101,46 +101,26 @@ export default async function (req, res, next) {
 
             // Initialize result variables
             let result = null;
-            let catchSelector = null;
 
-            // Configure selector with defaults if not provided
-            const Selector = {
-                type: selector?.type || SELECTOR_TYPE_NAMES[DEFAULT_SELECTOR_TYPE],
-                value: selector?.value || null,
-            }
+            if (responseType === RESPONSE_TYPE_NAMES.RAW) {
+                // For RAW responseType, we've already validated there's only one selector
+                const selector = selectors[0];
+                result = await processSelectorData(page, selector);
+            } else if (responseType === RESPONSE_TYPE_NAMES.JSON) {
+                // For JSON responseType, process all selectors and return a structured response
+                const selectorResults = {};
 
-            // Process the response if a response type is specified
-            if (responseType != RESPONSE_TYPE_NAMES.NONE) {
-                // Extract page content based on selector type
-                if (Selector.type == SELECTOR_TYPE_NAMES.FULL) {
-                    // Get the entire HTML content of the page
-                    catchSelector = await page.content();
-                } else if (Selector.type == SELECTOR_TYPE_NAMES.CSS) {
-                    // Extract content using CSS selector
-                    catchSelector = await page.$eval(Selector.value, (el) => {
-                        return el ? el?.innerHTML : "NOT FOUND ELEMENT";
-                    }).catch(() => "SELECTOR ERROR");
-                } else if (Selector.type == SELECTOR_TYPE_NAMES.XPATH) {
-                    // Extract content using XPath selector
-                    catchSelector = await page.evaluate((xpath) => {
-                        const element = document.evaluate(xpath, document, null, XPathResult.STRING_TYPE, null);
-                        return element ? element.stringValue : "NOT FOUND ELEMENT";
-                    }, Selector.value).catch(() => "SELECTOR ERROR");
+                for (const selector of selectors) {
+                    const selectorValue = await processSelectorData(page, selector);
+                    selectorResults[selector.key] = selectorValue;
                 }
 
-                // Format the response according to the specified response type
-                if (responseType == RESPONSE_TYPE_NAMES.JSON) {
-                    // Return a JSON object with success status and data
-                    result = {
-                        success: true,
-                        data: {
-                            catch: catchSelector,
-                        }
+                result = {
+                    success: true,
+                    data: {
+                        catch: selectorResults
                     }
-                } else if (responseType == RESPONSE_TYPE_NAMES.RAW) {
-                    // Return raw content without wrapping
-                    result = catchSelector;
-                }
+                };
             }
 
             // Send the successful response
@@ -154,6 +134,40 @@ export default async function (req, res, next) {
         }
     } catch (error) {
         next(error); // Pass the error to the next middleware for centralized error handling
+    }
+}
+
+/**
+ * Process selector data based on selector type
+ * 
+ * @param {Object} page - Puppeteer Page instance
+ * @param {Object} selector - Selector configuration object
+ * @returns {String} Extracted data from the page based on selector type
+ */
+async function processSelectorData(page, selector) {
+    try {
+        const { type, value } = selector;
+
+        if (type === SELECTOR_TYPE_NAMES.FULL) {
+            // Return the entire page content
+            return await page.content();
+        } else if (type === SELECTOR_TYPE_NAMES.CSS) {
+            // Extract content using CSS selector
+            return await page.$eval(value, (el) => {
+                return el ? el?.innerHTML : "NOT FOUND ELEMENT";
+            }).catch(() => "SELECTOR ERROR");
+        } else if (type === SELECTOR_TYPE_NAMES.XPATH) {
+            // Extract content using XPath selector
+            return await page.evaluate((xpath) => {
+                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                return element ? element.innerHTML : "NOT FOUND ELEMENT";
+            }, value).catch(() => "SELECTOR ERROR");
+        }
+
+        return "INVALID SELECTOR TYPE";
+    } catch (error) {
+        console.error('Error processing selector:', error);
+        return "SELECTOR PROCESSING ERROR";
     }
 }
 
