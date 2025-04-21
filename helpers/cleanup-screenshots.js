@@ -14,16 +14,21 @@ import path from 'path';
  */
 function extractDateFromFilename(filename) {
     try {
-        // Match date pattern in our screenshot filenames
-        const dateMatch = filename.match(/-([\d]{4})-([\d]{2})-([\d]{2})T/);
+        // Match full date pattern in our screenshot filenames (including time)
+        const dateMatch = filename.match(/-([\d]{4})-([\d]{2})-([\d]{2})T([\d]{2})-([\d]{2})-([\d]{2})-/);
         if (!dateMatch) return null;
         
         const year = parseInt(dateMatch[1]);
         const month = parseInt(dateMatch[2]) - 1; // JS months are 0-based
         const day = parseInt(dateMatch[3]);
+        const hours = parseInt(dateMatch[4]);
+        const minutes = parseInt(dateMatch[5]);
+        const seconds = parseInt(dateMatch[6]);
         
-        // Create date from extracted components
-        const date = new Date(year, month, day);
+        // Create date from extracted components as UTC
+        // Use Date.UTC to create the date in UTC timezone
+        const timestamp = Date.UTC(year, month, day, hours, minutes, seconds);
+        const date = new Date(timestamp);
         
         // Check if date is valid
         if (isNaN(date.getTime())) return null;
