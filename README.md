@@ -19,6 +19,8 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 - **System Controls**: Application shutdown and OS restart endpoints
 - **Error Tracking**: Detailed error reporting with step index information
 - **Browser Semaphore**: Limited concurrent browser instances for resource management
+- **Screenshot Capabilities**: Success and error screenshots with configurable options
+- **Resilient Error Handling**: Robust error capture with screenshot preservation even during browser failures
 
 ## Tech Stack
 
@@ -46,15 +48,20 @@ cd req-scrap
 npm install
 ```
 
-3. Create a `.env` file in the root directory (optional for custom configuration):
+3. Create a `.env` file in the root directory (using the .env.sample template):
 ```
+# Server Configuration
 PORT=3000
 HOST=localhost
 NODE_ENV=development
+WEB_ADDRESS=http://localhost:3000
+
+# Authentication
 AUTH_USERNAME=admin
 AUTH_PASSWORD=secretpassword
+
+# Puppeteer Configuration
 CHROME_PATH=/path/to/chrome # Optional custom Chrome path
-MAX_CONCURRENT_BROWSERS=3 # Maximum number of concurrent browser instances
 ```
 
 4. Start the application:
@@ -87,6 +94,8 @@ Main endpoint for web scraping operations.
   "speedMode": "NORMAL",
   "timeoutMode": "NORMAL",
   "responseType": "JSON",
+  "errorScreenshot": true,
+  "successScreenshot": true,
   "selectors": [
     {
       "key": "search_results",
@@ -138,6 +147,34 @@ Main endpoint for web scraping operations.
 }
 ```
 
+#### Response Examples
+
+##### Successful Response
+```json
+{
+  "success": true,
+  "data": {
+    "catch": {
+      "search_results": "<div>Result content...</div>",
+      "page_title": "Example Search - Google Search"
+    },
+    "screenshot": "http://localhost:3000/tmp/success-2025-04-21T14-32-48.png"
+  }
+}
+```
+
+##### Error Response
+```json
+{
+  "success": false,
+  "data": {
+    "message": "Error at step 3: Selector not found",
+    "stack": ["...error stack trace..."],
+    "screenshot": "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
+  }
+}
+```
+
 ### System Management
 ```
 POST /app-shutdown
@@ -169,6 +206,15 @@ Key configuration options:
 - Browser settings (user agent, headless mode, etc.)
 - Proxy settings
 - API security settings
+- Screenshot configurations
+
+### Screenshot Configuration
+
+Configure screenshot behavior through the request body:
+- `errorScreenshot`: When `true`, captures screenshots on errors
+- `successScreenshot`: When `true`, captures a screenshot after successful execution
+
+Screenshot URLs include the server domain from the `WEB_ADDRESS` environment variable.
 
 ## Response Types
 
@@ -197,6 +243,7 @@ The application provides detailed error information including:
 - Step type where error occurred
 - Complete error stack for debugging
 - HTTP status codes with appropriate error messages
+- Error screenshots (when enabled) showing the page state at the time of failure
 
 ## Project Structure
 
@@ -223,7 +270,8 @@ The application provides detailed error information including:
 └── tmp/                  # Temporary files & examples
     ├── browser-records/       # Browser recording examples
     ├── request-body-example/  # Example request bodies
-    └── response-example/      # Example responses
+    ├── response-example/      # Example responses
+    └── *.png                  # Screenshot files
 ```
 
 ## Performance Considerations
@@ -232,6 +280,14 @@ The application provides detailed error information including:
 - Adjustable speed modes allow optimization between performance and detection avoidance
 - Custom timeouts for different operation types
 - Error tracking with step indexing for faster debugging
+- Resilient browser handling with disconnection detection
+
+## Browser Resilience
+
+- Automatic disconnection detection for browsers closed manually
+- Semaphore release on browser disconnection events
+- Guaranteed screenshot capture even during unexpected errors
+- Timeout handling before browser closure
 
 ## License
 
