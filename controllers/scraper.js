@@ -124,10 +124,14 @@ export default async function (req, res, next) {
             if (successScreenshot) {
                 const finalScreenshotPath = await saveScreenshot(page, 'success');
                 if (finalScreenshotPath) {
-                    // Convert to URL format
-                    screenshotPath = path.relative(process.cwd(), finalScreenshotPath).replace(/\\/g, '/');
-                    screenshotPath = `${process.env.WEB_ADDRESS}/${screenshotPath}`;
+                    // Extract just the filename from the path
+                    const filename = path.basename(finalScreenshotPath);
+                    
+                    // Create a proper URL path using the /tmp/ endpoint
+                    screenshotPath = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
                     screenshotTaken = true;
+                    
+                    console.log(`Screenshot URL generated: ${screenshotPath}`);
                 }
             }
 
@@ -166,8 +170,11 @@ export default async function (req, res, next) {
                     console.log("Taking error screenshot before handling the error...");
                     const errorScreenshotPath = await saveScreenshot(page, 'error');
                     if (errorScreenshotPath) {
-                        const relativePath = path.relative(process.cwd(), errorScreenshotPath).replace(/\\/g, '/');
-                        error.screenshot = `${process.env.WEB_ADDRESS}/${relativePath}`;
+                        // Extract just the filename from the path
+                        const filename = path.basename(errorScreenshotPath);
+                        
+                        // Create a proper URL path using the /tmp/ endpoint
+                        error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
                         error.screenshotPath = errorScreenshotPath;
                         screenshotTaken = true;
                         console.log(`Error screenshot taken: ${error.screenshot}`);
@@ -180,8 +187,8 @@ export default async function (req, res, next) {
                 }
             } else if (error.screenshotPath) {
                 // If screenshot was already taken by Extension
-                const relativePath = path.relative(process.cwd(), error.screenshotPath).replace(/\\/g, '/');
-                error.screenshot = `${process.env.WEB_ADDRESS}/${relativePath}`;
+                const filename = path.basename(error.screenshotPath);
+                error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
             }
             
             throw error; // Rethrow the error for centralized handling
@@ -354,8 +361,14 @@ class Extension extends PuppeteerRunnerExtension {
                     console.log(`Taking error screenshot for beforeEachStep at step ${this.currentStepIndex + 1}...`);
                     const screenshotPath = await saveScreenshot(this.page, 'error');
                     if (screenshotPath) {
+                        // Store the full path for internal use
                         error.screenshotPath = screenshotPath;
-                        console.log(`Error screenshot saved for beforeEachStep: ${screenshotPath}`);
+                        
+                        // Create a proper URL using the /tmp/ endpoint and just the filename
+                        const filename = path.basename(screenshotPath);
+                        error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
+                        
+                        console.log(`Error screenshot saved for beforeEachStep: ${error.screenshot}`);
                     }
                 } catch (screenshotError) {
                     console.error(`Failed to take error screenshot in beforeEachStep:`, screenshotError);
@@ -393,8 +406,14 @@ class Extension extends PuppeteerRunnerExtension {
                     console.log(`Taking error screenshot for afterEachStep at step ${this.currentStepIndex + 1}...`);
                     const screenshotPath = await saveScreenshot(this.page, 'error');
                     if (screenshotPath) {
+                        // Store the full path for internal use
                         error.screenshotPath = screenshotPath;
-                        console.log(`Error screenshot saved for afterEachStep: ${screenshotPath}`);
+                        
+                        // Create a proper URL using the /tmp/ endpoint and just the filename
+                        const filename = path.basename(screenshotPath);
+                        error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
+                        
+                        console.log(`Error screenshot saved for afterEachStep: ${error.screenshot}`);
                     }
                 } catch (screenshotError) {
                     console.error(`Failed to take error screenshot in afterEachStep:`, screenshotError);
@@ -433,8 +452,14 @@ class Extension extends PuppeteerRunnerExtension {
                     console.log(`Taking error screenshot for step ${this.currentStepIndex + 1} (${step.type})...`);
                     const screenshotPath = await saveScreenshot(this.page, 'error');
                     if (screenshotPath) {
+                        // Store the full path for internal use
                         error.screenshotPath = screenshotPath;
-                        console.log(`Error screenshot saved for step ${this.currentStepIndex + 1}: ${screenshotPath}`);
+                        
+                        // Create a proper URL using the /tmp/ endpoint and just the filename
+                        const filename = path.basename(screenshotPath);
+                        error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
+                        
+                        console.log(`Error screenshot saved for step ${this.currentStepIndex + 1}: ${error.screenshot}`);
                     }
                 } catch (screenshotError) {
                     console.error(`Failed to take error screenshot for step ${this.currentStepIndex + 1}:`, screenshotError);
