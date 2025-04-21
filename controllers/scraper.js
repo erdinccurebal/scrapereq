@@ -7,6 +7,8 @@
 // Node modules
 import puppeteer from 'puppeteer';
 import { createRunner, PuppeteerRunnerExtension } from '@puppeteer/replay';
+import fs from 'fs';
+import path from 'path';
 
 // Helper functions
 import setupProxyAuth from '../helpers/setup-proxy-auth.js';
@@ -37,6 +39,9 @@ import {
  */
 export default async function (req, res, next) {
     try {
+        // Acquire browser semaphore lock
+        await browserSemaphore.acquire();
+
         // Validate the request body against the defined schema
         const { error, value } = scraperRequestSchema.validate(req.body, { abortEarly: false });
 
@@ -48,11 +53,23 @@ export default async function (req, res, next) {
         // Filter and process the steps to be executed
         const steps = filterSteps(value.steps);
 
-        const { proxy, title, speedMode = DEFAULT_SPEED_MODE, timeoutMode = DEFAULT_TIMEOUT_MODE, responseType = DEFAULT_RESPONSE_TYPE, selectors = [], acceptLanguage = BROWSER_CONFIG.ACCEPT_LANGUAGE, userAgent = BROWSER_CONFIG.USER_AGENT } = value;
+        const {
+            proxy,
+            title,
+            speedMode = DEFAULT_SPEED_MODE,
+            timeoutMode = DEFAULT_TIMEOUT_MODE,
+            responseType = DEFAULT_RESPONSE_TYPE,
+            selectors = [],
+            acceptLanguage = BROWSER_CONFIG.ACCEPT_LANGUAGE,
+            userAgent = BROWSER_CONFIG.USER_AGENT,
+            errorScreenshot = false,
+            successScreenshot = false
+        } = value;
 
         // Initialize browser and page variables for cleanup in finally block
         let browser = null;
         let page = null;
+        let screenshotTaken = false;
 
         // Configure proxy settings if provided
         const proxyServer = setupProxyAuth(proxy);
@@ -73,9 +90,6 @@ export default async function (req, res, next) {
         }
 
         try {
-            // Acquire browser semaphore lock
-            await browserSemaphore.acquire();
-
             // Launch browser and create a new page
             browser = await puppeteer.launch(launchOptions);
             page = await browser.newPage();
@@ -94,7 +108,7 @@ export default async function (req, res, next) {
             // Create and execute the runner with provided steps
             const runner = await createRunner(
                 { title, steps },
-                new Extension(browser, page, TIMEOUT_MODES[timeoutMode], SPEED_MODES[speedMode])
+                new Extension(browser, page, TIMEOUT_MODES[timeoutMode], SPEED_MODES[speedMode], errorScreenshot, successScreenshot)
             );
 
             // Log the record title being executed
@@ -104,6 +118,18 @@ export default async function (req, res, next) {
 
             // Initialize result variables
             let result = null;
+            let screenshotPath = null;
+
+            // If success screenshot is requested, take screenshot at the end
+            if (successScreenshot) {
+                const finalScreenshotPath = await saveScreenshot(page, 'success');
+                if (finalScreenshotPath) {
+                    // Convert to URL format
+                    screenshotPath = path.relative(process.cwd(), finalScreenshotPath).replace(/\\/g, '/');
+                    screenshotPath = `${process.env.WEB_ADDRESS}/${screenshotPath}`;
+                    screenshotTaken = true;
+                }
+            }
 
             if (responseType === RESPONSE_TYPE_NAMES.RAW) {
                 // For RAW responseType, we've already validated there's only one selector
@@ -124,22 +150,65 @@ export default async function (req, res, next) {
                         catch: selectorResults
                     }
                 };
+
+                // Add screenshot to data object
+                if (screenshotPath) {
+                    result.data.screenshot = screenshotPath;
+                }
             }
 
             // Send the successful response
             res.send(result);
         } catch (error) {
+            // Take error screenshot if enabled and not already taken
+            if (errorScreenshot && page && !screenshotTaken) {
+                try {
+                    console.log("Taking error screenshot before handling the error...");
+                    const errorScreenshotPath = await saveScreenshot(page, 'error');
+                    if (errorScreenshotPath) {
+                        const relativePath = path.relative(process.cwd(), errorScreenshotPath).replace(/\\/g, '/');
+                        error.screenshot = `${process.env.WEB_ADDRESS}/${relativePath}`;
+                        error.screenshotPath = errorScreenshotPath;
+                        screenshotTaken = true;
+                        console.log(`Error screenshot taken: ${error.screenshot}`);
+                        
+                        // Ensure time for screenshot to be saved
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                } catch (screenshotError) {
+                    console.error("Failed to take error screenshot:", screenshotError);
+                }
+            } else if (error.screenshotPath) {
+                // If screenshot was already taken by Extension
+                const relativePath = path.relative(process.cwd(), error.screenshotPath).replace(/\\/g, '/');
+                error.screenshot = `${process.env.WEB_ADDRESS}/${relativePath}`;
+            }
+            
             throw error; // Rethrow the error for centralized handling
         } finally {
-            // Clean up resources properly
-            if (page) await page.close();
-            if (browser) await browser.close();
-
-            // Release browser semaphore lock
-            browserSemaphore.release();
+            // Clean up resources properly - but only after ensuring screenshots are taken
+            try {
+                if (screenshotTaken) {
+                    // Give time for any pending screenshot operations to complete
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+                
+                if (page) {
+                    await page.close().catch(err => console.error("Error closing page:", err));
+                }
+                
+                if (browser) {
+                    await browser.close().catch(err => console.error("Error closing browser:", err));
+                }
+            } catch (closeError) {
+                console.error("Error during cleanup:", closeError);
+            }
         }
     } catch (error) {
         next(error); // Pass the error to the next middleware for centralized error handling
+    } finally {
+        // Release the browser semaphore lock
+        browserSemaphore.release();
     }
 }
 
@@ -178,6 +247,53 @@ async function processSelectorData(page, selector) {
 }
 
 /**
+ * Saves a screenshot from the page
+ * 
+ * @param {Object} page - Puppeteer Page instance 
+ * @param {String} type - Type of screenshot (error or success)
+ * @param {Number} stepIndex - Current step index when the screenshot was taken
+ * @returns {String} Path to the saved screenshot
+ */
+async function saveScreenshot(page, type) {
+    try {
+        // Create directory if it doesn't exist
+        const screenshotDir = path.join(process.cwd(), 'tmp');
+        if (!fs.existsSync(screenshotDir)) {
+            fs.mkdirSync(screenshotDir, { recursive: true });
+        }
+
+        // Generate unique filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        let filename;
+
+        // Use simple format for both success and error screenshots
+        if (type === 'success') {
+            filename = `success-${timestamp}.png`;
+        } else if (type === 'error') {
+            filename = `error-${timestamp}.png`;
+        } else {
+            filename = `${type}-${timestamp}.png`;
+        }
+
+        const filePath = path.join(screenshotDir, filename);
+
+        // Take screenshot
+        try {
+            await page.screenshot({ path: filePath, fullPage: true });
+        } catch (error) {
+            console.error('Error taking screenshot:', error);
+        }
+
+        console.log(`${type} screenshot taken and saved at: ${filePath}`);
+
+        return filePath;
+    } catch (error) {
+        console.error(`Failed to take ${type} screenshot:`, error);
+        return null;
+    }
+}
+
+/**
  * Custom extension for Puppeteer Runner
  * Provides hooks for execution lifecycle with logging
  * 
@@ -192,12 +308,16 @@ class Extension extends PuppeteerRunnerExtension {
      * @param {Object} page - Puppeteer Page instance
      * @param {number} timeout - Timeout value in milliseconds
      * @param {number} speedMode - Speed mode delay in milliseconds
+     * @param {boolean} errorScreenshot - Whether to take screenshots on errors
+     * @param {boolean} successScreenshot - Whether to take a screenshot after all steps complete successfully
      */
-    constructor(browser, page, timeout, speedMode) {
+    constructor(browser, page, timeout, speedMode, errorScreenshot = false, successScreenshot = false) {
         super(browser, page);
         this.timeout = timeout;
         this.speedMode = speedMode || SPEED_MODES.NORMAL; // Default to NORMAL if not specified
-        this.currentStepIndex = -1; // Başlangıçta -1, çalışmaya başladığında 0'dan başlayacak
+        this.currentStepIndex = -1; // Initially -1, will start at 0 when execution begins
+        this.errorScreenshot = errorScreenshot;
+        this.successScreenshot = successScreenshot;
     }
 
     /**
@@ -209,6 +329,8 @@ class Extension extends PuppeteerRunnerExtension {
         await super.beforeAllSteps(flow);
         console.log('Starting scraper execution');
         console.log(`Speed Mode: ${this.speedMode}ms delay`);
+        console.log(`Error Screenshot: ${this.errorScreenshot ? 'Enabled' : 'Disabled'}`);
+        console.log(`Success Screenshot: ${this.successScreenshot ? 'Enabled' : 'Disabled'}`);
         this.currentStepIndex = -1; // Reset step index before execution starts
     }
 
@@ -224,7 +346,21 @@ class Extension extends PuppeteerRunnerExtension {
             await super.beforeEachStep(step, flow);
             console.log(`Executing step ${this.currentStepIndex + 1}: ${step.type}`);
         } catch (error) {
-            // Hata oluştuğunda adım indeksini ekle
+            // Take screenshot when error occurs
+            if (this.errorScreenshot && this.page) {
+                try {
+                    console.log(`Taking error screenshot for beforeEachStep at step ${this.currentStepIndex + 1}...`);
+                    const screenshotPath = await saveScreenshot(this.page, 'error');
+                    if (screenshotPath) {
+                        error.screenshotPath = screenshotPath;
+                        console.log(`Error screenshot saved for beforeEachStep: ${screenshotPath}`);
+                    }
+                } catch (screenshotError) {
+                    console.error(`Failed to take error screenshot in beforeEachStep:`, screenshotError);
+                }
+            }
+            
+            // Add step index to error message
             error.message = `Error at step ${this.currentStepIndex + 1}: ${error.message}`;
             throw error;
         }
@@ -249,7 +385,21 @@ class Extension extends PuppeteerRunnerExtension {
 
             console.log(`Successfully completed step ${this.currentStepIndex + 1}: ${step.type}`);
         } catch (error) {
-            // Hata oluştuğunda adım indeksini ekle
+            // Take screenshot when error occurs
+            if (this.errorScreenshot && this.page) {
+                try {
+                    console.log(`Taking error screenshot for afterEachStep at step ${this.currentStepIndex + 1}...`);
+                    const screenshotPath = await saveScreenshot(this.page, 'error');
+                    if (screenshotPath) {
+                        error.screenshotPath = screenshotPath;
+                        console.log(`Error screenshot saved for afterEachStep: ${screenshotPath}`);
+                    }
+                } catch (screenshotError) {
+                    console.error(`Failed to take error screenshot in afterEachStep:`, screenshotError);
+                }
+            }
+            
+            // Add step index to error message
             error.message = `Error after step ${this.currentStepIndex + 1}: ${error.message}`;
             throw error;
         }
@@ -264,7 +414,7 @@ class Extension extends PuppeteerRunnerExtension {
         await super.afterAllSteps(flow);
         console.log(`Scraper execution completed. Total steps executed: ${this.currentStepIndex + 1}`);
     }
-    
+
     /**
      * Override step execution to catch errors with step index information
      * 
@@ -275,7 +425,21 @@ class Extension extends PuppeteerRunnerExtension {
         try {
             return await super.runStep(step, flow);
         } catch (error) {
-            // Adım çalıştırma sırasında oluşan hataya adım indeksini ekle
+            // Take screenshot when error occurs during step execution
+            if (this.errorScreenshot && this.page) {
+                try {
+                    console.log(`Taking error screenshot for step ${this.currentStepIndex + 1} (${step.type})...`);
+                    const screenshotPath = await saveScreenshot(this.page, 'error');
+                    if (screenshotPath) {
+                        error.screenshotPath = screenshotPath;
+                        console.log(`Error screenshot saved for step ${this.currentStepIndex + 1}: ${screenshotPath}`);
+                    }
+                } catch (screenshotError) {
+                    console.error(`Failed to take error screenshot for step ${this.currentStepIndex + 1}:`, screenshotError);
+                }
+            }
+            
+            // Add step index to the error that occurred during step execution
             error.message = `Error executing step ${this.currentStepIndex + 1} (${step.type}): ${error.message}`;
             throw error;
         }

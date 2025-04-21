@@ -32,6 +32,14 @@ const scraperRequestSchema = Joi.object({
         SPEED_MODE_NAMES.STEALTH
     ),
 
+    // Error handling options
+    // errorSnapshot: boolean to indicate if a snapshot should be taken on error
+    errorScreenshot: Joi.boolean(),
+
+    // successSnapshot: boolean to indicate if a snapshot should be taken on success
+    // This is optional and defaults to false if not provided
+    successScreenshot: Joi.boolean(),
+
     // Timeout mode for controlling scraper execution time (SHORT, NORMAL, LONG)
     timeoutMode: Joi.string().valid(
         TIMEOUTS_MODE_NAMES.SHORT,

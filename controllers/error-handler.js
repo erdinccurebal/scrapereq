@@ -10,42 +10,40 @@
  * @param {Response} res - Express response object
  * @param {Function} next - Express next middleware function
  */
-export default (error, req, res, next) => {
+
+export default (error, _req, res, _next) => {
   // Log the complete error to server console for debugging
   console.error(error);
 
   // Create standardized error response structure
   const result = {
     success: false,
-    data: null,
-  };
-
-  // Prepare detailed error information container
-  const data = {
-    message: null,
-    stack: null,
+    data: {
+      message: null,
+      stack: null
+    }
   };
 
   // Format error message based on error type
   if (error.name === 'ValidationError') {
     // Handle Joi validation errors with more details
-    data.message = formatValidationError(error);
+    result.data.message = formatValidationError(error);
   } else if (error.message) {
     // For general errors with messages
-    data.message = formatErrorMessage(error.message);
+    result.data.message = formatErrorMessage(error.message);
   } else {
     // Default message if error doesn't contain one
-    data.message = 'Internal Server Error';
+    result.data.message = 'Internal Server Error';
   }
 
   // Include stack trace only in development environment
   if (process.env.NODE_ENV === 'development' && error.stack) {
-    data.stack = formatStackTrace(error.stack);
+    result.data.stack = formatStackTrace(error.stack);
   }
 
-  // Only include data field if we have meaningful information to share
-  if (data.message || data.stack) {
-    result.data = data;
+  // Add screenshot path to data object (if exists)
+  if (error.screenshot) {
+    result.data.screenshot = error.screenshot;
   }
 
   // Send response with appropriate status code

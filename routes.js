@@ -203,6 +203,14 @@ router.get("/health", controllerHealth);
  *                 enum: [TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH]
  *                 description: Controls execution speed between scraping steps
  *                 example: "NORMAL"
+ *               errorScreenshot:
+ *                 type: boolean
+ *                 description: Take screenshots on error occurrences
+ *                 example: true
+ *               successScreenshot:
+ *                 type: boolean
+ *                 description: Take screenshots after successful steps
+ *                 example: false
  *               timeoutMode:
  *                 type: string
  *                 enum: [SHORT, NORMAL, LONG]
@@ -415,6 +423,10 @@ router.get("/health", controllerHealth);
  *                         "name": "Whiskas Pouch Kuzulu Yetişkin Kedi Maması 85 G"
  *                       }
  *                       description: Scraped data based on provided selectors
+ *                     screenshot:
+ *                       type: string
+ *                       description: URL to the success screenshot if successScreenshot was enabled
+ *                       example: "http://localhost:3000/tmp/success-2025-04-21T14-32-48.png"
  *       400:
  *         description: Invalid request parameters
  *         content:

@@ -4,6 +4,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Import centralized routes
 import routes from './routes.js';
@@ -17,6 +19,9 @@ import { swaggerDocs, swaggerUi } from './swagger.js';
 // Controller imports
 import controllerRouteNotFoundHandler from './controllers/route-not-found-handler.js';
 import controllerErrorHandler from './controllers/error-handler.js';
+
+// Get directory name in ES module context
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Initialize Express application
 const app = express();
@@ -49,6 +54,9 @@ app.use(morgan(morganFormat, { skip: skipOption }));
 // JSON parsing middleware - Process request bodies as JSON
 // Sets a limit to handle large payloads
 app.use(express.json({ limit: API_CONFIG.JSON_LIMIT }));
+
+// Serve static files from tmp directory
+app.use('/tmp', express.static(path.join(__dirname, 'tmp')));
 
 // Set up Swagger documentation
 app.use(

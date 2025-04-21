@@ -13,6 +13,7 @@ import process from 'process';
 
 // Custom helpers
 import checkPuppeteerHealth from '../helpers/puppeteer-health.js';
+import browserSemaphore from '../helpers/browser-semaphore.js';
 
 /**
  * Health check controller function - GET /health endpoint handler
@@ -23,6 +24,9 @@ import checkPuppeteerHealth from '../helpers/puppeteer-health.js';
  */
 export default async function (req, res, next) {
     try {
+        // Acquire browser semaphore lock
+        await browserSemaphore.acquire();
+
         // Get system info
         const uptime = process.uptime();
 
@@ -70,6 +74,9 @@ export default async function (req, res, next) {
         res.json(result);
     } catch (error) {
         next(error); // Pass the error to the error handler
+    } finally {
+        // Release browser semaphore lock
+        browserSemaphore.release();
     }
 }
 
