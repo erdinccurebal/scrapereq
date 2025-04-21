@@ -116,11 +116,12 @@ const HEADLESS = process.env.NODE_ENV === 'development' ? false : true;
  */
 export const BROWSER_CONFIG = {
   HEADLESS,
-  USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36',
+  USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
   ACCEPT_LANGUAGE: 'en-US,en;q=0.9',
   ARGS: {
     NO_SANDBOX: '--no-sandbox',
     DISABLE_SETUID_SANDBOX: '--disable-setuid-sandbox',
+    DISABLE_WEB_SECURITY: '--disable-web-security'
   }
 };
 

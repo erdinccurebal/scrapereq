@@ -42,8 +42,8 @@ export default (error, _req, res, _next) => {
   }
 
   // Add screenshot path to data object (if exists)
-  if (error.screenshot) {
-    result.data.screenshot = error.screenshot;
+  if (error.screenshotUrl) {
+    result.data.screenshotUrl = error.screenshotUrl;
   }
 
   // Send response with appropriate status code

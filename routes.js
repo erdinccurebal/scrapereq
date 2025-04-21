@@ -423,7 +423,7 @@ router.get("/health", controllerHealth);
  *                         "name": "Whiskas Pouch Kuzulu Yetişkin Kedi Maması 85 G"
  *                       }
  *                       description: Scraped data based on provided selectors
- *                     screenshot:
+ *                     screenshotUrl:
  *                       type: string
  *                       description: URL to the success screenshot if successScreenshot was enabled
  *                       example: "http://localhost:3000/tmp/success-2025-04-21T14-32-48.png"

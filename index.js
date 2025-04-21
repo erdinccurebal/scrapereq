@@ -60,7 +60,7 @@ server.listen(PORT, HOST, () => {
     } catch (error) {
       console.error('Error during scheduled screenshot cleanup:', error);
     }
-  }, 60 * 1000); // Run every 1 minute
+  }, 60 * 60 * 1000); // Run every 1 hour
 });
 
 // Global error handling for uncaught exceptions

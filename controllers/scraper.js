@@ -69,13 +69,17 @@ export default async function (req, res, next) {
         // Initialize browser and page variables for cleanup in finally block
         let browser = null;
         let page = null;
-        let screenshotTaken = false;
 
         // Configure proxy settings if provided
         const proxyServer = setupProxyAuth(proxy);
         const launchOptions = {
             headless: BROWSER_CONFIG.HEADLESS,
-            args: [BROWSER_CONFIG.ARGS.NO_SANDBOX, BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX],
+            args: [
+                BROWSER_CONFIG.ARGS.NO_SANDBOX,
+                BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX,
+                BROWSER_CONFIG.ARGS.DISABLE_WEB_SECURITY,
+            ],
+            ignoreHTTPSErrors: true,
         };
 
         // Chrome path from environment variable if set
@@ -112,27 +116,18 @@ export default async function (req, res, next) {
             );
 
             // Log the record title being executed
-            console.log('Executing record title:', title)
+            console.log('Executing record title:', title);
+
             // Execute the defined steps using the runner
             await runner.run();
 
             // Initialize result variables
             let result = null;
-            let screenshotPath = null;
+            let screenshotUrl = null;
 
             // If success screenshot is requested, take screenshot at the end
             if (successScreenshot) {
-                const finalScreenshotPath = await saveScreenshot(page, 'success');
-                if (finalScreenshotPath) {
-                    // Extract just the filename from the path
-                    const filename = path.basename(finalScreenshotPath);
-                    
-                    // Create a proper URL path using the /tmp/ endpoint
-                    screenshotPath = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
-                    screenshotTaken = true;
-                    
-                    console.log(`Screenshot URL generated: ${screenshotPath}`);
-                }
+                screenshotUrl = await getScreenshotUrl({ page, type: 'success' });
             }
 
             if (responseType === RESPONSE_TYPE_NAMES.RAW) {
@@ -156,59 +151,27 @@ export default async function (req, res, next) {
                 };
 
                 // Add screenshot to data object
-                if (screenshotPath) {
-                    result.data.screenshot = screenshotPath;
+                if (screenshotUrl) {
+                    result.data.screenshotUrl = screenshotUrl;
                 }
             }
+
+            await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
 
             // Send the successful response
             res.send(result);
         } catch (error) {
             // Take error screenshot if enabled and not already taken
-            if (errorScreenshot && page && !screenshotTaken) {
-                try {
-                    console.log("Taking error screenshot before handling the error...");
-                    const errorScreenshotPath = await saveScreenshot(page, 'error');
-                    if (errorScreenshotPath) {
-                        // Extract just the filename from the path
-                        const filename = path.basename(errorScreenshotPath);
-                        
-                        // Create a proper URL path using the /tmp/ endpoint
-                        error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
-                        error.screenshotPath = errorScreenshotPath;
-                        screenshotTaken = true;
-                        console.log(`Error screenshot taken: ${error.screenshot}`);
-                        
-                        // Ensure time for screenshot to be saved
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    }
-                } catch (screenshotError) {
-                    console.error("Failed to take error screenshot:", screenshotError);
-                }
-            } else if (error.screenshotPath) {
-                // If screenshot was already taken by Extension
-                const filename = path.basename(error.screenshotPath);
-                error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
+            if (errorScreenshot) {
+                error.screenshotUrl = await getScreenshotUrl({ page, type: 'error' }); // Use success screenshot URL for error screenshot
             }
-            
+
+            await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
+
             throw error; // Rethrow the error for centralized handling
         } finally {
-            // Clean up resources properly - but only after ensuring screenshots are taken
-            try {
-                if (screenshotTaken) {
-                    // Give time for any pending screenshot operations to complete
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-                
-                if (page) {
-                    await page.close().catch(err => console.error("Error closing page:", err));
-                }
-                
-                if (browser) {
-                    await browser.close().catch(err => console.error("Error closing browser:", err));
-                }
-            } catch (closeError) {
-                console.error("Error during cleanup:", closeError);
+            if (!successScreenshot && !errorScreenshot) {
+                await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
             }
         }
     } catch (error) {
@@ -216,6 +179,23 @@ export default async function (req, res, next) {
     } finally {
         // Release the browser semaphore lock
         browserSemaphore.release();
+    }
+}
+
+/**
+ * Safely closes browser and page instances, handling any potential errors
+ * 
+ * @param {Object} browser - Puppeteer Browser instance to close
+ * @param {Object} page - Puppeteer Page instance to close
+ * @returns {Promise<void>} Promise that resolves when browser and page are closed
+ */
+async function exitBrowserAndPage(browser, page) {
+    if (page) {
+        await page.close().catch(err => console.error("Error closing page:", err));
+    }
+
+    if (browser) {
+        await browser.close().catch(err => console.error("Error closing browser:", err));
     }
 }
 
@@ -254,6 +234,26 @@ async function processSelectorData(page, selector) {
 }
 
 /**
+ * Generate a URL for accessing the screenshot from the web application
+ * 
+ * @param {Object} options - Options object
+ * @param {Object} options.page - Puppeteer Page instance
+ * @param {String} options.type - Type of screenshot (error or success)
+ * @returns {Promise<String>} The public URL path to access the screenshot
+ */
+async function getScreenshotUrl({ page, type }) {
+    const screenshotPath = await saveScreenshot(page, type);
+
+    const filename = path.basename(screenshotPath);
+
+    // Create a proper URL path using the /tmp/ endpoint
+    const screenshotUrl = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
+    console.log(`Screenshot URL generated: ${screenshotUrl}`);
+
+    return screenshotUrl;
+}
+
+/**
  * Saves a screenshot from the page
  * 
  * @param {Object} page - Puppeteer Page instance 
@@ -262,44 +262,40 @@ async function processSelectorData(page, selector) {
  * @returns {String} Path to the saved screenshot
  */
 async function saveScreenshot(page, type) {
-    try {
-        // Use TMP_DIR from environment or fallback to default
-        const screenshotDir = process.env.TMP_DIR || path.join(process.cwd(), 'tmp');
-        
-        // Create directory if it doesn't exist
-        if (!fs.existsSync(screenshotDir)) {
-            fs.mkdirSync(screenshotDir, { recursive: true });
-        }
+    // Use TMP_DIR from environment or fallback to default
+    const screenshotDir = process.env.TMP_DIR || path.join(process.cwd(), 'tmp');
 
-        // Generate unique filename with timestamp
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        let filename;
-
-        // Use simple format for both success and error screenshots
-        if (type === 'success') {
-            filename = `success-${timestamp}.png`;
-        } else if (type === 'error') {
-            filename = `error-${timestamp}.png`;
-        } else {
-            filename = `${type}-${timestamp}.png`;
-        }
-
-        const filePath = path.join(screenshotDir, filename);
-
-        // Take screenshot
-        try {
-            await page.screenshot({ path: filePath, fullPage: true });
-        } catch (error) {
-            console.error('Error taking screenshot:', error);
-        }
-
-        console.log(`${type} screenshot taken and saved at: ${filePath}`);
-
-        return filePath;
-    } catch (error) {
-        console.error(`Failed to take ${type} screenshot:`, error);
-        return null;
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(screenshotDir)) {
+        fs.mkdirSync(screenshotDir, { recursive: true });
     }
+
+    // Generate unique filename with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    let filename;
+
+    // Use simple format for both success and error screenshots
+    if (type === 'success') {
+        filename = `success-${timestamp}.png`;
+    } else if (type === 'error') {
+        filename = `error-${timestamp}.png`;
+    } else {
+        filename = `${type}-${timestamp}.png`;
+    }
+
+    const filePath = path.join(screenshotDir, filename);
+
+    const savedFilePath = await new Promise((resolve, reject) => {
+        page.screenshot({ path: filePath, fullPage: true })
+            .then(() => {
+                resolve(filePath);
+            }).catch((error) => {
+                reject(error);
+            });
+    });
+    console.log(`${type} screenshot taken and saved at: ${savedFilePath}`);
+
+    return savedFilePath;
 }
 
 /**
@@ -363,18 +359,18 @@ class Extension extends PuppeteerRunnerExtension {
                     if (screenshotPath) {
                         // Store the full path for internal use
                         error.screenshotPath = screenshotPath;
-                        
+
                         // Create a proper URL using the /tmp/ endpoint and just the filename
                         const filename = path.basename(screenshotPath);
                         error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
-                        
+
                         console.log(`Error screenshot saved for beforeEachStep: ${error.screenshot}`);
                     }
                 } catch (screenshotError) {
                     console.error(`Failed to take error screenshot in beforeEachStep:`, screenshotError);
                 }
             }
-            
+
             // Add step index to error message
             error.message = `Error at step ${this.currentStepIndex + 1}: ${error.message}`;
             throw error;
@@ -408,18 +404,18 @@ class Extension extends PuppeteerRunnerExtension {
                     if (screenshotPath) {
                         // Store the full path for internal use
                         error.screenshotPath = screenshotPath;
-                        
+
                         // Create a proper URL using the /tmp/ endpoint and just the filename
                         const filename = path.basename(screenshotPath);
                         error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
-                        
+
                         console.log(`Error screenshot saved for afterEachStep: ${error.screenshot}`);
                     }
                 } catch (screenshotError) {
                     console.error(`Failed to take error screenshot in afterEachStep:`, screenshotError);
                 }
             }
-            
+
             // Add step index to error message
             error.message = `Error after step ${this.currentStepIndex + 1}: ${error.message}`;
             throw error;
@@ -454,18 +450,18 @@ class Extension extends PuppeteerRunnerExtension {
                     if (screenshotPath) {
                         // Store the full path for internal use
                         error.screenshotPath = screenshotPath;
-                        
+
                         // Create a proper URL using the /tmp/ endpoint and just the filename
                         const filename = path.basename(screenshotPath);
                         error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
-                        
+
                         console.log(`Error screenshot saved for step ${this.currentStepIndex + 1}: ${error.screenshot}`);
                     }
                 } catch (screenshotError) {
                     console.error(`Failed to take error screenshot for step ${this.currentStepIndex + 1}:`, screenshotError);
                 }
             }
-            
+
             // Add step index to the error that occurred during step execution
             error.message = `Error executing step ${this.currentStepIndex + 1} (${step.type}): ${error.message}`;
             throw error;
