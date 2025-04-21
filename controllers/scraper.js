@@ -256,8 +256,10 @@ async function processSelectorData(page, selector) {
  */
 async function saveScreenshot(page, type) {
     try {
+        // Use TMP_DIR from environment or fallback to default
+        const screenshotDir = process.env.TMP_DIR || path.join(process.cwd(), 'tmp');
+        
         // Create directory if it doesn't exist
-        const screenshotDir = path.join(process.cwd(), 'tmp');
         if (!fs.existsSync(screenshotDir)) {
             fs.mkdirSync(screenshotDir, { recursive: true });
         }

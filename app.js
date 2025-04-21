@@ -5,6 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 // Import centralized routes
@@ -22,6 +23,19 @@ import controllerErrorHandler from './controllers/error-handler.js';
 
 // Get directory name in ES module context
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Define tmp directory path, using env variable or default to local path
+const TMP_DIR = process.env.TMP_DIR || path.join(__dirname, 'tmp');
+
+// Ensure tmp directory exists
+if (!fs.existsSync(TMP_DIR)) {
+    try {
+        fs.mkdirSync(TMP_DIR, { recursive: true });
+        console.log(`Created TMP_DIR at: ${TMP_DIR}`);
+    } catch (error) {
+        console.error(`Failed to create TMP_DIR at ${TMP_DIR}:`, error);
+    }
+}
 
 // Initialize Express application
 const app = express();
@@ -55,8 +69,11 @@ app.use(morgan(morganFormat, { skip: skipOption }));
 // Sets a limit to handle large payloads
 app.use(express.json({ limit: API_CONFIG.JSON_LIMIT }));
 
-// Serve static files from tmp directory
-app.use('/tmp', express.static(path.join(__dirname, 'tmp')));
+// Serve static files from tmp directory (configured via TMP_DIR env variable)
+app.use('/tmp', express.static(TMP_DIR));
+
+// Make TMP_DIR available to routes via app.locals
+app.locals.TMP_DIR = TMP_DIR;
 
 // Set up Swagger documentation
 app.use(

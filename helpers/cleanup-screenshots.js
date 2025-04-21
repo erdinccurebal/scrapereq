@@ -45,9 +45,11 @@ export async function cleanupOldScreenshots(retentionHours = 24) {
     try {
         console.log(`Starting screenshot cleanup (retention period: ${retentionHours} hours)`);
         
-        const screenshotDir = path.join(process.cwd(), 'tmp');
+        // Use TMP_DIR from environment or fallback to default
+        const screenshotDir = process.env.TMP_DIR || path.join(process.cwd(), 'tmp');
+        
         if (!fs.existsSync(screenshotDir)) {
-            console.log('Screenshot directory does not exist. Nothing to clean up.');
+            console.log(`Screenshot directory does not exist at path: ${screenshotDir}. Nothing to clean up.`);
             return { deleted: 0, errors: 0 };
         }
 

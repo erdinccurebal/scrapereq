@@ -21,6 +21,7 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 - **Browser Semaphore**: Limited concurrent browser instances for resource management
 - **Screenshot Capabilities**: Success and error screenshots with configurable options
 - **Resilient Error Handling**: Robust error capture with screenshot preservation even during browser failures
+- **Persistent Storage**: Configurable screenshot directory path for persistent storage across deployments
 
 ## Tech Stack
 
@@ -62,6 +63,9 @@ AUTH_PASSWORD=secretpassword
 
 # Puppeteer Configuration
 CHROME_PATH=/path/to/chrome # Optional custom Chrome path
+
+# File Storage
+TMP_DIR=/path/to/persistent/directory # For example: /var/www/req-scrap-data/tmp
 ```
 
 4. Start the application:
@@ -207,6 +211,22 @@ Key configuration options:
 - Proxy settings
 - API security settings
 - Screenshot configurations
+- Storage path configurations
+
+### Screenshot Storage Configuration
+
+By default, screenshots are stored in the `tmp` directory within the project root. For persistent storage across deployments, you can set a custom path using the `TMP_DIR` environment variable:
+
+```
+TMP_DIR=/path/to/persistent/directory
+```
+
+For Ubuntu 24.04 deployments, consider using a path outside the application directory, such as `/var/www/req-scrap-data/tmp` to ensure screenshots are preserved when the application is redeployed.
+
+The application automatically:
+- Creates the directory if it doesn't exist
+- Serves static files from this directory under the `/tmp` URL path
+- Cleans up screenshots older than 24 hours on a regular schedule
 
 ### Screenshot Configuration
 
@@ -263,11 +283,12 @@ The application provides detailed error information including:
 │   └── scraper.js        # Main scraping controller
 ├── helpers/              # Utility functions
 │   ├── browser-semaphore.js # Limit concurrent browser instances
+│   ├── cleanup-screenshots.js # Auto-cleanup for old screenshots
 │   ├── filter-steps.js   # Process scraping steps
 │   ├── puppeteer-health.js # Browser health checks
 │   ├── setup-proxy-auth.js # Proxy configuration
 │   └── validators.js     # Request validation schemas
-└── tmp/                  # Temporary files & examples
+└── tmp/                  # Default temporary files directory (can be configured)
     ├── browser-records/       # Browser recording examples
     ├── request-body-example/  # Example request bodies
     ├── response-example/      # Example responses
@@ -288,6 +309,18 @@ The application provides detailed error information including:
 - Semaphore release on browser disconnection events
 - Guaranteed screenshot capture even during unexpected errors
 - Timeout handling before browser closure
+
+## Deployment Considerations
+
+When deploying this application:
+
+1. **Persistent Storage**: Configure `TMP_DIR` in your environment to point to a persistent directory that won't be deleted during redeployments.
+   
+2. **File Permissions**: Ensure the application has read/write permissions to the configured `TMP_DIR`.
+   
+3. **Screenshot Cleanup**: The application automatically cleans up screenshots older than 24 hours. Adjust the cleanup schedule in `index.js` if needed.
+
+4. **Static File Serving**: The application serves files from `TMP_DIR` under the `/tmp` path. No additional configuration is needed for static file serving.
 
 ## License
 
