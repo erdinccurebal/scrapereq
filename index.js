@@ -3,6 +3,7 @@ import 'dotenv/config';
 
 // Node modules
 import http from 'http';
+import cleanupOldScreenshots from './helpers/cleanup-screenshots.js';
 
 // Set default port if not specified in environment variables
 if (!process.env.PORT) {
@@ -35,6 +36,31 @@ const server = http.createServer(app);
 // Start the server and log when ready
 server.listen(PORT, HOST, () => {
   console.log(`Server started on port http://${HOST}:${PORT} in ${NODE_ENV} mode.`);
+  
+  // Initial screenshot cleanup
+  cleanupOldScreenshots()
+    .then(({ deleted }) => {
+      if (deleted > 0) {
+        console.log(`Initial cleanup: Removed ${deleted} old screenshot files`);
+      } else {
+        console.log('Initial cleanup: No old screenshot files to remove');
+      }
+    })
+    .catch(err => {
+      console.error('Error during initial screenshot cleanup:', err);
+    });
+
+  // Set up scheduled cleanup every 1 minute
+  setInterval(async () => {
+    try {
+      const { deleted } = await cleanupOldScreenshots();
+      if (deleted > 0) {
+        console.log(`Scheduled cleanup: Removed ${deleted} old screenshot files`);
+      }
+    } catch (error) {
+      console.error('Error during scheduled screenshot cleanup:', error);
+    }
+  }, 60 * 1000); // Run every 1 minute
 });
 
 // Global error handling for uncaught exceptions
