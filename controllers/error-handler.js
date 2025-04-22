@@ -46,6 +46,10 @@ export function controllerErrorHandler(error, _req, res, _next) {
     result.data.screenshotUrl = error.screenshotUrl;
   }
 
+  if (error.proxy) {
+    result.data.proxy = error.proxy;
+  }
+
   // Send response with appropriate status code
   // Use existing status code if set, otherwise default to 500
   res.status(res.statusCode || 500).json(result);

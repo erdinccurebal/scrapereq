@@ -63,6 +63,14 @@ export const helperValidatorsScraper = Joi.object({
         RESPONSE_TYPE_NAMES.RAW
     ),
 
+    // Recaptcha settings for handling CAPTCHA challenges
+    // enabled: boolean to indicate if recaptcha handling is enabled
+    recaptcha: Joi.object({
+        enabled: Joi.boolean().required(),
+        id: Joi.string().required(),
+        token: Joi.string().required(),
+    }),
+
     // Proxy authentication settings
     proxyAuth: Joi.object({
         enabled: Joi.boolean().required(),

@@ -229,9 +229,33 @@ router.get("/health", controllerHealth);
  *                 type: string
  *                 description: Browser user-agent string
  *                 example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36"
+ *               recaptcha:
+ *                 type: object
+ *                 description: Recaptcha settings for handling CAPTCHA challenges
+ *                 required:
+ *                   - enabled
+ *                   - id
+ *                   - token
+ *                 properties:
+ *                   enabled:
+ *                     type: boolean
+ *                     description: Enable/disable recaptcha handling (required)
+ *                     example: true
+ *                   id:
+ *                     type: string
+ *                     description: Recaptcha identifier (required)
+ *                     example: "recaptcha-id-123"
+ *                   token:
+ *                     type: string
+ *                     description: Recaptcha token (required)
+ *                     example: "recaptcha-token-xyz"
  *               selectors:
  *                 type: array
- *                 description: Data extraction selector configurations for scraping (Required when responseType is not NONE, forbidden when responseType is NONE)
+ *                 description: |
+ *                   Data extraction selector configurations for scraping.
+ *                   - Required when responseType is not NONE, forbidden when responseType is NONE
+ *                   - When responseType is RAW, only one selector is allowed
+ *                   - Only one selector with type FULL is allowed
  *                 items:
  *                   type: object
  *                   required:
@@ -273,11 +297,11 @@ router.get("/health", controllerHealth);
  *                     example: true
  *                   username:
  *                     type: string
- *                     description: Proxy authentication username (required)
+ *                     description: Proxy authentication username (required when enabled is true)
  *                     example: "username"
  *                   password:
  *                     type: string
- *                     description: Proxy authentication password (required)
+ *                     description: Proxy authentication password (required when enabled is true)
  *                     example: "password"
  *               proxies:
  *                 type: array
@@ -299,8 +323,8 @@ router.get("/health", controllerHealth);
  *                     protocol:
  *                       type: string
  *                       description: Proxy protocol (optional)
- *                       enum: [http, https, socks4, socks5]
- *                       example: "http"
+ *                       enum: [HTTP, HTTPS, SOCKS4, SOCKS5]
+ *                       example: "HTTP"
  *                 example:
  *                   - server: "proxy1.example.com"
  *                     port: 8080
@@ -310,7 +334,9 @@ router.get("/health", controllerHealth);
  *                     protocol: "https"
  *               steps:
  *                 type: array
- *                 description: Sequence of browser actions to perform (required with at least one navigate step containing a valid URL)
+ *                 description: |
+ *                   Sequence of browser actions to perform.
+ *                   Requires at least one navigate step with a valid URL.
  *                 items:
  *                   type: object
  *                   required:

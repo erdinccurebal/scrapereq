@@ -9,11 +9,12 @@ import fs from 'fs';
 import path from 'path';
 
 // Node third-party modules
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
 import { createRunner, PuppeteerRunnerExtension } from '@puppeteer/replay';
+import puppeteerRecaptchaPlugin from 'puppeteer-extra-plugin-recaptcha';
 
 // Helper functions
-import { helperSetupProxies } from '../helpers/setup-proxies.js';
+import { helperProxiesRandomGetOne } from '../helpers/proxies-random-get-one.js';
 import { helperValidatorsScraper } from '../helpers/validators.js';
 import { helperFilterSteps } from '../helpers/filter-steps.js';
 import { helperBrowserSemaphore } from '../helpers/browser-semaphore.js';
@@ -72,6 +73,7 @@ export async function controllerScraper(req, res, next) {
             errorScreenshot = false,
             successScreenshot = false,
             accessPasswordWithoutProxy = null,
+            recaptcha = {},
         } = value;
 
         // Check if the access password is provided and matches the environment variable
@@ -87,6 +89,7 @@ export async function controllerScraper(req, res, next) {
         // Initialize browser and page variables for cleanup in finally block
         let browser = null;
         let page = null;
+        let proxyServer = null;
 
         // Configure launch options for Puppeteer
         const launchOptions = {
@@ -108,8 +111,22 @@ export async function controllerScraper(req, res, next) {
         // Proxies setup if provided
         // This allows for rotating proxies or specific proxy configurations
         if (!checkAccessPasswordWithoutProxy && proxies && proxies.length > 0) {
-            const proxyServer = helperSetupProxies(proxies);
+            const getProxy = helperProxiesRandomGetOne(proxies);
+            proxyServer = `--proxy-server=${getProxy.protocol || "http"}://${getProxy.server}:${getProxy.port}`;
             launchOptions.args.push(proxyServer);
+        };
+
+        // Extend Puppeteer with Recaptcha plugin for solving reCAPTCHA challenges
+        if (recaptcha?.enabled) {
+            puppeteer.use(
+                puppeteerRecaptchaPlugin({
+                    provider: {
+                        id: recaptcha.id,
+                        token: recaptcha.token,
+                    },
+                    visualFeedback: true // colorize reCAPTCHAs (violet = detected, green = solved)
+                })
+            );
         };
 
         try {
@@ -168,6 +185,10 @@ export async function controllerScraper(req, res, next) {
                     }
                 };
 
+                if (proxyServer) {
+                    result.data.proxy = proxyServer;
+                };
+
                 if (successScreenshot) {
                     const screenshotUrl = await getScreenshotUrl({ page, type: 'success' });
                     result.data.screenshotUrl = screenshotUrl;
@@ -182,6 +203,10 @@ export async function controllerScraper(req, res, next) {
             // Take error screenshot if enabled and not already taken
             if (responseType === RESPONSE_TYPE_NAMES.JSON && errorScreenshot) {
                 error.screenshotUrl = await getScreenshotUrl({ page, type: 'error' }); // Use success screenshot URL for error screenshot
+            };
+
+            if (proxyServer) {
+                error.proxy = proxyServer;
             };
 
             await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
