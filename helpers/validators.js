@@ -216,7 +216,7 @@ const scraperRequestSchema = Joi.object({
             PROXY_PROTOCOLS.HTTPS,
             PROXY_PROTOCOLS.SOCKS4,
             PROXY_PROTOCOLS.SOCKS5
-        ).required()
+        )
     })
 });
 
