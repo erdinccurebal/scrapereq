@@ -89,7 +89,7 @@ export async function controllerScraper(req, res, next) {
         // Initialize browser and page variables for cleanup in finally block
         let browser = null;
         let page = null;
-        let proxyServer = null;
+        let getProxy = null;
 
         // Configure launch options for Puppeteer
         const launchOptions = {
@@ -111,8 +111,8 @@ export async function controllerScraper(req, res, next) {
         // Proxies setup if provided
         // This allows for rotating proxies or specific proxy configurations
         if (!checkAccessPasswordWithoutProxy && proxies && proxies.length > 0) {
-            const getProxy = helperProxiesRandomGetOne(proxies);
-            proxyServer = `--proxy-server=${getProxy.protocol || "http"}://${getProxy.server}:${getProxy.port}`;
+            getProxy = helperProxiesRandomGetOne(proxies);
+            const proxyServer = `--proxy-server=${getProxy.protocol || "http"}://${getProxy.server}:${getProxy.port}`;
             launchOptions.args.push(proxyServer);
         };
 
@@ -186,7 +186,7 @@ export async function controllerScraper(req, res, next) {
                 };
 
                 if (proxyServer) {
-                    result.data.proxy = proxyServer;
+                    result.data.proxy = getProxy;
                 };
 
                 if (successScreenshot) {
@@ -206,7 +206,7 @@ export async function controllerScraper(req, res, next) {
             };
 
             if (proxyServer) {
-                error.proxy = proxyServer;
+                error.proxy = getProxy;
             };
 
             await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
