@@ -86,7 +86,7 @@ export const RESPONSE_TYPE_NAMES = {
 /**
  * Default response type if none is specified
  */
-export const DEFAULT_RESPONSE_TYPE = 'NORMAL';
+export const DEFAULT_RESPONSE_TYPE = 'NONE';
 
 /**
  * Selector Types
