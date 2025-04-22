@@ -1,97 +1,113 @@
-# Req-Scrap
+# 🕸️ Req-Scrap
 
-A powerful and flexible web scraping API built with Express.js and Puppeteer.
+<div align="center">
+  <h3>A powerful and flexible web scraping API built with Express.js and Puppeteer</h3>
+  <p>
+    <img src="https://img.shields.io/badge/Express-5.1.0-000000?style=flat-square&logo=express" alt="Express.js" />
+    <img src="https://img.shields.io/badge/Puppeteer-24.6.1-40B5A4?style=flat-square&logo=puppeteer" alt="Puppeteer" />
+    <img src="https://img.shields.io/badge/Node.js-v18+-339933?style=flat-square&logo=node.js" alt="Node.js" />
+    <img src="https://img.shields.io/badge/License-ISC-blue?style=flat-square" alt="License" />
+  </p>
+</div>
 
-## Overview
+## 📋 Overview
 
-Req-Scrap is a RESTful API service that allows you to perform web scraping operations by defining a series of steps that are executed by a headless browser. It provides a clean and secure way to extract data from websites with advanced features like proxy support, customizable scraping speeds, and robust error handling.
+Req-Scrap is a RESTful API service that allows you to perform web scraping operations by defining a series of steps executed by a headless browser. It provides a clean and secure way to extract data from websites with advanced features like proxy support, customizable scraping speeds, and robust error handling.
 
-## Features
+## ✨ Features
 
-- **Step-Based Scraping**: Define your scraping workflow as a series of steps (navigate, click, wait, setViewport, change, waitForElement, etc.)
-- **Speed Control**: Multiple speed modes to control execution pace (TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH)
-- **Proxy Support**: Configure proxies with authentication for web requests
-- **Security**: Built-in basic authentication, helmet protection, and CORS configuration
-- **Reliability**: Comprehensive error handling and health check endpoints
-- **Customizable**: Adjustable timeouts and browser configurations
-- **API Documentation**: Integrated Swagger documentation
-- **API Monitoring**: Detailed health check endpoint with system information
-- **System Controls**: Application shutdown and OS restart endpoints
-- **Error Tracking**: Detailed error reporting with step index information
-- **Browser Semaphore**: Limited concurrent browser instances for resource management
-- **Screenshot Capabilities**: Success and error screenshots with configurable options
-- **Resilient Error Handling**: Robust error capture with screenshot preservation even during browser failures
-- **Persistent Storage**: Configurable screenshot directory path for persistent storage across deployments
+### Core Capabilities
+- **🔄 Step-Based Scraping**: Define your scraping workflow as a series of steps (navigate, click, wait, setViewport, etc.)
+- **⚡ Speed Control**: Multiple speed modes (TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH)
+- **🔍 Selector Support**: Extract data using CSS, XPath, or full page HTML selectors
 
-## Tech Stack
+### Security & Reliability
+- **🔐 Built-in Security**: Basic authentication, helmet protection, and CORS configuration
+- **🌐 Proxy Support**: Configure proxies with authentication for web requests
+- **🔄 Error Handling**: Comprehensive error reporting with step indexing
+- **💪 Browser Resilience**: Automatic disconnection detection and resource management
 
-- **Node.js**: JavaScript runtime
-- **Express.js v5.1.0**: Web application framework
-- **Puppeteer v24.6.1**: Headless Chrome browser automation
-- **@puppeteer/replay v3.1.1**: Record and replay browser interactions
-- **Joi v17.13.3**: Request validation
-- **Morgan**: HTTP request logging
-- **Helmet v8.1.0**: Security middleware
-- **Swagger**: API documentation
-- **CORS**: Cross-Origin Resource Sharing support
-- **dotenv v16.5.0**: Environment configuration
+### Advanced Features
+- **📸 Screenshot Capabilities**: Capture success and error screenshots with configurable options
+- **📊 API Monitoring**: Detailed health check endpoint with system information
+- **📝 Swagger Documentation**: Integrated API documentation
+- **🔧 System Controls**: Application shutdown and OS restart endpoints
+- **💾 Persistent Storage**: Configurable screenshot directory for persistent storage across deployments
 
-## Installation
+## 🛠️ Tech Stack
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/req-scrap.git
-cd req-scrap
-```
+- **📦 Node.js**: JavaScript runtime
+- **🚀 Express.js v5.1.0**: Web application framework
+- **🤖 Puppeteer v24.6.1**: Headless Chrome browser automation
+- **⏺️ @puppeteer/replay v3.1.1**: Record and replay browser interactions
+- **✅ Joi v17.13.3**: Request validation
+- **📝 Morgan**: HTTP request logging
+- **🛡️ Helmet v8.1.0**: Security middleware
+- **📚 Swagger**: API documentation
+- **🌐 CORS**: Cross-Origin Resource Sharing support
+- **⚙️ dotenv v16.5.0**: Environment configuration
 
-2. Install dependencies:
-```bash
-npm install
-```
+## 🚀 Installation
 
-3. Create a `.env` file in the root directory (using the .env.sample template):
-```
-# Server Configuration
-PORT=3000
-HOST=localhost
-NODE_ENV=development
-WEB_ADDRESS=http://localhost:3000
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/req-scrap.git
+   cd req-scrap
+   ```
 
-# Authentication
-AUTH_USERNAME=admin
-AUTH_PASSWORD=secretpassword
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-# Puppeteer Configuration
-CHROME_PATH=/path/to/chrome # Optional custom Chrome path
+3. **Create a configuration file**:
+   
+   Create a `.env` file in the root directory based on the following template:
+   ```env
+   # Server Configuration
+   PORT=3000
+   HOST=localhost
+   NODE_ENV=development
+   WEB_ADDRESS=http://localhost:3000
 
-# File Storage
-TMP_DIR=/path/to/persistent/directory # For example: /var/www/req-scrap-data/tmp
-```
+   # Authentication
+   AUTH_USERNAME=admin
+   AUTH_PASSWORD=secretpassword
 
-4. Start the application:
-```bash
-npm start
-```
+   # Puppeteer Configuration
+   CHROME_PATH=/path/to/chrome # Optional custom Chrome path
 
-## API Endpoints
+   # File Storage
+   TMP_DIR=/path/to/persistent/directory # For example: /var/www/req-scrap-data/tmp
+   ```
 
-### Health Check
-```
+4. **Start the application**:
+   ```bash
+   npm start
+   ```
+
+## 🔌 API Endpoints
+
+### 🔍 Health Check
+```http
 GET /health
 ```
-Returns detailed system information and checks if all components are working correctly. Includes:
-- Project metadata
+✅ Returns detailed system information and checks if all components are working correctly:
+- Project metadata and versions
 - Application status and uptime
 - Puppeteer browser functionality test
 - System information (OS, memory, CPU)
 
-### Scraper
-```
+### 🕸️ Scraper
+```http
 POST /
 ```
-Main endpoint for web scraping operations.
+Main endpoint for web scraping operations. Configure your scraping workflow with a detailed JSON structure.
 
-#### Request Body Example
+#### Example Request:
+<details>
+<summary>📋 View example request body</summary>
+
 ```json
 {
   "title": "Google Search Example",
@@ -150,10 +166,13 @@ Main endpoint for web scraping operations.
   }
 }
 ```
+</details>
 
-#### Response Examples
+#### Response Examples:
 
-##### Successful Response
+<details>
+<summary>✅ Successful Response</summary>
+
 ```json
 {
   "success": true,
@@ -166,8 +185,11 @@ Main endpoint for web scraping operations.
   }
 }
 ```
+</details>
 
-##### Error Response
+<details>
+<summary>❌ Error Response</summary>
+
 ```json
 {
   "success": false,
@@ -178,46 +200,58 @@ Main endpoint for web scraping operations.
   }
 }
 ```
+</details>
 
-### System Management
-```
+### 🔧 System Management
+
+```http
 POST /app-shutdown
 ```
-Shuts down the application.
+Safely shuts down the application with a 3-second delay.
 
-```
+```http
 POST /os-restart
 ```
-Initiates an operating system restart.
+Initiates an operating system restart (requires appropriate permissions).
 
-## Authentication
+## 🔐 Authentication
 
-The API is secured with basic authentication. Default credentials:
-- Username: `admin`
-- Password: `admin`
+The API is secured with basic authentication:
 
-You can change these values in the `.env` file or in constants.js.
+| Username | Password | Configuration |
+|----------|----------|---------------|
+| `admin` | `admin` | Default values |
 
-## Configuration
+You can change these values in the `.env` file or in the `constants.js` file:
+
+```env
+# Authentication
+AUTH_USERNAME=new_username
+AUTH_PASSWORD=secure_password
+```
+
+## ⚙️ Configuration
 
 The application can be configured through:
-- Environment variables (`.env` file)
-- Constants defined in `constants.js`
+- **.env file**: For environment variables
+- **constants.js**: For constant values
 
-Key configuration options:
-- Speed modes for controlling scraping pace
-- Timeout values for operations
-- Browser settings (user agent, headless mode, etc.)
-- Proxy settings
-- API security settings
-- Screenshot configurations
-- Storage path configurations
+### Key Configuration Options
+
+| Category | Description |
+|----------|-------------|
+| 🔄 **Speed Modes** | Controls scraping pace (TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH) |
+| ⏱️ **Timeout Values** | Timeout values for operations (SHORT, NORMAL, LONG) |
+| 🌐 **Browser Settings** | Browser configurations (user agent, headless mode, etc.) |
+| 🔐 **Proxy Settings** | Proxy server configurations |
+| 🛡️ **API Security** | API security settings |
+| 📸 **Screenshot Options** | Screenshot configurations |
 
 ### Screenshot Storage Configuration
 
 By default, screenshots are stored in the `tmp` directory within the project root. For persistent storage across deployments, you can set a custom path using the `TMP_DIR` environment variable:
 
-```
+```env
 TMP_DIR=/path/to/persistent/directory
 ```
 
@@ -228,44 +262,46 @@ The application automatically:
 - Serves static files from this directory under the `/tmp` URL path
 - Cleans up screenshots older than 24 hours on a regular schedule
 
-### Screenshot Configuration
+## 📊 Response Types
 
-Configure screenshot behavior through the request body:
-- `errorScreenshot`: When `true`, captures screenshots on errors
-- `successScreenshot`: When `true`, captures a screenshot after successful execution
+The scraper supports multiple response formats:
 
-Screenshot URLs include the server domain from the `WEB_ADDRESS` environment variable.
+| Type | Description |
+|------|-------------|
+| `JSON` | Returns structured JSON with success status and data |
+| `RAW` | Returns raw content without formatting |
+| `NONE` | No response content (useful for headless operations) |
 
-## Response Types
-
-The scraper supports multiple response types:
-- `JSON`: Returns structured JSON with success status and data
-- `RAW`: Returns raw content without formatting
-- `NONE`: No response content (useful for headless operations)
-
-## Selector Types and Validation Rules
+## 🔍 Selector Types and Validation Rules
 
 Data can be extracted using different selector methods:
-- `CSS`: Standard CSS selectors
-- `XPATH`: XPath expressions
-- `FULL`: Retrieves the full page HTML content
 
-Selectors validation rules:
+| Selector Type | Usage |
+|---------------|-------|
+| `CSS` | Standard CSS selectors |
+| `XPATH` | XPath expressions |
+| `FULL` | Retrieves the full page HTML content |
+
+### Selector Validation Rules:
+
 - When `responseType` is set to `NONE`, selectors cannot be provided
 - When `responseType` is set to `RAW`, only one selector can be used
 - Maximum one `FULL` type selector is allowed regardless of response type
 - Each selector requires `key`, `type`, and `value` properties
 
-## Error Handling
+## ⚠️ Error Handling
 
 The application provides detailed error information including:
-- Step index where error occurred (1-based indexing)
-- Step type where error occurred
-- Complete error stack for debugging
-- HTTP status codes with appropriate error messages
-- Error screenshots (when enabled) showing the page state at the time of failure
 
-## Project Structure
+| Error Detail | Description |
+|--------------|-------------|
+| 📍 **Step Index** | Index of the step where the error occurred (1-based indexing) |
+| 🔄 **Step Type** | Type of step where the error occurred |
+| 📋 **Error Stack** | Full error stack for debugging |
+| 🔢 **HTTP Status** | HTTP status codes with appropriate error messages |
+| 📸 **Error Screenshots** | Screenshots of the page state at the time of error (if enabled) |
+
+## 📁 Project Structure
 
 ```
 .
@@ -274,62 +310,64 @@ The application provides detailed error information including:
 ├── index.js              # Entry point
 ├── routes.js             # API route definitions
 ├── swagger.js            # Swagger API documentation configuration
+│
 ├── controllers/          # Request handlers
 │   ├── app-shutdown.js   # Application shutdown handler
 │   ├── error-handler.js  # Error handling middleware
 │   ├── health.js         # Health check endpoint
 │   ├── os-restart.js     # OS restart handler
-│   ├── route-not-found-handler.js # 404 handler
 │   └── scraper.js        # Main scraping controller
-├── helpers/              # Utility functions
+│
+├── helpers/              # Helper functions
 │   ├── browser-semaphore.js # Limit concurrent browser instances
-│   ├── cleanup-screenshots.js # Auto-cleanup for old screenshots
+│   ├── cleanup-screenshots.js # Automatically clean up old screenshots
 │   ├── filter-steps.js   # Process scraping steps
 │   ├── puppeteer-health.js # Browser health checks
 │   ├── setup-proxy-auth.js # Proxy configuration
 │   └── validators.js     # Request validation schemas
-└── tmp/                  # Default temporary files directory (can be configured)
-    ├── browser-records/       # Browser recording examples
-    ├── request-body-example/  # Example request bodies
-    ├── response-example/      # Example responses
-    └── *.png                  # Screenshot files
+│
+└── tmp/                  # Default temporary files directory
+    ├── browser-records/  # Browser recording samples
+    ├── request-body-example/ # Request body examples
+    ├── response-example/ # Response examples
+    └── *.png             # Screenshot files
 ```
 
-## Performance Considerations
+## ⚡ Performance Considerations
 
-- Browser instances are limited using a semaphore to prevent resource exhaustion
-- Adjustable speed modes allow optimization between performance and detection avoidance
-- Custom timeouts for different operation types
-- Error tracking with step indexing for faster debugging
-- Resilient browser handling with disconnection detection
+- **🔒 Resource Management**: Browser instances are limited using a semaphore to prevent resource exhaustion
+- **⏱️ Speed Optimization**: Adjustable speed modes optimize between performance and detection risk
+- **⏲️ Customized Timeouts**: Customized timeout values for different operation types
+- **🔍 Quick Debugging**: Error tracking with step indexing
+- **🛡️ Browser Resilience**: Enhanced browser management with disconnection detection
 
-## Browser Resilience
+## 🛡️ Browser Resilience
 
-- Automatic disconnection detection for browsers closed manually
-- Semaphore release on browser disconnection events
-- Guaranteed screenshot capture even during unexpected errors
-- Timeout handling before browser closure
+- **🔄 Disconnection Detection**: Automatic detection for manually closed browsers
+- **🔓 Resource Management**: Semaphore is released when browser disconnects
+- **📸 Guaranteed Screenshots**: Screenshots are captured even during unexpected errors
+- **⏱️ Pre-Closure Management**: Timeout operations before browser closure
 
-## Deployment Considerations
+## 🚀 Deployment Considerations
 
-When deploying this application:
+When deploying this application, consider the following:
 
-1. **Persistent Storage**: Configure `TMP_DIR` in your environment to point to a persistent directory that won't be deleted during redeployments.
+1. **💾 Persistent Storage**: Configure the `TMP_DIR` environment variable to point to a persistent directory that won't be deleted during redeployments.
    
-2. **File Permissions**: Ensure the application has read/write permissions to the configured `TMP_DIR`.
+2. **📂 File Permissions**: Ensure the application has read/write permissions for the configured `TMP_DIR`.
    
-3. **Screenshot Cleanup**: The application automatically cleans up screenshots older than 24 hours. Adjust the cleanup schedule in `index.js` if needed.
+3. **🧹 Screenshot Cleanup**: The application automatically cleans up screenshots older than 24 hours. Adjust the cleanup schedule in `index.js` if necessary.
 
-4. **Static File Serving**: The application serves files from `TMP_DIR` under the `/tmp` path. No additional configuration is needed for static file serving.
+4. **🌐 Static File Serving**: The application serves files in `TMP_DIR` under the `/tmp` path. No additional configuration is required for static file serving.
 
-## License
+## 📄 License
 
 ISC License
 
-## Author
+## 👨‍💻 Author
 
 Erdinç Cürebal
 
-## Last Updated
+## 🔄 Last Updated
 
 April 22, 2025
