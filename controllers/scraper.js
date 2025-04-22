@@ -185,7 +185,7 @@ export async function controllerScraper(req, res, next) {
                     }
                 };
 
-                if (proxyServer) {
+                if (getProxy) {
                     result.data.proxy = getProxy;
                 };
 
@@ -205,7 +205,7 @@ export async function controllerScraper(req, res, next) {
                 error.screenshotUrl = await getScreenshotUrl({ page, type: 'error' }); // Use success screenshot URL for error screenshot
             };
 
-            if (proxyServer) {
+            if (getProxy) {
                 error.proxy = getProxy;
             };
 
@@ -272,10 +272,33 @@ async function processSelectorData(page, selector) {
             }).catch(() => "ERROR_SELECTOR");
         } else if (type === SELECTOR_TYPE_NAMES.XPATH) {
             // Extract content using XPath selector
-            return await page.evaluate((xpath) => {
-                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                return element ? element.innerHTML : "ERROR_NOT_FOUND_ELEMENT";
-            }, value).catch(() => "ERROR_SELECTOR");
+            const getResult = await page.evaluate((xpath) => {
+                try {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+                    if (!element) {
+                        return "ERROR_NOT_FOUND_ELEMENT";
+                    }
+
+                    // Get both innerHTML and textContent for more reliable data extraction
+                    const innerHTML = element.innerHTML || "";
+                    const textContent = element.textContent || "";
+
+                    // If innerHTML is empty or just whitespace but textContent has content, return textContent
+                    if (!innerHTML.trim() && textContent.trim()) {
+                        return textContent;
+                    }
+
+                    return innerHTML;
+                } catch (err) {
+                    console.error('XPath evaluation error:', err);
+                    return "ERROR_SELECTOR";
+                }
+            }, value).catch((err) => {
+                console.error('XPath evaluate method error:', err);
+                return "ERROR_SELECTOR";
+            });
+            return getResult;
         }
 
         return "ERROR_INVALID_SELECTOR_TYPE";
