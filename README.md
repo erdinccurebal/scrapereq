@@ -23,7 +23,7 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 
 ### Security & Reliability
 - **🔐 Built-in Security**: Basic authentication, helmet protection, and CORS configuration
-- **🌐 Proxy Support**: Configure proxies with authentication for web requests
+- **🌐 Enhanced Proxy Support**: Advanced proxy configuration with authentication and multiple proxy rotation
 - **🔄 Error Handling**: Comprehensive error reporting with step indexing
 - **💪 Browser Resilience**: Automatic disconnection detection and resource management
 
@@ -156,14 +156,23 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
       "selectors": [".search-results"]
     }
   ],
-  "proxy": {
-    "enabled": false,
-    "server": "proxy.example.com",
-    "port": 8080,
+  "proxyAuth": {
+    "enabled": true,
     "username": "user",
-    "password": "pass",
-    "protocol": "http"
-  }
+    "password": "pass"
+  },
+  "proxies": [
+    {
+      "server": "proxy1.example.com",
+      "port": 8080,
+      "protocol": "http"
+    },
+    {
+      "server": "proxy2.example.com",
+      "port": 8081,
+      "protocol": "https"
+    }
+  ]
 }
 ```
 </details>
@@ -289,6 +298,43 @@ Data can be extracted using different selector methods:
 - Maximum one `FULL` type selector is allowed regardless of response type
 - Each selector requires `key`, `type`, and `value` properties
 
+## 🌐 Enhanced Proxy Support
+
+The application supports advanced proxy configurations:
+
+### Proxy Authentication
+
+```json
+"proxyAuth": {
+  "enabled": true,
+  "username": "user",
+  "password": "pass"
+}
+```
+
+### Multiple Proxy Rotation
+
+```json
+"proxies": [
+  {
+    "server": "proxy1.example.com",
+    "port": 8080,
+    "protocol": "http"
+  },
+  {
+    "server": "proxy2.example.com",
+    "port": 8081,
+    "protocol": "https"
+  }
+]
+```
+
+This feature allows for:
+- Load balancing across multiple proxy servers
+- Automatic failover if one proxy becomes unavailable
+- Reduced chance of IP blocking during intensive scraping operations
+- Support for different proxy protocols (HTTP, HTTPS, SOCKS4, SOCKS5)
+
 ## ⚠️ Error Handling
 
 The application provides detailed error information including:
@@ -323,7 +369,7 @@ The application provides detailed error information including:
 │   ├── cleanup-screenshots.js # Automatically clean up old screenshots
 │   ├── filter-steps.js   # Process scraping steps
 │   ├── puppeteer-health.js # Browser health checks
-│   ├── setup-proxy-auth.js # Proxy configuration
+│   ├── setup-proxies.js  # Enhanced proxy configuration and rotation
 │   └── validators.js     # Request validation schemas
 │
 └── tmp/                  # Default temporary files directory
@@ -370,4 +416,4 @@ Erdinç Cürebal
 
 ## 🔄 Last Updated
 
-April 22, 2025
+April 23, 2025

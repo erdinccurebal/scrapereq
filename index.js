@@ -1,3 +1,10 @@
+/**
+ * Application Entry Point
+ * 
+ * This file initializes and starts the HTTP server for the application.
+ * Sets up environment variables, server configuration, and scheduled tasks.
+ */
+
 // Load environment variables from .env file
 import 'dotenv/config';
 
@@ -6,6 +13,11 @@ import http from 'http';
 
 // Helpers
 import { helperCleanupOldScreenshots } from './helpers/cleanup-screenshots.js';
+
+/**
+ * Set default environment variables if not already defined
+ * These provide fallback values for critical configuration
+ */
 
 // Set default port if not specified in environment variables
 if (!process.env.PORT) {
@@ -28,18 +40,31 @@ import app from './app.js';
 // Destructure environment variables for easier access
 const { PORT, HOST, NODE_ENV } = process.env;
 
+/**
+ * Configure Express application settings
+ * These settings are available via app.get('setting') throughout the application
+ */
 app.set('env', NODE_ENV); // Set the environment in the app
 app.set('port', PORT); // Set the port in the app
 app.set('host', HOST); // Set the host in the app
 
-// Create HTTP server using our Express application
+/**
+ * Create HTTP server using our Express application
+ * This allows for potential future upgrades (like WebSockets) without changing the app
+ */
 const server = http.createServer(app);
 
-// Start the server and log when ready
+/**
+ * Start the server and initialize scheduled tasks
+ * Listens on the specified port and host
+ */
 server.listen(PORT, HOST, () => {
   console.log(`Server started on port http://${HOST}:${PORT} in ${NODE_ENV} mode.`);
 
-  // Initial screenshot cleanup
+  /**
+   * Initial screenshot cleanup on server start
+   * Removes old screenshot files that may have accumulated while the server was offline
+   */
   helperCleanupOldScreenshots()
     .then(({ deleted }) => {
       if (deleted > 0) {
@@ -52,7 +77,11 @@ server.listen(PORT, HOST, () => {
       console.error('Error during initial screenshot cleanup:', error);
     });
 
-  // Set up scheduled cleanup every 1 minute
+  /**
+   * Set up scheduled cleanup to run periodically
+   * Automatically removes old screenshot files to prevent disk space issues
+   * Runs every hour to maintain disk space without excessive processing
+   */
   setInterval(async () => {
     try {
       const { deleted } = await helperCleanupOldScreenshots();
@@ -65,12 +94,18 @@ server.listen(PORT, HOST, () => {
   }, 60 * 60 * 1000); // Run every 1 hour
 });
 
-// Global error handling for uncaught exceptions
+/**
+ * Global error handling for uncaught exceptions
+ * Prevents the server from crashing when unexpected errors occur
+ */
 process.on('uncaughtException', (error) => {
   console.error('Uncaught exception:', error);
 });
 
-// Global error handling for unhandled promise rejections
+/**
+ * Global error handling for unhandled promise rejections
+ * Prevents the server from crashing when promises are rejected without a catch handler
+ */
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled promise rejection:', reason);
 });

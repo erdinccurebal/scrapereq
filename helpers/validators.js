@@ -53,12 +53,36 @@ export const helperValidatorsScraper = Joi.object({
         TIMEOUTS_MODE_NAMES.LONG
     ),
 
+    // Access password for authentication
+    accessPasswordWithoutProxy: Joi.string(),
+
     // Response type for the scraper output (NONE, JSON, RAW)
     responseType: Joi.string().valid(
         RESPONSE_TYPE_NAMES.NONE,
         RESPONSE_TYPE_NAMES.JSON,
         RESPONSE_TYPE_NAMES.RAW
     ),
+
+    // Proxy authentication settings
+    proxyAuth: Joi.object({
+        enabled: Joi.boolean().required(),
+        username: Joi.string().required(),
+        password: Joi.string().required(),
+    }),
+
+    // Rotating proxy settings
+    // Array of proxy configurations, each with server, port, and protocol
+    proxies: Joi.array().items(
+        Joi.object({
+            server: Joi.string().required(),
+            port: Joi.number().required(),
+            protocol: Joi.string().valid(
+                PROXY_PROTOCOLS.HTTP,
+                PROXY_PROTOCOLS.HTTPS,
+                PROXY_PROTOCOLS.SOCKS4,
+                PROXY_PROTOCOLS.SOCKS5
+            ),
+        })),
 
     // Array of CSS or XPath selectors for targeting elements on the page
     // Each selector must have a key, type (CSS/XPath), and value
@@ -208,20 +232,5 @@ export const helperValidatorsScraper = Joi.object({
         }
 
         return steps;
-    }).required(),
-
-    // Optional proxy configuration for web requests
-    proxy: Joi.object({
-        enabled: Joi.boolean().required(),
-        server: Joi.string().required(),
-        port: Joi.number().required(),
-        username: Joi.string(),
-        password: Joi.string(),
-        protocol: Joi.string().valid(
-            PROXY_PROTOCOLS.HTTP,
-            PROXY_PROTOCOLS.HTTPS,
-            PROXY_PROTOCOLS.SOCKS4,
-            PROXY_PROTOCOLS.SOCKS5
-        )
-    })
+    }).required()
 });

@@ -13,7 +13,7 @@ import puppeteer from 'puppeteer';
 import { createRunner, PuppeteerRunnerExtension } from '@puppeteer/replay';
 
 // Helper functions
-import { helperSetupProxyAuth } from '../helpers/setup-proxy-auth.js';
+import { helperSetupProxies } from '../helpers/setup-proxies.js';
 import { helperValidatorsScraper } from '../helpers/validators.js';
 import { helperFilterSteps } from '../helpers/filter-steps.js';
 import { helperBrowserSemaphore } from '../helpers/browser-semaphore.js';
@@ -60,8 +60,9 @@ export async function controllerScraper(req, res, next) {
         const steps = helperFilterSteps(value.steps);
 
         const {
-            proxy,
-            title,
+            proxies = [],
+            proxyAuth = {},
+            title = "TITLE_NOT_FOUND",
             speedMode = DEFAULT_SPEED_MODE,
             timeoutMode = DEFAULT_TIMEOUT_MODE,
             responseType = DEFAULT_RESPONSE_TYPE,
@@ -69,15 +70,23 @@ export async function controllerScraper(req, res, next) {
             acceptLanguage = BROWSER_CONFIG.ACCEPT_LANGUAGE,
             userAgent = BROWSER_CONFIG.USER_AGENT,
             errorScreenshot = false,
-            successScreenshot = false
+            successScreenshot = false,
+            accessPasswordWithoutProxy = null,
         } = value;
+
+        // Check if the access password is provided and matches the environment variable
+        // This is used to allow access without a proxy if the password is correct
+        const checkAccessPasswordWithoutProxy = accessPasswordWithoutProxy == process.env.ACCESS_PASSWORD_WITHOUT_PROXY;
+
+        // Check if the proxy is enabled and set the access password
+        if (!checkAccessPasswordWithoutProxy && (!proxies || proxies?.length == 0)) {
+            res.status(401);
+            throw new Error("Access denied. Proxy is required for this request.");
+        };
 
         // Initialize browser and page variables for cleanup in finally block
         let browser = null;
         let page = null;
-
-        // Configure proxy settings if provided
-        const proxyServer = helperSetupProxyAuth(proxy);
 
         // Configure launch options for Puppeteer
         const launchOptions = {
@@ -96,15 +105,25 @@ export async function controllerScraper(req, res, next) {
             launchOptions.executablePath = process.env.CHROME_PATH;
         };
 
-        // Add proxy configuration if available
-        if (proxyServer) {
-            launchOptions.args.push(`--proxy-server=${proxyServer}`);
+        // Proxies setup if provided
+        // This allows for rotating proxies or specific proxy configurations
+        if (!checkAccessPasswordWithoutProxy && proxies && proxies.length > 0) {
+            const proxyServer = helperSetupProxies(proxies);
+            launchOptions.args.push(proxyServer);
         };
 
         try {
             // Launch browser and create a new page
             browser = await puppeteer.launch(launchOptions);
             page = await browser.newPage();
+
+            // Proxy authentication if enabled and credentials are provided
+            if (!checkAccessPasswordWithoutProxy && proxyAuth?.enabled && proxyAuth?.username && proxyAuth?.password) {
+                await page.authenticate({
+                    username: proxyAuth.username,
+                    password: proxyAuth.password,
+                });
+            };
 
             // Set timeout values for better reliability
             page.setDefaultTimeout(TIMEOUT_MODES[timeoutMode]);

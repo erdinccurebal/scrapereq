@@ -6,10 +6,23 @@
 
 // Browser semaphore mechanism for all browser operations across the application
 export const helperBrowserSemaphore = {
+    /**
+     * Indicates whether a browser operation is currently in progress
+     * @type {boolean}
+     */
     isLocked: false,
+    
+    /**
+     * Queue for pending browser operation requests
+     * @type {Array<Function>}
+     */
     queue: [],
     
-    // Acquire the lock
+    /**
+     * Acquires the browser lock for an operation
+     * If the browser is already in use, adds the request to the queue
+     * @returns {Promise<void>} - Resolves when the lock is acquired
+     */
     async acquire() {
         return new Promise(resolve => {
             if (!this.isLocked) {
@@ -23,7 +36,11 @@ export const helperBrowserSemaphore = {
         });
     },
     
-    // Release the lock
+    /**
+     * Releases the browser lock
+     * If there are pending requests in the queue, grants access to the next request
+     * Otherwise, completely releases the lock
+     */
     release() {
         if (this.queue.length > 0) {
             const nextResolve = this.queue.shift();

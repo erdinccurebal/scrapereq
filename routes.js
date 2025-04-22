@@ -217,6 +217,10 @@ router.get("/health", controllerHealth);
  *                 enum: [SHORT, NORMAL, LONG]
  *                 description: Sets timeout duration for operations
  *                 example: "NORMAL"
+ *               accessPasswordWithoutProxy:
+ *                 type: string
+ *                 description: Password to allow requests without proxy
+ *                 example: "secure_password_123"
  *               acceptLanguage:
  *                 type: string
  *                 description: Language header for browser requests
@@ -255,40 +259,62 @@ router.get("/health", controllerHealth);
  *                   - key: "title"
  *                     type: "CSS"
  *                     value: "#productTitle"
- *               proxy:
+ *               proxyAuth:
  *                 type: object
- *                 description: Proxy configuration for web requests
+ *                 description: Proxy authentication settings
+ *                 required:
+ *                   - enabled
+ *                   - username
+ *                   - password
  *                 properties:
  *                   enabled:
  *                     type: boolean
- *                     description: Enable/disable proxy usage (required)
- *                     example: false
- *                   server:
- *                     type: string
- *                     description: Proxy server hostname or IP (required)
- *                     example: "proxy.example.com"
- *                   port:
- *                     type: number
- *                     description: Proxy server port (required)
- *                     example: 8080
+ *                     description: Enable/disable proxy authentication (required)
+ *                     example: true
  *                   username:
  *                     type: string
- *                     description: Proxy authentication username
+ *                     description: Proxy authentication username (required)
  *                     example: "username"
  *                   password:
  *                     type: string
- *                     description: Proxy authentication password
+ *                     description: Proxy authentication password (required)
  *                     example: "password"
- *                   protocol:
- *                     type: string
- *                     description: Proxy protocol
- *                     enum: [http, https, socks4, socks5]
- *                     example: "http"
+ *               proxies:
+ *                 type: array
+ *                 description: Array of proxy configurations for web requests
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - server
+ *                     - port
+ *                   properties:
+ *                     server:
+ *                       type: string
+ *                       description: Proxy server hostname or IP (required)
+ *                       example: "proxy.example.com"
+ *                     port:
+ *                       type: number
+ *                       description: Proxy server port (required)
+ *                       example: 8080
+ *                     protocol:
+ *                       type: string
+ *                       description: Proxy protocol (optional)
+ *                       enum: [http, https, socks4, socks5]
+ *                       example: "http"
+ *                 example:
+ *                   - server: "proxy1.example.com"
+ *                     port: 8080
+ *                     protocol: "http"
+ *                   - server: "proxy2.example.com"
+ *                     port: 8081
+ *                     protocol: "https"
  *               steps:
  *                 type: array
  *                 description: Sequence of browser actions to perform (required with at least one navigate step containing a valid URL)
  *                 items:
  *                   type: object
+ *                   required:
+ *                     - type
  *                   properties:
  *                     type:
  *                       type: string
@@ -299,6 +325,10 @@ router.get("/health", controllerHealth);
  *                       type: string
  *                       description: URL for navigation steps
  *                       example: "https://www.amazon.com/dp/B00IJ0ALYS"
+ *                     value:
+ *                       type: string
+ *                       description: Value to set for input fields (for change action) or URL for navigation when url is not provided
+ *                       example: "search keyword"
  *                     width:
  *                       type: number
  *                       description: Browser viewport width (for setViewport)
@@ -331,10 +361,6 @@ router.get("/health", controllerHealth);
  *                       type: string
  *                       description: Target frame for the action
  *                       example: "main"
- *                     value:
- *                       type: string
- *                       description: Value to set for input fields (for change action) or URL for navigation
- *                       example: "search keyword"
  *                     offsetX:
  *                       type: number
  *                       description: X-coordinate offset for click operations
@@ -344,10 +370,12 @@ router.get("/health", controllerHealth);
  *                       description: Y-coordinate offset for click operations
  *                       example: 9
  *                     frame:
- *                       type: array
- *                       description: Frame indices for nested frames
- *                       items:
- *                         type: number
+ *                       oneOf:
+ *                         - type: string
+ *                         - type: array
+ *                           items:
+ *                             type: number
+ *                       description: Frame identifier for actions in iframes (string or array)
  *                       example: [0]
  *                     duration:
  *                       type: number
@@ -443,7 +471,7 @@ router.get("/health", controllerHealth);
  *                   properties:
  *                     message:
  *                       type: string
- *                       example: "ValidationError: 'title' is required. 'titles' is not allowed"
+ *                       example: "ValidationError: 'title' is required. Selectors cannot be provided when responseType is NONE"
  *                     stack:
  *                       type: array
  *                       items:
