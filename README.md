@@ -1,4 +1,4 @@
-# 🕸️ Req-Scrap
+# 🕸️ Req-Scrap.
 
 <div align="center">
   <h3>A powerful and flexible web scraping API built with Express.js and Puppeteer</h3>
