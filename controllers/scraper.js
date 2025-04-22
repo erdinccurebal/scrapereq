@@ -35,7 +35,10 @@ import {
  * @param {Object} req - Express request object containing scraping configuration and steps
  * @param {Object} res - Express response object
  * @param {Function} next - Express next middleware function
- * @returns {Object} JSON response with scraped data or raw content based on responseType
+ * @returns {Promise<void>} - Returns a promise that resolves when the scraping is complete
+ * @throws {Error} - Throws an error if the scraping process fails at any point
+ * @throws {Error} - Throws an error if the request body validation fails
+ * @throws {Error} - Throws an error if the browser or page instances cannot be created or closed
  */
 export default async function (req, res, next) {
     try {
@@ -47,6 +50,7 @@ export default async function (req, res, next) {
 
         // Return validation errors if request is invalid
         if (error) {
+            res.status(400);
             throw new Error(error);
         }
 
@@ -72,6 +76,8 @@ export default async function (req, res, next) {
 
         // Configure proxy settings if provided
         const proxyServer = setupProxyAuth(proxy);
+
+        // Configure launch options for Puppeteer
         const launchOptions = {
             headless: BROWSER_CONFIG.HEADLESS,
             args: [
@@ -112,23 +118,14 @@ export default async function (req, res, next) {
             // Create and execute the runner with provided steps
             const runner = await createRunner(
                 { title, steps },
-                new Extension(browser, page, TIMEOUT_MODES[timeoutMode], SPEED_MODES[speedMode], errorScreenshot, successScreenshot)
+                new Extension(browser, page, TIMEOUT_MODES[timeoutMode], SPEED_MODES[speedMode])
             );
-
-            // Log the record title being executed
-            console.log('Executing record title:', title);
 
             // Execute the defined steps using the runner
             await runner.run();
 
             // Initialize result variables
             let result = null;
-            let screenshotUrl = null;
-
-            // If success screenshot is requested, take screenshot at the end
-            if (successScreenshot) {
-                screenshotUrl = await getScreenshotUrl({ page, type: 'success' });
-            }
 
             if (responseType === RESPONSE_TYPE_NAMES.RAW) {
                 // For RAW responseType, we've already validated there's only one selector
@@ -150,8 +147,8 @@ export default async function (req, res, next) {
                     }
                 };
 
-                // Add screenshot to data object
-                if (screenshotUrl) {
+                if (successScreenshot) {
+                    const screenshotUrl = await getScreenshotUrl({ page, type: 'success' });
                     result.data.screenshotUrl = screenshotUrl;
                 }
             }
@@ -162,7 +159,7 @@ export default async function (req, res, next) {
             res.send(result);
         } catch (error) {
             // Take error screenshot if enabled and not already taken
-            if (errorScreenshot) {
+            if (responseType === RESPONSE_TYPE_NAMES.JSON && errorScreenshot) {
                 error.screenshotUrl = await getScreenshotUrl({ page, type: 'error' }); // Use success screenshot URL for error screenshot
             }
 
@@ -188,6 +185,8 @@ export default async function (req, res, next) {
  * @param {Object} browser - Puppeteer Browser instance to close
  * @param {Object} page - Puppeteer Page instance to close
  * @returns {Promise<void>} Promise that resolves when browser and page are closed
+ * @throws {Error} Throws an error if closing the browser or page fails
+ * @throws {Error} Throws an error if the browser or page instances are not provided
  */
 async function exitBrowserAndPage(browser, page) {
     if (page) {
@@ -204,7 +203,14 @@ async function exitBrowserAndPage(browser, page) {
  * 
  * @param {Object} page - Puppeteer Page instance
  * @param {Object} selector - Selector configuration object
- * @returns {String} Extracted data from the page based on selector type
+ * @returns {Promise<String>} Extracted data from the page based on selector type
+ * @throws {Error} Throws an error if selector processing fails
+ * @throws {String} Returns "ERROR_NOT_FOUND_ELEMENT" if the element is not found
+ * @throws {String} Returns "ERROR_SELECTOR" if the selector is invalid
+ * @throws {String} Returns "ERROR_INVALID_SELECTOR_TYPE" if the selector type is invalid
+ * @throws {String} Returns "ERROR_SELECTOR_PROCESSING_ERROR" if an error occurs during selector processing
+ * @throws {String} Returns "ERROR_SELECTOR" if the selector processing fails
+ * @throws {String} Returns "ERROR_SELECTOR_PROCESSING_ERROR" if an error occurs during selector processing
  */
 async function processSelectorData(page, selector) {
     try {
@@ -216,20 +222,20 @@ async function processSelectorData(page, selector) {
         } else if (type === SELECTOR_TYPE_NAMES.CSS) {
             // Extract content using CSS selector
             return await page.$eval(value, (el) => {
-                return el ? el?.innerHTML : "NOT FOUND ELEMENT";
-            }).catch(() => "SELECTOR ERROR");
+                return el ? el?.innerHTML : "ERROR_NOT_FOUND_ELEMENT";
+            }).catch(() => "ERROR_SELECTOR");
         } else if (type === SELECTOR_TYPE_NAMES.XPATH) {
             // Extract content using XPath selector
             return await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                return element ? element.innerHTML : "NOT FOUND ELEMENT";
-            }, value).catch(() => "SELECTOR ERROR");
+                return element ? element.innerHTML : "ERROR_NOT_FOUND_ELEMENT";
+            }, value).catch(() => "ERROR_SELECTOR");
         }
 
-        return "INVALID SELECTOR TYPE";
+        return "ERROR_INVALID_SELECTOR_TYPE";
     } catch (error) {
         console.error('Error processing selector:', error);
-        return "SELECTOR PROCESSING ERROR";
+        return "ERROR_SELECTOR_PROCESSING_ERROR";
     }
 }
 
@@ -240,17 +246,26 @@ async function processSelectorData(page, selector) {
  * @param {Object} options.page - Puppeteer Page instance
  * @param {String} options.type - Type of screenshot (error or success)
  * @returns {Promise<String>} The public URL path to access the screenshot
+ * @throws {Error} Throws an error if the screenshot directory cannot be created
+ * @throws {Error} Throws an error if the screenshot URL generation fails
+ * @throws {String} Returns "ERROR_NOT_SAVED_SCREENSHOT" if the screenshot cannot be saved
  */
 async function getScreenshotUrl({ page, type }) {
-    const screenshotPath = await saveScreenshot(page, type);
+    try {
 
-    const filename = path.basename(screenshotPath);
+        const screenshotPath = await saveScreenshot(page, type);
 
-    // Create a proper URL path using the /tmp/ endpoint
-    const screenshotUrl = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
-    console.log(`Screenshot URL generated: ${screenshotUrl}`);
+        const filename = path.basename(screenshotPath);
 
-    return screenshotUrl;
+        // Create a proper URL path using the /tmp/ endpoint
+        const screenshotUrl = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
+        console.log(`Screenshot URL generated: ${screenshotUrl}`);
+
+        return screenshotUrl;
+    } catch (error) {
+        console.error(`Error generating screenshot URL:`, error);
+        return "ERROR_NOT_SAVED_SCREENSHOT"; // Return null if there's an error generating the URL
+    }
 }
 
 /**
@@ -258,8 +273,9 @@ async function getScreenshotUrl({ page, type }) {
  * 
  * @param {Object} page - Puppeteer Page instance 
  * @param {String} type - Type of screenshot (error or success)
- * @param {Number} stepIndex - Current step index when the screenshot was taken
- * @returns {String} Path to the saved screenshot
+ * @returns {Promise<String>} Path to the saved screenshot
+ * @throws {Error} Throws an error if the screenshot cannot be saved
+ * @throws {Error} Throws an error if the screenshot directory cannot be created
  */
 async function saveScreenshot(page, type) {
     // Use TMP_DIR from environment or fallback to default
@@ -286,12 +302,14 @@ async function saveScreenshot(page, type) {
     const filePath = path.join(screenshotDir, filename);
 
     const savedFilePath = await new Promise((resolve, reject) => {
-        page.screenshot({ path: filePath, fullPage: true })
-            .then(() => {
-                resolve(filePath);
-            }).catch((error) => {
-                reject(error);
-            });
+        setTimeout(() => {
+            page.screenshot({ path: filePath, fullPage: true })
+                .then(() => {
+                    resolve(filePath);
+                }).catch((error) => {
+                    reject(error);
+                });
+        }, 500)
     });
     console.log(`${type} screenshot taken and saved at: ${savedFilePath}`);
 
@@ -313,30 +331,26 @@ class Extension extends PuppeteerRunnerExtension {
      * @param {Object} page - Puppeteer Page instance
      * @param {number} timeout - Timeout value in milliseconds
      * @param {number} speedMode - Speed mode delay in milliseconds
-     * @param {boolean} errorScreenshot - Whether to take screenshots on errors
-     * @param {boolean} successScreenshot - Whether to take a screenshot after all steps complete successfully
      */
-    constructor(browser, page, timeout, speedMode, errorScreenshot = false, successScreenshot = false) {
+    constructor(browser, page, timeout, speedMode) {
         super(browser, page);
+
         this.timeout = timeout;
-        this.speedMode = speedMode || SPEED_MODES.NORMAL; // Default to NORMAL if not specified
-        this.currentStepIndex = -1; // Initially -1, will start at 0 when execution begins
-        this.errorScreenshot = errorScreenshot;
-        this.successScreenshot = successScreenshot;
+        this.speedMode = speedMode;
+        this.currentStep = 0;
     }
 
     /**
      * Hook executed before all steps run
      * 
      * @param {Object} flow - The flow object containing step information
+     * @throws {Error} Throws an error if the flow object is invalid
      */
     async beforeAllSteps(flow) {
         await super.beforeAllSteps(flow);
-        console.log('Starting scraper execution');
+
+        console.log('Starting scraper execution:', flow.title);
         console.log(`Speed Mode: ${this.speedMode}ms delay`);
-        console.log(`Error Screenshot: ${this.errorScreenshot ? 'Enabled' : 'Disabled'}`);
-        console.log(`Success Screenshot: ${this.successScreenshot ? 'Enabled' : 'Disabled'}`);
-        this.currentStepIndex = -1; // Reset step index before execution starts
     }
 
     /**
@@ -344,35 +358,32 @@ class Extension extends PuppeteerRunnerExtension {
      * 
      * @param {Object} step - The current step being executed
      * @param {Object} flow - The flow object containing step information
+     * @throws {Error} Throws an error with step index information if pre-step operations fail
      */
     async beforeEachStep(step, flow) {
         try {
-            this.currentStepIndex++; // Increment step index
+            this.currentStep++;
             await super.beforeEachStep(step, flow);
-            console.log(`Executing step ${this.currentStepIndex + 1}: ${step.type}`);
+            console.log(`Executing step ${this.currentStep}: ${step.type}`);
         } catch (error) {
-            // Take screenshot when error occurs
-            if (this.errorScreenshot && this.page) {
-                try {
-                    console.log(`Taking error screenshot for beforeEachStep at step ${this.currentStepIndex + 1}...`);
-                    const screenshotPath = await saveScreenshot(this.page, 'error');
-                    if (screenshotPath) {
-                        // Store the full path for internal use
-                        error.screenshotPath = screenshotPath;
+            error.message = `Error at step ${this.currentStep}: ${error.message}`;
+            throw error;
+        }
+    }
 
-                        // Create a proper URL using the /tmp/ endpoint and just the filename
-                        const filename = path.basename(screenshotPath);
-                        error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
-
-                        console.log(`Error screenshot saved for beforeEachStep: ${error.screenshot}`);
-                    }
-                } catch (screenshotError) {
-                    console.error(`Failed to take error screenshot in beforeEachStep:`, screenshotError);
-                }
-            }
-
-            // Add step index to error message
-            error.message = `Error at step ${this.currentStepIndex + 1}: ${error.message}`;
+    /**
+     * Override step execution to catch errors with step index information
+     * 
+     * @param {Object} step - The current step being executed
+     * @param {Object} flow - The flow object containing step information
+     * @returns {Promise<Object>} The result of the step execution
+     * @throws {Error} Throws an error if the step execution fails
+     */
+    async runStep(step, flow) {
+        try {
+            return await super.runStep(step, flow);
+        } catch (error) {
+            error.message = `Error executing step ${this.currentStep} (${step.type}): ${error.message}`;
             throw error;
         }
     }
@@ -383,6 +394,7 @@ class Extension extends PuppeteerRunnerExtension {
      * 
      * @param {Object} step - The current step being executed
      * @param {Object} flow - The flow object containing step information
+     * @throws {Error} Throws an error with step information if post-step operations fail
      */
     async afterEachStep(step, flow) {
         try {
@@ -394,30 +406,9 @@ class Extension extends PuppeteerRunnerExtension {
                 await new Promise(resolve => setTimeout(resolve, this.speedMode));
             }
 
-            console.log(`Successfully completed step ${this.currentStepIndex + 1}: ${step.type}`);
+            console.log(`Successfully completed step ${this.currentStep}: ${step.type}`);
         } catch (error) {
-            // Take screenshot when error occurs
-            if (this.errorScreenshot && this.page) {
-                try {
-                    console.log(`Taking error screenshot for afterEachStep at step ${this.currentStepIndex + 1}...`);
-                    const screenshotPath = await saveScreenshot(this.page, 'error');
-                    if (screenshotPath) {
-                        // Store the full path for internal use
-                        error.screenshotPath = screenshotPath;
-
-                        // Create a proper URL using the /tmp/ endpoint and just the filename
-                        const filename = path.basename(screenshotPath);
-                        error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
-
-                        console.log(`Error screenshot saved for afterEachStep: ${error.screenshot}`);
-                    }
-                } catch (screenshotError) {
-                    console.error(`Failed to take error screenshot in afterEachStep:`, screenshotError);
-                }
-            }
-
-            // Add step index to error message
-            error.message = `Error after step ${this.currentStepIndex + 1}: ${error.message}`;
+            error.message = `Error after step ${this.currentStep}: ${error.message}`;
             throw error;
         }
     }
@@ -426,45 +417,10 @@ class Extension extends PuppeteerRunnerExtension {
      * Hook executed after all steps are completed
      * 
      * @param {Object} flow - The flow object containing step information
+     * @throws {Error} Throws an error if all steps are not completed successfully
      */
     async afterAllSteps(flow) {
         await super.afterAllSteps(flow);
-        console.log(`Scraper execution completed. Total steps executed: ${this.currentStepIndex + 1}`);
-    }
-
-    /**
-     * Override step execution to catch errors with step index information
-     * 
-     * @param {Object} step - The current step being executed
-     * @param {Object} flow - The flow object containing step information
-     */
-    async runStep(step, flow) {
-        try {
-            return await super.runStep(step, flow);
-        } catch (error) {
-            // Take screenshot when error occurs during step execution
-            if (this.errorScreenshot && this.page) {
-                try {
-                    console.log(`Taking error screenshot for step ${this.currentStepIndex + 1} (${step.type})...`);
-                    const screenshotPath = await saveScreenshot(this.page, 'error');
-                    if (screenshotPath) {
-                        // Store the full path for internal use
-                        error.screenshotPath = screenshotPath;
-
-                        // Create a proper URL using the /tmp/ endpoint and just the filename
-                        const filename = path.basename(screenshotPath);
-                        error.screenshot = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
-
-                        console.log(`Error screenshot saved for step ${this.currentStepIndex + 1}: ${error.screenshot}`);
-                    }
-                } catch (screenshotError) {
-                    console.error(`Failed to take error screenshot for step ${this.currentStepIndex + 1}:`, screenshotError);
-                }
-            }
-
-            // Add step index to the error that occurred during step execution
-            error.message = `Error executing step ${this.currentStepIndex + 1} (${step.type}): ${error.message}`;
-            throw error;
-        }
+        console.log(`Scraper execution completed. Total steps executed: ${this.currentStep}`);
     }
 }

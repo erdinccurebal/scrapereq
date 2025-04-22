@@ -48,7 +48,7 @@ export default (error, _req, res, _next) => {
 
   // Send response with appropriate status code
   // Use existing status code if set, otherwise default to 500
-  res.status(500).json(result);
+  res.status(res.statusCode || 500).json(result);
 };
 
 /**
