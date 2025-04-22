@@ -1,10 +1,10 @@
-# 🕸️ Req-Scrap.
+# 🕸️ Req-Scrap
 
 <div align="center">
   <h3>A powerful and flexible web scraping API built with Express.js and Puppeteer</h3>
   <p>
     <img src="https://img.shields.io/badge/Express-5.1.0-000000?style=flat-square&logo=express" alt="Express.js" />
-    <img src="https://img.shields.io/badge/Puppeteer-24.6.1-40B5A4?style=flat-square&logo=puppeteer" alt="Puppeteer" />
+    <img src="https://img.shields.io/badge/Puppeteer-24.7.0-40B5A4?style=flat-square&logo=puppeteer" alt="Puppeteer" />
     <img src="https://img.shields.io/badge/Node.js-v18+-339933?style=flat-square&logo=node.js" alt="Node.js" />
     <img src="https://img.shields.io/badge/License-ISC-blue?style=flat-square" alt="License" />
   </p>
@@ -12,7 +12,7 @@
 
 ## 📋 Overview
 
-Req-Scrap is a RESTful API service that allows you to perform web scraping operations by defining a series of steps executed by a headless browser. It provides a clean and secure way to extract data from websites with advanced features like proxy support, customizable scraping speeds, and robust error handling.
+Req-Scrap is a RESTful API service that allows you to perform web scraping operations by defining a series of steps executed by a headless browser. It provides a clean and secure way to extract data from websites with advanced features like proxy support, customizable scraping speeds, reCAPTCHA handling, and robust error handling.
 
 ## ✨ Features
 
@@ -20,6 +20,7 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 - **🔄 Step-Based Scraping**: Define your scraping workflow as a series of steps (navigate, click, wait, setViewport, etc.)
 - **⚡ Speed Control**: Multiple speed modes (TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH)
 - **🔍 Selector Support**: Extract data using CSS, XPath, or full page HTML selectors
+- **🤖 reCAPTCHA Handling**: Integrated support for solving reCAPTCHA challenges
 
 ### Security & Reliability
 - **🔐 Built-in Security**: Basic authentication, helmet protection, and CORS configuration
@@ -33,12 +34,15 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 - **📝 Swagger Documentation**: Integrated API documentation
 - **🔧 System Controls**: Application shutdown and OS restart endpoints
 - **💾 Persistent Storage**: Configurable screenshot directory for persistent storage across deployments
+- **🧹 Automatic Cleanup**: Automated cleanup of old screenshot files
 
 ## 🛠️ Tech Stack
 
 - **📦 Node.js**: JavaScript runtime
 - **🚀 Express.js v5.1.0**: Web application framework
-- **🤖 Puppeteer v24.6.1**: Headless Chrome browser automation
+- **🤖 Puppeteer v24.7.0**: Headless Chrome browser automation
+- **🧩 Puppeteer-Extra v3.3.6**: Plugin system for Puppeteer
+- **🔒 Puppeteer-Extra-Plugin-reCAPTCHA v3.6.8**: reCAPTCHA solving capabilities
 - **⏺️ @puppeteer/replay v3.1.1**: Record and replay browser interactions
 - **✅ Joi v17.13.3**: Request validation
 - **📝 Morgan**: HTTP request logging
@@ -156,6 +160,11 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
       "selectors": [".search-results"]
     }
   ],
+  "recaptcha": {
+    "enabled": true,
+    "id": "your_provider_id",
+    "token": "your_provider_token"
+  },
   "proxyAuth": {
     "enabled": true,
     "username": "user",
@@ -190,7 +199,8 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
       "search_results": "<div>Result content...</div>",
       "page_title": "Example Search - Google Search"
     },
-    "screenshot": "http://localhost:3000/tmp/success-2025-04-21T14-32-48.png"
+    "screenshotUrl": "http://localhost:3000/tmp/success-2025-04-21T14-32-48.png",
+    "proxy": "--proxy-server=http://proxy1.example.com:8080"
   }
 }
 ```
@@ -205,7 +215,8 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
   "data": {
     "message": "Error at step 3: Selector not found",
     "stack": ["...error stack trace..."],
-    "screenshot": "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
+    "screenshotUrl": "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png",
+    "proxy": "--proxy-server=http://proxy1.example.com:8080"
   }
 }
 ```
@@ -255,6 +266,7 @@ The application can be configured through:
 | 🔐 **Proxy Settings** | Proxy server configurations |
 | 🛡️ **API Security** | API security settings |
 | 📸 **Screenshot Options** | Screenshot configurations |
+| 🤖 **reCAPTCHA** | reCAPTCHA solving configurations |
 
 ### Screenshot Storage Configuration
 
@@ -334,6 +346,43 @@ This feature allows for:
 - Automatic failover if one proxy becomes unavailable
 - Reduced chance of IP blocking during intensive scraping operations
 - Support for different proxy protocols (HTTP, HTTPS, SOCKS4, SOCKS5)
+
+## 🔍 Enhanced Features
+
+### reCAPTCHA Handling
+
+The application supports solving reCAPTCHA challenges during scraping:
+
+```json
+"recaptcha": {
+  "enabled": true,
+  "id": "your_provider_id",
+  "token": "your_provider_token"
+}
+```
+
+This feature:
+- Automatically detects reCAPTCHA challenges on the page
+- Uses the configured provider to solve them
+- Provides visual feedback during solving (optional)
+- Continues with the scraping process once solved
+
+### Browser Semaphore
+
+To prevent resource exhaustion, the application uses a semaphore to limit the number of concurrent browser instances:
+
+- Automatically queues scraping requests when limits are reached
+- Ensures browser resources are properly released after each operation
+- Manages browser lifecycle even during unexpected errors
+
+### Improved Screenshot Management
+
+Enhanced screenshot capabilities:
+- Option to take screenshots on success or error conditions
+- Automatic filename generation with timestamps
+- Configurable screenshot directory
+- Automatic cleanup of old screenshots
+- Direct URL access to screenshots via the application
 
 ## ⚠️ Error Handling
 
