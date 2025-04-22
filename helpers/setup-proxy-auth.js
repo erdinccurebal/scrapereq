@@ -12,24 +12,25 @@
  * @param {string} [proxy.password] - Optional password for proxy authentication
  * @param {string} [proxy.protocol='http'] - Protocol to use (http, https, socks, etc)
  * @returns {string|null} - Formatted proxy server string or null if proxy is disabled/invalid
+ * @throws {Error} - Throws an error if proxy configuration is invalid
  */
-export default function (proxy) {
+export function helperSetupProxyAuth(proxy) {
     // Return null if proxy is not provided or not enabled
     if (!proxy || !proxy.enabled) return null;
 
     // Extract proxy configuration properties
     const { server, port, username, password, protocol } = proxy;
-    
+
     // Return null if essential properties are missing
     if (!server || !port) return null;
 
     // Build the proxy server string with protocol, defaulting to http if not specified
     let proxyServer = `${protocol || 'http'}://${server}:${port}`;
-    
+
     // Add authentication credentials if provided
     if (username && password) {
         proxyServer = `${protocol || 'http'}://${username}:${password}@${server}:${port}`;
-    }
+    };
 
     return proxyServer;
 };

@@ -1,3 +1,6 @@
+// Node core modules
+import { exec } from 'child_process';
+
 /**
  * Operating System Restart Controller
  * 
@@ -5,14 +8,13 @@
  * This should be used with caution as it affects the entire system.
  * Typically used during major maintenance or when the system requires a full restart.
  * 
- * @param {Object} req - Express request object
- * @param {Object} _res - Express response object (unused but kept for middleware signature consistency)
+ * @param {Object} _req - Express request object
+ * @param {Object} res - Express response object (unused but kept for middleware signature consistency)
  * @param {Function} next - Express next middleware function
- * @returns {Object} JSON response confirming restart initiation
+ * @returns {void}
+ * @throws {Error} - Throws an error if the restart command fails
  */
-import { exec } from 'child_process';
-
-export default (_req, res, next) => {
+export function controllerOsRestart(_req, res, next) {
   try {
     console.log('OS restart request received. Initiating immediate system restart...');
 
@@ -35,11 +37,11 @@ export default (_req, res, next) => {
         if (error) {
           console.error('Restart failed:', error);
           // Cannot send response here as it's already sent
-        }
+        };
       });
     }, 1000);
 
   } catch (error) {
     next(error);
-  }
+  };
 };

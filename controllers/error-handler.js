@@ -6,12 +6,13 @@
  * It's customized to hide framework-specific information for security purposes.
  * 
  * @param {Error} error - The error object captured by Express
- * @param {Request} req - Express request object
+ * @param {Request} _req - Express request object
  * @param {Response} res - Express response object
- * @param {Function} next - Express next middleware function
+ * @param {Function} _next - Express next middleware function
+ * @returns {void} - Sends a JSON response with the error details
+ * @throws {void} - Does not throw any errors, but sends a response to the client
  */
-
-export default (error, _req, res, _next) => {
+export function controllerErrorHandler(error, _req, res, _next) {
   // Log the complete error to server console for debugging
   console.error(error);
 
@@ -20,7 +21,6 @@ export default (error, _req, res, _next) => {
     success: false,
     data: {
       message: null,
-      stack: null
     }
   };
 
@@ -56,6 +56,10 @@ export default (error, _req, res, _next) => {
  * 
  * @param {Error} error - Validation error object
  * @return {string} Formatted validation error message
+ * @throws {null} If error is not provided
+ * @return {null} Returns null if no error message is available
+ * @return {string} Returns a string with formatted error message
+ * @throws {string} If error message is not provided
  */
 function formatValidationError(error) {
   // For Joi validation errors
@@ -70,13 +74,15 @@ function formatValidationError(error) {
   }
 
   return formatErrorMessage(error.message) || 'Validation failed';
-}
+};
 
 /**
  * Format any error message to remove escape characters and improve readability
  * 
  * @param {string} message - The error message to format
  * @return {string} Cleaned error message
+ * @throws {null} If message is not provided
+ * @return {null} Returns null if no message is available
  */
 function formatErrorMessage(message) {
   if (!message) return '';
@@ -85,7 +91,7 @@ function formatErrorMessage(message) {
     .replace(/\\"/g, '"')  // Replace escaped quotes with regular quotes
     .replace(/"/g, '\'')   // Replace double quotes with single quotes
     .trim();
-}
+};
 
 /**
  * Format stack trace for error responses
@@ -93,6 +99,9 @@ function formatErrorMessage(message) {
  * 
  * @param {string} stackTrace - Raw stack trace string
  * @return {Array} Basic stack trace as array of lines
+ * @throws {null} If stack trace is not provided
+ * @return {null} Returns null if no stack trace is available
+ * @return {Array} Returns an array of formatted stack trace lines
  */
 function formatStackTrace(stackTrace) {
   if (!stackTrace) return null;
@@ -102,4 +111,4 @@ function formatStackTrace(stackTrace) {
     .split('\n')
     .map(line => line.trim())
     .slice(0, 10);
-}
+};

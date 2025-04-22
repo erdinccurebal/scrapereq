@@ -1,12 +1,13 @@
-// filepath: c:\Users\EC\Develop\req-scrap\app.js
-// Node modules - Express framework and security middleware packages
+// Node core modules
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+// Node third-party modules
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
 
 // Import centralized routes
 import routes from './routes.js';
@@ -18,8 +19,8 @@ import { API_CONFIG, LOGGER_CONFIG } from './constants.js';
 import { swaggerDocs, swaggerUi } from './swagger.js';
 
 // Controller imports
-import controllerRouteNotFoundHandler from './controllers/route-not-found-handler.js';
-import controllerErrorHandler from './controllers/error-handler.js';
+import { controllerRouteNotFoundHandler } from './controllers/route-not-found-handler.js';
+import { controllerErrorHandler } from './controllers/error-handler.js';
 
 // Get directory name in ES module context
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

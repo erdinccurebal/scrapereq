@@ -4,6 +4,7 @@
  * Often used by monitoring tools and load balancers
  * Returns system information and status metrics
  */
+
 // Import package.json as JSON module for version information
 import packageJson from '../package.json' with { type: "json" };
 
@@ -12,20 +13,21 @@ import os from 'os';
 import process from 'process';
 
 // Custom helpers
-import checkPuppeteerHealth from '../helpers/puppeteer-health.js';
-import browserSemaphore from '../helpers/browser-semaphore.js';
+import { helperCheckPuppeteerHealth } from '../helpers/puppeteer-health.js';
+import { helperBrowserSemaphore } from '../helpers/browser-semaphore.js';
 
 /**
  * Health check controller function - GET /health endpoint handler
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  * @param {Function} next - Express next middleware function
- * @returns {Object} JSON response with health status information
+ * @returns {Promise<void>} - Returns a promise that resolves when the response is sent
+ * @throws {Error} - Throws an error if the health check fails
  */
-export default async function (req, res, next) {
+export async function controllerHealth(req, res, next) {
     try {
         // Acquire browser semaphore lock
-        await browserSemaphore.acquire();
+        await helperBrowserSemaphore.acquire();
 
         // Get system info
         const uptime = process.uptime();
@@ -65,7 +67,7 @@ export default async function (req, res, next) {
             }
         };
 
-        result.data.app.puppeteer = await checkPuppeteerHealth();
+        result.data.app.puppeteer = await helperCheckPuppeteerHealth();
 
         if (!result.data.app.puppeteer?.success) {
             result.success = false; // Set success to false if Puppeteer health check fails
@@ -76,7 +78,7 @@ export default async function (req, res, next) {
         next(error); // Pass the error to the error handler
     } finally {
         // Release browser semaphore lock
-        browserSemaphore.release();
+        helperBrowserSemaphore.release();
     }
 }
 
@@ -84,6 +86,8 @@ export default async function (req, res, next) {
  * Format the uptime into a human-readable string
  * @param {number} uptime - Uptime in seconds
  * @returns {string} Formatted uptime string
+ * @throws {Error} - Throws an error if the uptime is not a number
+ * @throws {TypeError} - Throws a type error if the uptime is not a number
  */
 function formatUptime(uptime) {
     const days = Math.floor(uptime / 86400);

@@ -4,17 +4,19 @@
  * Executes predefined steps on target websites and returns the results
  */
 
-// Node modules
-import puppeteer from 'puppeteer';
-import { createRunner, PuppeteerRunnerExtension } from '@puppeteer/replay';
+// Node core modules
 import fs from 'fs';
 import path from 'path';
 
+// Node third-party modules
+import puppeteer from 'puppeteer';
+import { createRunner, PuppeteerRunnerExtension } from '@puppeteer/replay';
+
 // Helper functions
-import setupProxyAuth from '../helpers/setup-proxy-auth.js';
-import { scraperRequestSchema } from '../helpers/validators.js';
-import filterSteps from '../helpers/filter-steps.js';
-import browserSemaphore from '../helpers/browser-semaphore.js';
+import { helperSetupProxyAuth } from '../helpers/setup-proxy-auth.js';
+import { helperValidatorsScraper } from '../helpers/validators.js';
+import { helperFilterSteps } from '../helpers/filter-steps.js';
+import { helperBrowserSemaphore } from '../helpers/browser-semaphore.js';
 
 // Import constants
 import {
@@ -40,22 +42,22 @@ import {
  * @throws {Error} - Throws an error if the request body validation fails
  * @throws {Error} - Throws an error if the browser or page instances cannot be created or closed
  */
-export default async function (req, res, next) {
+export async function controllerScraper(req, res, next) {
     try {
         // Acquire browser semaphore lock
-        await browserSemaphore.acquire();
+        await helperBrowserSemaphore.acquire();
 
         // Validate the request body against the defined schema
-        const { error, value } = scraperRequestSchema.validate(req.body, { abortEarly: false });
+        const { error, value } = helperValidatorsScraper.validate(req.body, { abortEarly: false });
 
         // Return validation errors if request is invalid
         if (error) {
             res.status(400);
             throw new Error(error);
-        }
+        };
 
         // Filter and process the steps to be executed
-        const steps = filterSteps(value.steps);
+        const steps = helperFilterSteps(value.steps);
 
         const {
             proxy,
@@ -75,7 +77,7 @@ export default async function (req, res, next) {
         let page = null;
 
         // Configure proxy settings if provided
-        const proxyServer = setupProxyAuth(proxy);
+        const proxyServer = helperSetupProxyAuth(proxy);
 
         // Configure launch options for Puppeteer
         const launchOptions = {
@@ -92,12 +94,12 @@ export default async function (req, res, next) {
         // This allows for custom Chrome installations or debugging
         if (process.env.CHROME_PATH) {
             launchOptions.executablePath = process.env.CHROME_PATH;
-        }
+        };
 
         // Add proxy configuration if available
         if (proxyServer) {
             launchOptions.args.push(`--proxy-server=${proxyServer}`);
-        }
+        };
 
         try {
             // Launch browser and create a new page
@@ -138,7 +140,7 @@ export default async function (req, res, next) {
                 for (const selector of selectors) {
                     const selectorValue = await processSelectorData(page, selector);
                     selectorResults[selector.key] = selectorValue;
-                }
+                };
 
                 result = {
                     success: true,
@@ -150,8 +152,8 @@ export default async function (req, res, next) {
                 if (successScreenshot) {
                     const screenshotUrl = await getScreenshotUrl({ page, type: 'success' });
                     result.data.screenshotUrl = screenshotUrl;
-                }
-            }
+                };
+            };
 
             await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
 
@@ -161,7 +163,7 @@ export default async function (req, res, next) {
             // Take error screenshot if enabled and not already taken
             if (responseType === RESPONSE_TYPE_NAMES.JSON && errorScreenshot) {
                 error.screenshotUrl = await getScreenshotUrl({ page, type: 'error' }); // Use success screenshot URL for error screenshot
-            }
+            };
 
             await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
 
@@ -169,15 +171,15 @@ export default async function (req, res, next) {
         } finally {
             if (!successScreenshot && !errorScreenshot) {
                 await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
-            }
-        }
+            };
+        };
     } catch (error) {
         next(error); // Pass the error to the next middleware for centralized error handling
     } finally {
         // Release the browser semaphore lock
-        browserSemaphore.release();
-    }
-}
+        helperBrowserSemaphore.release();
+    };
+};
 
 /**
  * Safely closes browser and page instances, handling any potential errors
@@ -190,13 +192,13 @@ export default async function (req, res, next) {
  */
 async function exitBrowserAndPage(browser, page) {
     if (page) {
-        await page.close().catch(err => console.error("Error closing page:", err));
-    }
+        await page.close().catch(error => console.error("Error closing page:", error));
+    };
 
     if (browser) {
-        await browser.close().catch(err => console.error("Error closing browser:", err));
-    }
-}
+        await browser.close().catch(error => console.error("Error closing browser:", error));
+    };
+};
 
 /**
  * Process selector data based on selector type
@@ -265,7 +267,7 @@ async function getScreenshotUrl({ page, type }) {
     } catch (error) {
         console.error(`Error generating screenshot URL:`, error);
         return "ERROR_NOT_SAVED_SCREENSHOT"; // Return null if there's an error generating the URL
-    }
+    };
 }
 
 /**
@@ -284,10 +286,12 @@ async function saveScreenshot(page, type) {
     // Create directory if it doesn't exist
     if (!fs.existsSync(screenshotDir)) {
         fs.mkdirSync(screenshotDir, { recursive: true });
-    }
+    };
 
     // Generate unique filename with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+    // Use the type to determine the filename format
     let filename;
 
     // Use simple format for both success and error screenshots
@@ -297,7 +301,7 @@ async function saveScreenshot(page, type) {
         filename = `error-${timestamp}.png`;
     } else {
         filename = `${type}-${timestamp}.png`;
-    }
+    };
 
     const filePath = path.join(screenshotDir, filename);
 
@@ -314,7 +318,7 @@ async function saveScreenshot(page, type) {
     console.log(`${type} screenshot taken and saved at: ${savedFilePath}`);
 
     return savedFilePath;
-}
+};
 
 /**
  * Custom extension for Puppeteer Runner
@@ -338,7 +342,7 @@ class Extension extends PuppeteerRunnerExtension {
         this.timeout = timeout;
         this.speedMode = speedMode;
         this.currentStep = 0;
-    }
+    };
 
     /**
      * Hook executed before all steps run
@@ -351,7 +355,7 @@ class Extension extends PuppeteerRunnerExtension {
 
         console.log('Starting scraper execution:', flow.title);
         console.log(`Speed Mode: ${this.speedMode}ms delay`);
-    }
+    };
 
     /**
      * Hook executed before each individual step
@@ -368,8 +372,8 @@ class Extension extends PuppeteerRunnerExtension {
         } catch (error) {
             error.message = `Error at step ${this.currentStep}: ${error.message}`;
             throw error;
-        }
-    }
+        };
+    };
 
     /**
      * Override step execution to catch errors with step index information
@@ -385,8 +389,8 @@ class Extension extends PuppeteerRunnerExtension {
         } catch (error) {
             error.message = `Error executing step ${this.currentStep} (${step.type}): ${error.message}`;
             throw error;
-        }
-    }
+        };
+    };
 
     /**
      * Hook executed after each individual step
@@ -404,14 +408,14 @@ class Extension extends PuppeteerRunnerExtension {
             if (this.speedMode > 0) {
                 console.log(`Applying speed mode delay: ${this.speedMode}ms`);
                 await new Promise(resolve => setTimeout(resolve, this.speedMode));
-            }
+            };
 
             console.log(`Successfully completed step ${this.currentStep}: ${step.type}`);
         } catch (error) {
             error.message = `Error after step ${this.currentStep}: ${error.message}`;
             throw error;
-        }
-    }
+        };
+    };
 
     /**
      * Hook executed after all steps are completed
@@ -422,5 +426,5 @@ class Extension extends PuppeteerRunnerExtension {
     async afterAllSteps(flow) {
         await super.afterAllSteps(flow);
         console.log(`Scraper execution completed. Total steps executed: ${this.currentStep}`);
-    }
-}
+    };
+};

@@ -9,8 +9,9 @@
  * @param {Object} res - Express response object
  * @param {Function} next - Express next middleware function
  * @returns {Object} JSON response confirming shutdown initiation
+ * @throws {Error} If an error occurs during the shutdown process
  */
-export default (_req, res, next) => {
+export function controllerAppShutdown(_req, res, next) {
   try {
     console.log('Application shutdown request received. Shutting down in 3 seconds...');
 
@@ -29,5 +30,5 @@ export default (_req, res, next) => {
     }, 3000);
   } catch (error) {
     next(error); // Pass any errors to the global error handler
-  }
+  };
 };

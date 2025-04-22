@@ -5,7 +5,7 @@
  */
 
 // Browser semaphore mechanism for all browser operations across the application
-const browserSemaphore = {
+export const helperBrowserSemaphore = {
     isLocked: false,
     queue: [],
     
@@ -19,7 +19,7 @@ const browserSemaphore = {
             } else {
                 console.log('Browser is busy. Request added to queue.');
                 this.queue.push(resolve);
-            }
+            };
         });
     },
     
@@ -32,8 +32,6 @@ const browserSemaphore = {
         } else {
             this.isLocked = false;
             console.log('Browser lock released. No pending requests.');
-        }
+        };
     }
 };
-
-export default browserSemaphore;

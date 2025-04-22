@@ -11,16 +11,17 @@
  *     description: General operations and utilities
  */
 
-// Import Express framework for routing
+// Node third-party modules
 import express from 'express';
+
 // Import basic authentication middleware
 import basicAuth from 'express-basic-auth';
 
 // Controller imports
-import controllerScraper from './controllers/scraper.js';
-import controllerHealth from './controllers/health.js';
-import controllerAppShutdown from './controllers/app-shutdown.js';
-import controllerOsRestart from './controllers/os-restart.js';
+import { controllerScraper } from './controllers/scraper.js';
+import { controllerHealth } from './controllers/health.js';
+import { controllerAppShutdown } from './controllers/app-shutdown.js';
+import { controllerOsRestart } from './controllers/os-restart.js';
 
 // Import constants
 import { AUTH_DEFAULTS } from './constants.js';

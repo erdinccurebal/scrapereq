@@ -3,10 +3,13 @@
  * Sets up API documentation based on JSDoc annotations
  */
 
-import swaggerJsDoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
+// Node core modules
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+
+// Node third-party modules
+import swaggerJsDoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 // Get current file and directory paths
 const __filename = fileURLToPath(import.meta.url);

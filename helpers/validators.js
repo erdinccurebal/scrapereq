@@ -5,11 +5,17 @@
  * using Joi validation library to ensure data integrity and security.
  */
 
-// Node modules
+// Node third-party modules
 import Joi from 'joi';
 
 // Import constants
-import { SPEED_MODE_NAMES, TIMEOUTS_MODE_NAMES, STEP_TYPES, PROXY_PROTOCOLS, RESPONSE_TYPE_NAMES, SELECTOR_TYPE_NAMES } from '../constants.js';
+import {
+    SPEED_MODE_NAMES,
+    TIMEOUTS_MODE_NAMES, STEP_TYPES,
+    PROXY_PROTOCOLS,
+    RESPONSE_TYPE_NAMES,
+    SELECTOR_TYPE_NAMES
+} from '../constants.js';
 
 /**
  * Scraper Request Validation Schema
@@ -17,7 +23,7 @@ import { SPEED_MODE_NAMES, TIMEOUTS_MODE_NAMES, STEP_TYPES, PROXY_PROTOCOLS, RES
  * Defines the expected structure and validation rules for incoming scraper requests.
  * Ensures all required fields are present and properly formatted before processing.
  */
-const scraperRequestSchema = Joi.object({
+export const helperValidatorsScraper = Joi.object({
     // Title of the scraping task - required for identification
     title: Joi.string().required(),
 
@@ -219,5 +225,3 @@ const scraperRequestSchema = Joi.object({
         )
     })
 });
-
-export { scraperRequestSchema };
