@@ -191,7 +191,7 @@ router.get("/health", controllerHealth);
  *             properties:
  *               title:
  *                 type: string
- *                 description: Title or name of the scraping task
+ *                 description: Title or name of the scraping task (required)
  *                 example: "Amazon Product Price Scraper"
  *               responseType:
  *                 type: string
@@ -226,7 +226,7 @@ router.get("/health", controllerHealth);
  *                 example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36"
  *               selectors:
  *                 type: array
- *                 description: Data extraction selector configurations for scraping
+ *                 description: Data extraction selector configurations for scraping (Required when responseType is not NONE, forbidden when responseType is NONE)
  *                 items:
  *                   type: object
  *                   required:
@@ -260,15 +260,15 @@ router.get("/health", controllerHealth);
  *                 properties:
  *                   enabled:
  *                     type: boolean
- *                     description: Enable/disable proxy usage
+ *                     description: Enable/disable proxy usage (required)
  *                     example: false
  *                   server:
  *                     type: string
- *                     description: Proxy server hostname or IP
+ *                     description: Proxy server hostname or IP (required)
  *                     example: "proxy.example.com"
  *                   port:
  *                     type: number
- *                     description: Proxy server port
+ *                     description: Proxy server port (required)
  *                     example: 8080
  *                   username:
  *                     type: string
@@ -285,7 +285,7 @@ router.get("/health", controllerHealth);
  *                     example: "http"
  *               steps:
  *                 type: array
- *                 description: Sequence of browser actions to perform
+ *                 description: Sequence of browser actions to perform (required with at least one navigate step containing a valid URL)
  *                 items:
  *                   type: object
  *                   properties:
@@ -332,7 +332,7 @@ router.get("/health", controllerHealth);
  *                       example: "main"
  *                     value:
  *                       type: string
- *                       description: Value to set for input fields (for change action)
+ *                       description: Value to set for input fields (for change action) or URL for navigation
  *                       example: "search keyword"
  *                     offsetX:
  *                       type: number
