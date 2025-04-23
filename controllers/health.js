@@ -95,7 +95,9 @@ export async function controllerHealth(req, res, next) {
 
         try {
 
-            const puppeteer = (await import('puppeteer-extra')).default;
+            const puppeteerVanilla = await import('puppeteer');
+            const { addExtra } = await import('puppeteer-extra');
+            const puppeteer = addExtra(puppeteerVanilla);
 
             // Launch browser with minimal options for quick testing
             browser = await puppeteer.launch(launchOptions);
