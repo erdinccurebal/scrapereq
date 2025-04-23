@@ -104,7 +104,7 @@ export const SELECTOR_TYPE_NAMES = {
 // Headless mode configuration
 // In development mode, headless mode is disabled for debugging purposes
 // In production mode, headless mode is enabled for performance
-const HEADLESS = process.env.NODE_ENV === 'development' ? false : true;
+const HEADLESS = process.env.NODE_ENV === 'development' ? false : "new";
 
 /**
  * Browser Configuration

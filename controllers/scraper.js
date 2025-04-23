@@ -67,8 +67,7 @@ export async function controllerScraper(req, res, next) {
             userAgent = BROWSER_CONFIG.USER_AGENT,
             errorScreenshot = false,
             successScreenshot = false,
-            accessPasswordWithoutProxy = null,
-            recaptcha = {},
+            accessPasswordWithoutProxy = null
         } = value;
 
         // Check if the access password is provided and matches the environment variable
@@ -93,6 +92,14 @@ export async function controllerScraper(req, res, next) {
                 BROWSER_CONFIG.ARGS.NO_SANDBOX,
                 BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX,
                 BROWSER_CONFIG.ARGS.DISABLE_WEB_SECURITY,
+                // Çerezleri etkinleştirmek için argümanlar
+                '--enable-cookies',
+                '--enable-javascript',
+                '--enable-features=NetworkService',
+                '--disable-features=IsolateOrigins,site-per-process',
+                // Üçüncü taraf çerezlere izin ver
+                '--disable-web-security',
+                '--disable-features=BlockThirdPartyCookies',
             ],
             ignoreHTTPSErrors: true,
         };
@@ -113,12 +120,11 @@ export async function controllerScraper(req, res, next) {
 
         try {
             // Dynamically import Puppeteer and plugins for each request
-            const puppeteer = (await import('puppeteer-extra')).default;
-            const replayModule = await import('@puppeteer/replay');
-            const { createRunner } = replayModule;
-            const { PuppeteerRunnerExtension } = replayModule;
-            const puppeteerPluginRecaptcha = (await import('puppeteer-extra-plugin-recaptcha')).default;
-            const puppeteerPluginStealth = (await import('puppeteer-extra-plugin-stealth')).default;
+            const puppeteerVanilla = await import('puppeteer');
+            const { addExtra } = await import('puppeteer-extra');
+            const puppeteer = addExtra(puppeteerVanilla);
+
+            const { createRunner, PuppeteerRunnerExtension } = await import('@puppeteer/replay');
 
             // Create Extension class dynamically
             class Extension extends PuppeteerRunnerExtension {
@@ -222,22 +228,6 @@ export async function controllerScraper(req, res, next) {
                     console.log(`Scraper execution completed. Total steps executed: ${this.currentStep}`);
                 };
             }
-
-            // Extend Puppeteer with Recaptcha plugin for solving reCAPTCHA challenges
-            if (recaptcha?.enabled) {
-                puppeteer.use(
-                    puppeteerPluginRecaptcha({
-                        provider: {
-                            id: recaptcha.id,
-                            token: recaptcha.token,
-                        },
-                        visualFeedback: true // colorize reCAPTCHAs (violet = detected, green = solved)
-                    })
-                );
-            };
-
-            // Extend Puppeteer with Stealth plugin for better evasion of bot detection
-            puppeteer.use(puppeteerPluginStealth());
 
             // Launch browser and create a new page
             browser = await puppeteer.launch(launchOptions);

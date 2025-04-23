@@ -12,7 +12,7 @@
 
 ## 📋 Overview
 
-Req-Scrap is a RESTful API service that allows you to perform web scraping operations by defining a series of steps executed by a headless browser. It provides a clean and secure way to extract data from websites with advanced features like proxy support, customizable scraping speeds, reCAPTCHA handling, and robust error handling.
+Req-Scrap is a RESTful API service that allows you to perform web scraping operations by defining a series of steps executed by a headless browser. It provides a clean and secure way to extract data from websites with advanced features like proxy support, customizable scraping speeds, robust validation, and error handling.
 
 ## ✨ Features
 
@@ -20,7 +20,7 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 - **🔄 Step-Based Scraping**: Define your scraping workflow as a series of steps (navigate, click, wait, setViewport, etc.)
 - **⚡ Speed Control**: Multiple speed modes (TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH)
 - **🔍 Selector Support**: Extract data using CSS, XPath, or full page HTML selectors
-- **🤖 reCAPTCHA Handling**: Integrated support for solving reCAPTCHA challenges
+- **✅ Enhanced Validation**: Comprehensive request validation with clear error messages
 
 ### Security & Reliability
 - **🔐 Built-in Security**: Basic authentication, helmet protection, and CORS configuration
@@ -31,7 +31,7 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 ### Advanced Features
 - **📸 Screenshot Capabilities**: Capture success and error screenshots with configurable options
 - **📊 API Monitoring**: Detailed health check endpoint with system information
-- **📝 Swagger Documentation**: Integrated API documentation
+- **📝 Swagger Documentation**: Interactive API documentation with detailed request/response examples
 - **🔧 System Controls**: Application shutdown and OS restart endpoints
 - **💾 Persistent Storage**: Configurable screenshot directory for persistent storage across deployments
 - **🧹 Automatic Cleanup**: Automated cleanup of old screenshot files
@@ -42,12 +42,12 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 - **🚀 Express.js v5.1.0**: Web application framework
 - **🤖 Puppeteer v24.7.0**: Headless Chrome browser automation
 - **🧩 Puppeteer-Extra v3.3.6**: Plugin system for Puppeteer
-- **🔒 Puppeteer-Extra-Plugin-reCAPTCHA v3.6.8**: reCAPTCHA solving capabilities
 - **⏺️ @puppeteer/replay v3.1.1**: Record and replay browser interactions
 - **✅ Joi v17.13.3**: Request validation
 - **📝 Morgan**: HTTP request logging
 - **🛡️ Helmet v8.1.0**: Security middleware
-- **📚 Swagger**: API documentation
+- **📚 Swagger-JSDoc v6.2.8**: API documentation generation
+- **🌐 Swagger-UI-Express v5.0.1**: Interactive API documentation
 - **🌐 CORS**: Cross-Origin Resource Sharing support
 - **⚙️ dotenv v16.5.0**: Environment configuration
 
@@ -160,11 +160,6 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
       "selectors": [".search-results"]
     }
   ],
-  "recaptcha": {
-    "enabled": true,
-    "id": "your_provider_id",
-    "token": "your_provider_token"
-  },
   "proxyAuth": {
     "enabled": true,
     "username": "user",
@@ -174,12 +169,12 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
     {
       "server": "proxy1.example.com",
       "port": 8080,
-      "protocol": "http"
+      "protocol": "HTTP"
     },
     {
       "server": "proxy2.example.com",
       "port": 8081,
-      "protocol": "https"
+      "protocol": "HTTPS"
     }
   ]
 }
@@ -266,6 +261,7 @@ The application can be configured through:
 | 🔐 **Proxy Settings** | Proxy server configurations |
 | 🛡️ **API Security** | API security settings |
 | 📸 **Screenshot Options** | Screenshot configurations |
+| ✅ **Validation Rules** | Enhanced validation rules for requests |
 | 🤖 **reCAPTCHA** | reCAPTCHA solving configurations |
 
 ### Screenshot Storage Configuration
@@ -331,12 +327,12 @@ The application supports advanced proxy configurations:
   {
     "server": "proxy1.example.com",
     "port": 8080,
-    "protocol": "http"
+    "protocol": "HTTP"
   },
   {
     "server": "proxy2.example.com",
     "port": 8081,
-    "protocol": "https"
+    "protocol": "HTTPS"
   }
 ]
 ```
@@ -346,6 +342,49 @@ This feature allows for:
 - Automatic failover if one proxy becomes unavailable
 - Reduced chance of IP blocking during intensive scraping operations
 - Support for different proxy protocols (HTTP, HTTPS, SOCKS4, SOCKS5)
+
+## 📝 Enhanced API Documentation
+
+The application includes a comprehensive API documentation system:
+
+### Interactive Swagger UI
+
+Access the interactive API documentation at:
+```
+http://your-server:port/api-docs
+```
+
+The Swagger UI provides:
+- Interactive API testing capabilities
+- Detailed request and response schemas
+- Example requests and responses
+- Authentication integration
+- Parameter descriptions and validation rules
+
+### Validation Improvements
+
+Recent updates include enhanced request validation:
+
+- **Consistent Enum Values**: All enum values have been standardized across the codebase
+- **Clear Error Messages**: Validation errors now provide specific guidance on what's wrong
+- **Conditional Validation**: Complex validation rules based on other field values
+- **Custom Validators**: Special validation logic for complex requirements
+
+Example validation error response:
+```json
+{
+  "success": false,
+  "data": {
+    "message": "ValidationError: Selectors cannot be provided when responseType is NONE"
+  }
+}
+```
+
+### Step Validation Features
+
+- **URL Validation**: Ensures all navigation URLs are properly formatted
+- **Required Step Checks**: Verifies that at least one navigate step with a valid URL is present
+- **Type Checking**: Makes sure all parameters match their expected types
 
 ## 🔍 Enhanced Features
 
@@ -465,4 +504,4 @@ Erdinç Cürebal
 
 ## 🔄 Last Updated
 
-April 23, 2025
+April 24, 2025

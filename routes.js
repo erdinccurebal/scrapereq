@@ -229,26 +229,6 @@ router.get("/health", controllerHealth);
  *                 type: string
  *                 description: Browser user-agent string
  *                 example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36"
- *               recaptcha:
- *                 type: object
- *                 description: Recaptcha settings for handling CAPTCHA challenges
- *                 required:
- *                   - enabled
- *                   - id
- *                   - token
- *                 properties:
- *                   enabled:
- *                     type: boolean
- *                     description: Enable/disable recaptcha handling (required)
- *                     example: true
- *                   id:
- *                     type: string
- *                     description: Recaptcha identifier (required)
- *                     example: "recaptcha-id-123"
- *                   token:
- *                     type: string
- *                     description: Recaptcha token (required)
- *                     example: "recaptcha-token-xyz"
  *               selectors:
  *                 type: array
  *                 description: |
@@ -311,6 +291,7 @@ router.get("/health", controllerHealth);
  *                   required:
  *                     - server
  *                     - port
+ *                     - protocol
  *                   properties:
  *                     server:
  *                       type: string
@@ -322,16 +303,16 @@ router.get("/health", controllerHealth);
  *                       example: 8080
  *                     protocol:
  *                       type: string
- *                       description: Proxy protocol (optional)
+ *                       description: Proxy protocol (required)
  *                       enum: [HTTP, HTTPS, SOCKS4, SOCKS5]
  *                       example: "HTTP"
  *                 example:
  *                   - server: "proxy1.example.com"
  *                     port: 8080
- *                     protocol: "http"
+ *                     protocol: "HTTP"
  *                   - server: "proxy2.example.com"
  *                     port: 8081
- *                     protocol: "https"
+ *                     protocol: "HTTPS"
  *               steps:
  *                 type: array
  *                 description: |
@@ -349,6 +330,7 @@ router.get("/health", controllerHealth);
  *                       example: "navigate"
  *                     url:
  *                       type: string
+ *                       format: uri
  *                       description: URL for navigation steps
  *                       example: "https://www.amazon.com/dp/B00IJ0ALYS"
  *                     value:
