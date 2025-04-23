@@ -12,9 +12,15 @@ import packageJson from '../package.json' with { type: "json" };
 import os from 'os';
 import process from 'process';
 
+// Import constants for configuration
+import { HEALTH_CHECK_CONFIG, BROWSER_CONFIG } from '../constants.js';
+
+// Constants for configuration
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
 // Custom helpers
-import { helperCheckPuppeteerHealth } from '../helpers/puppeteer-health.js';
 import { helperBrowserSemaphore } from '../helpers/browser-semaphore.js';
+import { helperFormatUptime } from '../helpers/format-uptime.js';
 
 /**
  * Health check controller function - GET /health endpoint handler
@@ -33,7 +39,7 @@ export async function controllerHealth(req, res, next) {
         const uptime = process.uptime();
 
         // Format uptime to be more readable
-        const uptimeFormatted = formatUptime(uptime);
+        const uptimeFormatted = helperFormatUptime(uptime);
 
         // Prepare comprehensive health check response
         const result = {
@@ -67,11 +73,81 @@ export async function controllerHealth(req, res, next) {
             }
         };
 
-        result.data.app.puppeteer = await helperCheckPuppeteerHealth();
+        // Configure proxy settings if provided
+        const launchOptions = {
+            headless: BROWSER_CONFIG.HEADLESS,
+            args: [
+                BROWSER_CONFIG.ARGS.NO_SANDBOX,
+                BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX,
+                BROWSER_CONFIG.ARGS.DISABLE_WEB_SECURITY,
+            ],
+            ignoreHTTPSErrors: true,
+        };
+
+        // Chrome path from environment variable if set
+        // This allows for custom Chrome installations or debugging
+        if (process.env.CHROME_PATH) {
+            launchOptions.executablePath = process.env.CHROME_PATH;
+        }
+
+        let browser = null;
+        let page = null;
+
+        try {
+
+            const puppeteer = (await import('puppeteer-extra')).default;
+
+            // Launch browser with minimal options for quick testing
+            browser = await puppeteer.launch(launchOptions);
+
+            // Open a new page
+            page = await browser.newPage();
+
+            // Navigate to a reliable test page (Google)
+            await page.goto(HEALTH_CHECK_CONFIG.TEST_URL, {
+                waitUntil: 'networkidle2',
+                timeout: HEALTH_CHECK_CONFIG.TIMEOUT
+            });
+
+            const resultUrl = page.url();
+            const resultTitle = await page.title();
+
+            result.data.app.puppeteer = {
+                success: true,
+                data: {
+                    testUrl: HEALTH_CHECK_CONFIG.TEST_URL,
+                    resultUrl,
+                    resultTitle,
+                    message: 'Puppeteer is working correctly.',
+                }
+            };
+        } catch (error) {
+            console.error('Puppeteer Health Check Error:', error.message);
+            console.error('Stack Trace:', error.stack);
+            result.data.app.puppeteer = {
+                success: false,
+                data: {
+                    testUrl: HEALTH_CHECK_CONFIG.TEST_URL,
+                    message: 'Puppeteer is not working correctly.',
+                    error: {
+                        message: error.message,
+                        stack: NODE_ENV === 'development' ? error.stack : null,
+                    }
+                }
+            };
+        } finally {
+            if (page) {
+                await page.close().catch(error => console.error("Error closing page:", error));
+            };
+
+            if (browser) {
+                await browser.close().catch(error => console.error("Error closing browser:", error));
+            };
+        };
 
         if (!result.data.app.puppeteer?.success) {
             result.success = false; // Set success to false if Puppeteer health check fails
-        }
+        };
 
         res.json(result);
     } catch (error) {
@@ -79,27 +155,6 @@ export async function controllerHealth(req, res, next) {
     } finally {
         // Release browser semaphore lock
         helperBrowserSemaphore.release();
-    }
-}
+    };
+};
 
-/**
- * Format the uptime into a human-readable string
- * @param {number} uptime - Uptime in seconds
- * @returns {string} Formatted uptime string
- * @throws {Error} - Throws an error if the uptime is not a number
- * @throws {TypeError} - Throws a type error if the uptime is not a number
- */
-function formatUptime(uptime) {
-    const days = Math.floor(uptime / 86400);
-    const hours = Math.floor((uptime % 86400) / 3600);
-    const minutes = Math.floor((uptime % 3600) / 60);
-    const seconds = Math.floor(uptime % 60);
-
-    const parts = [];
-    if (days > 0) parts.push(`${days}d`);
-    if (hours > 0) parts.push(`${hours}h`);
-    if (minutes > 0) parts.push(`${minutes}m`);
-    if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
-
-    return parts.join(' ');
-}

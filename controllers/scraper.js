@@ -8,17 +8,6 @@
 import fs from 'fs';
 import path from 'path';
 
-// Node third-party modules
-import puppeteer from 'puppeteer-extra';
-import { createRunner, PuppeteerRunnerExtension } from '@puppeteer/replay';
-import puppeteerRecaptchaPlugin from 'puppeteer-extra-plugin-recaptcha';
-
-// Helper functions
-import { helperProxiesRandomGetOne } from '../helpers/proxies-random-get-one.js';
-import { helperValidatorsScraper } from '../helpers/validators.js';
-import { helperFilterSteps } from '../helpers/filter-steps.js';
-import { helperBrowserSemaphore } from '../helpers/browser-semaphore.js';
-
 // Import constants
 import {
     SPEED_MODES,
@@ -30,6 +19,12 @@ import {
     RESPONSE_TYPE_NAMES,
     SELECTOR_TYPE_NAMES,
 } from '../constants.js';
+
+// Helper functions
+import { helperProxiesRandomGetOne } from '../helpers/proxies-random-get-one.js';
+import { helperValidatorsScraper } from '../helpers/validators.js';
+import { helperFilterSteps } from '../helpers/filter-steps.js';
+import { helperBrowserSemaphore } from '../helpers/browser-semaphore.js';
 
 /**
  * Main scraper controller function
@@ -116,20 +111,134 @@ export async function controllerScraper(req, res, next) {
             launchOptions.args.push(proxyServer);
         };
 
-        // Extend Puppeteer with Recaptcha plugin for solving reCAPTCHA challenges
-        if (recaptcha?.enabled) {
-            puppeteer.use(
-                puppeteerRecaptchaPlugin({
-                    provider: {
-                        id: recaptcha.id,
-                        token: recaptcha.token,
-                    },
-                    visualFeedback: true // colorize reCAPTCHAs (violet = detected, green = solved)
-                })
-            );
-        };
-
         try {
+            // Dynamically import Puppeteer and plugins for each request
+            const puppeteer = (await import('puppeteer-extra')).default;
+            const replayModule = await import('@puppeteer/replay');
+            const { createRunner } = replayModule;
+            const { PuppeteerRunnerExtension } = replayModule;
+            const puppeteerPluginRecaptcha = (await import('puppeteer-extra-plugin-recaptcha')).default;
+            const puppeteerPluginStealth = (await import('puppeteer-extra-plugin-stealth')).default;
+
+            // Create Extension class dynamically
+            class Extension extends PuppeteerRunnerExtension {
+                /**
+                 * Creates an instance of Extension with customized settings
+                 * 
+                 * @param {Object} browser - Puppeteer Browser instance
+                 * @param {Object} page - Puppeteer Page instance
+                 * @param {number} timeout - Timeout value in milliseconds
+                 * @param {number} speedMode - Speed mode delay in milliseconds
+                 */
+                constructor(browser, page, timeout, speedMode) {
+                    super(browser, page);
+
+                    this.timeout = timeout;
+                    this.speedMode = speedMode;
+                    this.currentStep = 0;
+                };
+
+                /**
+                 * Hook executed before all steps run
+                 * 
+                 * @param {Object} flow - The flow object containing step information
+                 * @throws {Error} Throws an error if the flow object is invalid
+                 */
+                async beforeAllSteps(flow) {
+                    await super.beforeAllSteps(flow);
+
+                    console.log('Starting scraper execution:', flow.title);
+                    console.log(`Speed Mode: ${this.speedMode}ms delay`);
+                };
+
+                /**
+                 * Hook executed before each individual step
+                 * 
+                 * @param {Object} step - The current step being executed
+                 * @param {Object} flow - The flow object containing step information
+                 * @throws {Error} Throws an error with step index information if pre-step operations fail
+                 */
+                async beforeEachStep(step, flow) {
+                    try {
+                        this.currentStep++;
+                        await super.beforeEachStep(step, flow);
+                        console.log(`Executing step ${this.currentStep}: ${step.type}`);
+                    } catch (error) {
+                        error.message = `Error at step ${this.currentStep}: ${error.message}`;
+                        throw error;
+                    };
+                };
+
+                /**
+                 * Override step execution to catch errors with step index information
+                 * 
+                 * @param {Object} step - The current step being executed
+                 * @param {Object} flow - The flow object containing step information
+                 * @returns {Promise<Object>} The result of the step execution
+                 * @throws {Error} Throws an error if the step execution fails
+                 */
+                async runStep(step, flow) {
+                    try {
+                        return await super.runStep(step, flow);
+                    } catch (error) {
+                        error.message = `Error executing step ${this.currentStep} (${step.type}): ${error.message}`;
+                        throw error;
+                    };
+                };
+
+                /**
+                 * Hook executed after each individual step
+                 * Applies the configured speed mode delay after each step
+                 * 
+                 * @param {Object} step - The current step being executed
+                 * @param {Object} flow - The flow object containing step information
+                 * @throws {Error} Throws an error with step information if post-step operations fail
+                 */
+                async afterEachStep(step, flow) {
+                    try {
+                        await super.afterEachStep(step, flow);
+
+                        // Apply the speed mode delay after each step
+                        if (this.speedMode > 0) {
+                            console.log(`Applying speed mode delay: ${this.speedMode}ms`);
+                            await new Promise(resolve => setTimeout(resolve, this.speedMode));
+                        };
+
+                        console.log(`Successfully completed step ${this.currentStep}: ${step.type}`);
+                    } catch (error) {
+                        error.message = `Error after step ${this.currentStep}: ${error.message}`;
+                        throw error;
+                    };
+                };
+
+                /**
+                 * Hook executed after all steps are completed
+                 * 
+                 * @param {Object} flow - The flow object containing step information
+                 * @throws {Error} Throws an error if all steps are not completed successfully
+                 */
+                async afterAllSteps(flow) {
+                    await super.afterAllSteps(flow);
+                    console.log(`Scraper execution completed. Total steps executed: ${this.currentStep}`);
+                };
+            }
+
+            // Extend Puppeteer with Recaptcha plugin for solving reCAPTCHA challenges
+            if (recaptcha?.enabled) {
+                puppeteer.use(
+                    puppeteerPluginRecaptcha({
+                        provider: {
+                            id: recaptcha.id,
+                            token: recaptcha.token,
+                        },
+                        visualFeedback: true // colorize reCAPTCHAs (violet = detected, green = solved)
+                    })
+                );
+            };
+
+            // Extend Puppeteer with Stealth plugin for better evasion of bot detection
+            puppeteer.use(puppeteerPluginStealth());
+
             // Launch browser and create a new page
             browser = await puppeteer.launch(launchOptions);
             page = await browser.newPage();
@@ -385,113 +494,4 @@ async function saveScreenshot(page, type) {
     console.log(`${type} screenshot taken and saved at: ${savedFilePath}`);
 
     return savedFilePath;
-};
-
-/**
- * Custom extension for Puppeteer Runner
- * Provides hooks for execution lifecycle with logging
- * 
- * @class Extension
- * @extends PuppeteerRunnerExtension
- */
-class Extension extends PuppeteerRunnerExtension {
-    /**
-     * Creates an instance of Extension with customized settings
-     * 
-     * @param {Object} browser - Puppeteer Browser instance
-     * @param {Object} page - Puppeteer Page instance
-     * @param {number} timeout - Timeout value in milliseconds
-     * @param {number} speedMode - Speed mode delay in milliseconds
-     */
-    constructor(browser, page, timeout, speedMode) {
-        super(browser, page);
-
-        this.timeout = timeout;
-        this.speedMode = speedMode;
-        this.currentStep = 0;
-    };
-
-    /**
-     * Hook executed before all steps run
-     * 
-     * @param {Object} flow - The flow object containing step information
-     * @throws {Error} Throws an error if the flow object is invalid
-     */
-    async beforeAllSteps(flow) {
-        await super.beforeAllSteps(flow);
-
-        console.log('Starting scraper execution:', flow.title);
-        console.log(`Speed Mode: ${this.speedMode}ms delay`);
-    };
-
-    /**
-     * Hook executed before each individual step
-     * 
-     * @param {Object} step - The current step being executed
-     * @param {Object} flow - The flow object containing step information
-     * @throws {Error} Throws an error with step index information if pre-step operations fail
-     */
-    async beforeEachStep(step, flow) {
-        try {
-            this.currentStep++;
-            await super.beforeEachStep(step, flow);
-            console.log(`Executing step ${this.currentStep}: ${step.type}`);
-        } catch (error) {
-            error.message = `Error at step ${this.currentStep}: ${error.message}`;
-            throw error;
-        };
-    };
-
-    /**
-     * Override step execution to catch errors with step index information
-     * 
-     * @param {Object} step - The current step being executed
-     * @param {Object} flow - The flow object containing step information
-     * @returns {Promise<Object>} The result of the step execution
-     * @throws {Error} Throws an error if the step execution fails
-     */
-    async runStep(step, flow) {
-        try {
-            return await super.runStep(step, flow);
-        } catch (error) {
-            error.message = `Error executing step ${this.currentStep} (${step.type}): ${error.message}`;
-            throw error;
-        };
-    };
-
-    /**
-     * Hook executed after each individual step
-     * Applies the configured speed mode delay after each step
-     * 
-     * @param {Object} step - The current step being executed
-     * @param {Object} flow - The flow object containing step information
-     * @throws {Error} Throws an error with step information if post-step operations fail
-     */
-    async afterEachStep(step, flow) {
-        try {
-            await super.afterEachStep(step, flow);
-
-            // Apply the speed mode delay after each step
-            if (this.speedMode > 0) {
-                console.log(`Applying speed mode delay: ${this.speedMode}ms`);
-                await new Promise(resolve => setTimeout(resolve, this.speedMode));
-            };
-
-            console.log(`Successfully completed step ${this.currentStep}: ${step.type}`);
-        } catch (error) {
-            error.message = `Error after step ${this.currentStep}: ${error.message}`;
-            throw error;
-        };
-    };
-
-    /**
-     * Hook executed after all steps are completed
-     * 
-     * @param {Object} flow - The flow object containing step information
-     * @throws {Error} Throws an error if all steps are not completed successfully
-     */
-    async afterAllSteps(flow) {
-        await super.afterAllSteps(flow);
-        console.log(`Scraper execution completed. Total steps executed: ${this.currentStep}`);
-    };
 };
