@@ -43,80 +43,33 @@ export async function controllerScraper(req, res, next) {
         // Acquire browser semaphore lock
         await helperBrowserSemaphore.acquire();
 
-        // Validate the request body against the defined schema
-        const { error, value } = helperValidatorsScraper.validate(req.body, { abortEarly: false });
-
-        // Return validation errors if request is invalid
-        if (error) {
-            res.status(400);
-            throw new Error(error);
-        };
+        // Validate the request body
+        const { validateValue } = reqBodyValidation({ req, res });
 
         // Filter and process the steps to be executed
-        const steps = helperFilterSteps(value.steps);
+        const { filteredSteps } = helperFilterSteps({ steps: validateValue.steps });
 
         const {
-            proxies = [],
-            proxyAuth = {},
+            proxies,
+            proxyAuth,
             title,
-            speedMode = DEFAULT_SPEED_MODE,
-            timeoutMode = DEFAULT_TIMEOUT_MODE,
-            responseType = DEFAULT_RESPONSE_TYPE,
-            selectors = [],
-            acceptLanguage = BROWSER_CONFIG.ACCEPT_LANGUAGE,
-            userAgent = BROWSER_CONFIG.USER_AGENT,
-            errorScreenshot = false,
-            successScreenshot = false,
-            accessPasswordWithoutProxy = null
-        } = value;
-
-        // Check if the access password is provided and matches the environment variable
-        // This is used to allow access without a proxy if the password is correct
-        const checkAccessPasswordWithoutProxy = accessPasswordWithoutProxy == process.env.ACCESS_PASSWORD_WITHOUT_PROXY;
-
-        // Check if the proxy is enabled and set the access password
-        if (!checkAccessPasswordWithoutProxy && (!proxies || proxies?.length == 0)) {
-            res.status(401);
-            throw new Error("Access denied. Proxy is required for this request.");
-        };
+            speedMode,
+            timeoutMode,
+            responseType,
+            selectors,
+            acceptLanguage,
+            userAgent,
+            errorScreenshot,
+            successScreenshot,
+            accessPasswordWithoutProxy
+        } = assignDefaultDataToApprovedBodyData({ validateValue });
 
         // Initialize browser and page variables for cleanup in finally block
         let browser = null;
         let page = null;
-        let getProxy = null;
 
-        // Configure launch options for Puppeteer
-        const launchOptions = {
-            headless: BROWSER_CONFIG.HEADLESS,
-            args: [
-                BROWSER_CONFIG.ARGS.NO_SANDBOX,
-                BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX,
-                BROWSER_CONFIG.ARGS.DISABLE_WEB_SECURITY,
-                // Arguments to enable cookies
-                '--enable-cookies',
-                '--enable-javascript',
-                '--enable-features=NetworkService',
-                '--disable-features=IsolateOrigins,site-per-process',
-                // Allow third-party cookies
-                '--disable-web-security',
-                '--disable-features=BlockThirdPartyCookies',
-            ],
-            ignoreHTTPSErrors: true,
-        };
-
-        // Chrome path from environment variable if set
-        // This allows for custom Chrome installations or debugging
-        if (process.env.CHROME_PATH) {
-            launchOptions.executablePath = process.env.CHROME_PATH;
-        };
-
-        // Proxies setup if provided
-        // This allows for rotating proxies or specific proxy configurations
-        if (!checkAccessPasswordWithoutProxy && proxies && proxies.length > 0) {
-            getProxy = helperProxiesRandomGetOne(proxies);
-            const proxyServer = `--proxy-server=${getProxy.protocol || "http"}://${getProxy.server}:${getProxy.port}`;
-            launchOptions.args.push(proxyServer);
-        };
+        // Launch options and proxy settings
+        const { launchOptions, getProxy, pageAuthenticateEnabled, pageAuthenticateParams } = generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxyAuth });
 
         try {
             // Dynamically import Puppeteer and plugins for each request
@@ -233,28 +186,11 @@ export async function controllerScraper(req, res, next) {
             browser = await puppeteer.launch(launchOptions);
             page = await browser.newPage();
 
-            // Proxy authentication if enabled and credentials are provided
-            if (!checkAccessPasswordWithoutProxy && proxyAuth?.enabled && proxyAuth?.username && proxyAuth?.password) {
-                await page.authenticate({
-                    username: proxyAuth.username,
-                    password: proxyAuth.password,
-                });
-            };
-
-            // Set timeout values for better reliability
-            page.setDefaultTimeout(TIMEOUT_MODES[timeoutMode]);
-            page.setDefaultNavigationTimeout(TIMEOUT_MODES[timeoutMode]);
-
-            // Configure page settings to mimic a real browser
-            await page.setJavaScriptEnabled(true);
-            await page.setExtraHTTPHeaders({
-                'Accept-Language': acceptLanguage,
-                'User-Agent': userAgent
-            });
+            await setPageGeneral({ page, acceptLanguage, userAgent, pageAuthenticateEnabled, pageAuthenticateParams, timeoutMode });
 
             // Create and execute the runner with provided steps
             const runner = await createRunner(
-                { title, steps },
+                { title, steps: filteredSteps },
                 new Extension(browser, page, TIMEOUT_MODES[timeoutMode], SPEED_MODES[speedMode])
             );
 
@@ -289,7 +225,7 @@ export async function controllerScraper(req, res, next) {
                 };
 
                 if (successScreenshot && page) {
-                    const screenshotUrl = await getScreenshotUrl({ page, type: 'success' });
+                    const { screenshotUrl } = await getScreenshotUrl({ page, type: 'success' });
                     result.data.screenshotUrl = screenshotUrl;
                 };
             };
@@ -301,7 +237,8 @@ export async function controllerScraper(req, res, next) {
         } catch (error) {
             // Take error screenshot if enabled and not already taken
             if (responseType === RESPONSE_TYPE_NAMES.JSON && errorScreenshot && page) {
-                error.screenshotUrl = await getScreenshotUrl({ page, type: 'error' }); // Use success screenshot URL for error screenshot
+                const { screenshotUrl } = await getScreenshotUrl({ page, type: 'error' });
+                error.screenshotUrl = screenshotUrl;
             };
 
             if (getProxy) {
@@ -325,21 +262,194 @@ export async function controllerScraper(req, res, next) {
 };
 
 /**
- * Safely closes browser and page instances, handling any potential errors
+ * Validates the request body against the defined schema
  * 
- * @param {Object} browser - Puppeteer Browser instance to close
- * @param {Object} page - Puppeteer Page instance to close
- * @returns {Promise<void>} Promise that resolves when browser and page are closed
- * @throws {Error} Throws an error if closing the browser or page fails
- * @throws {Error} Throws an error if the browser or page instances are not provided
- */
-async function exitBrowserAndPage(browser, page) {
-    if (page) {
-        await page.close().catch(error => console.error("Error closing page:", error));
+ * @param {Object} req - Express request object containing the request body to be validated
+ * @param {Object} res - Express response object for sending error responses
+ * @returns {Object} - Returns the validated request body value
+ * @throws {Error} - Throws an error if the request body validation fails
+ * 
+ **/
+function reqBodyValidation({ req, res }) {
+    try {
+        // Validate the request body against the defined schema
+        const { error, value } = helperValidatorsScraper.validate(req.body, { abortEarly: false });
+
+        // Return validation errors if request is invalid
+        if (error) {
+            res.status(400);
+            throw new Error(error);
+        };
+
+        return { validateValue: value }; // Return the validated request body
+    } catch (error) {
+        error.message = `${error.message} - Code: ERROR_REQUEST_BODY_VALIDATION`;
+        throw error;
+    }
+};
+
+/**
+ *  Assigns default values to the approved request body data
+ * 
+ * @param {Object} validateValue - The validated request body value
+ * @returns {Object} - Returns the approved request body data with default values assigned
+ * @throws {Error} - Throws an error if the assignment fails
+ * 
+ **/
+function assignDefaultDataToApprovedBodyData({ validateValue }) {
+    try {
+        const {
+            proxies = [],
+            proxyAuth = {},
+            title,
+            speedMode = DEFAULT_SPEED_MODE,
+            timeoutMode = DEFAULT_TIMEOUT_MODE,
+            responseType = DEFAULT_RESPONSE_TYPE,
+            selectors = [],
+            acceptLanguage = BROWSER_CONFIG.ACCEPT_LANGUAGE,
+            userAgent = BROWSER_CONFIG.USER_AGENT,
+            errorScreenshot = false,
+            successScreenshot = false,
+            accessPasswordWithoutProxy = null
+        } = validateValue;
+
+        return {
+            proxies,
+            proxyAuth,
+            title,
+            speedMode,
+            timeoutMode,
+            responseType,
+            selectors,
+            acceptLanguage,
+            userAgent,
+            errorScreenshot,
+            successScreenshot,
+            accessPasswordWithoutProxy
+        };
+    } catch (error) {
+        error.message = `${error.message} - Code: ERROR_DEFAULT_DATA_ASSIGNMENT`;
+        throw error;
+    };
+};
+
+/**
+ *  Checks if the access password is provided and matches the environment variable
+ * 
+ * @param {Object} res - Express response object for sending error responses
+ * @param {Array} proxies - Array of proxy configurations
+ * @param {String} accessPasswordWithoutProxy - Access password for bypassing proxy requirement
+ * @return {Object} - Returns launch options and proxy information
+ * @throws {Error} - Throws an error if the access password is invalid or missing
+ * 
+ **/
+function generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxyAuth }) {
+    // Initialize getProxy variable
+    let getProxy = null;
+    let launchOptions = null;
+    let pageAuthenticateEnabled = false;
+    let pageAuthenticateParams = {};
+
+    try {
+        // Configure launch options for Puppeteer
+        launchOptions = {
+            headless: BROWSER_CONFIG.HEADLESS,
+            args: [
+                BROWSER_CONFIG.ARGS.NO_SANDBOX,
+                BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX,
+                BROWSER_CONFIG.ARGS.DISABLE_WEB_SECURITY,
+                // Arguments to enable cookies
+                '--enable-cookies',
+                '--enable-javascript',
+                '--enable-features=NetworkService',
+                '--disable-features=IsolateOrigins,site-per-process',
+                // Allow third-party cookies
+                '--disable-web-security',
+                '--disable-features=BlockThirdPartyCookies',
+            ],
+            ignoreHTTPSErrors: true,
+        };
+
+        // Chrome path from environment variable if set
+        // This allows for custom Chrome installations or debugging
+        const chromePath = process.env.CHROME_PATH;
+        if (chromePath) {
+            launchOptions.executablePath = chromePath;
+        };
+    } catch (error) {
+        error.message = `${error.message} - Code: ERROR_LAUNCH_OPTIONS_GENERATION`;
+        throw error;
     };
 
-    if (browser) {
-        await browser.close().catch(error => console.error("Error closing browser:", error));
+    try {
+        // Check if the access password is provided and matches the environment variable
+        // This is used to allow access without a proxy if the password is correct
+        const checkAccessPasswordWithoutProxy = accessPasswordWithoutProxy == process.env.ACCESS_PASSWORD_WITHOUT_PROXY;
+
+        // Check if the proxy is enabled and set the access password
+        if (!checkAccessPasswordWithoutProxy && (!proxies || proxies?.length == 0)) {
+            res.status(401);
+            throw new Error("Access denied. Proxy is required for this request.");
+        };
+
+        // Proxies setup if provided
+        // This allows for rotating proxies or specific proxy configurations
+        if (!checkAccessPasswordWithoutProxy && proxies && proxies.length > 0) {
+            getProxy = helperProxiesRandomGetOne({ proxies });
+            const proxyServer = `--proxy-server=${getProxy.protocol || "http"}://${getProxy.server}:${getProxy.port}`;
+            launchOptions.args.push(proxyServer);
+        };
+
+        // Proxy authentication if enabled and credentials are provided
+        // This allows for authentication with the proxy server
+        if (!checkAccessPasswordWithoutProxy && proxyAuth?.enabled && proxyAuth?.username && proxyAuth?.password) {
+            pageAuthenticateEnabled = true;
+            pageAuthenticateParams = {
+                username: proxyAuth.username,
+                password: proxyAuth.password,
+            };
+        };
+
+    } catch (error) {
+        error.message = `${error.message} - Code: ERROR_PROXY_SETUP`;
+        throw error;
+    };
+    return { launchOptions, getProxy, pageAuthenticateEnabled, pageAuthenticateParams }; // Return the launch options and proxy information
+};
+
+/**
+ * Sets up the page with general configurations
+ * 
+ * @param {Object} page - Puppeteer Page instance to configure
+ * @param {String} acceptLanguage - Accept-Language header value
+ * @param {String} userAgent - User-Agent header value
+ * @param {Boolean} pageAuthenticateEnabled - Flag indicating if proxy authentication is enabled
+ * @param {Object} pageAuthenticateParams - Proxy authentication parameters
+ * @param {String} timeoutMode - Timeout mode for the page
+ * @returns {Promise<void>} - Returns a promise that resolves when the page is configured
+ * @throws {Error} - Throws an error if the page configuration fails
+ * 
+ **/
+async function setPageGeneral({ page, acceptLanguage, userAgent, pageAuthenticateEnabled, pageAuthenticateParams, timeoutMode }) {
+    try {
+        // Proxy authentication if enabled and credentials are provided
+        if (pageAuthenticateEnabled) {
+            await page.authenticate(pageAuthenticateParams);
+        };
+
+        // Set timeout values for better reliability
+        page.setDefaultTimeout(TIMEOUT_MODES[timeoutMode]);
+        page.setDefaultNavigationTimeout(TIMEOUT_MODES[timeoutMode]);
+
+        // Configure page settings to mimic a real browser
+        await page.setJavaScriptEnabled(true);
+        await page.setExtraHTTPHeaders({
+            'Accept-Language': acceptLanguage,
+            'User-Agent': userAgent
+        });
+    } catch (error) {
+        error.message = `${error.message} - Code: ERROR_PAGE_GENERAL_SETUP`;
+        throw error;
     };
 };
 
@@ -405,73 +515,69 @@ async function processSelectorData({ page, selector }) {
 /**
  * Generate a URL for accessing the screenshot from the web application
  * 
- * @param {Object} options - Options object
- * @param {Object} options.page - Puppeteer Page instance
- * @param {String} options.type - Type of screenshot (error or success)
- * @returns {Promise<String>} The public URL path to access the screenshot
- * @throws {Error} Throws an error if the screenshot directory cannot be created
- * @throws {Error} Throws an error if the screenshot URL generation fails
- * @throws {String} Returns "ERROR_NOT_SAVED_SCREENSHOT" if the screenshot cannot be saved
+ * @param {Object} page - Puppeteer Page instance
+ * @param {String} type - Type of screenshot (success or error)
+ * @returns {Promise<String>} - Returns the URL of the screenshot
+ * @throws {Error} - Throws an error if the screenshot generation fails
+ * @throws {Error} - Throws an error if the screenshot URL generation fails
  */
 async function getScreenshotUrl({ page, type }) {
+    try {
+        const screenshotsDir = process.env.TMP_DIR || path.join(process.cwd(), 'tmp');
 
-    const screenshotPath = await saveScreenshot(page, type);
+        // Create directory if it doesn't exist
+        if (!fs.existsSync(screenshotsDir)) {
+            fs.mkdirSync(screenshotsDir, { recursive: true });
+        };
 
-    const filename = path.basename(screenshotPath);
+        // Generate unique filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
-    // Create a proper URL path using the /tmp/ endpoint
-    const screenshotUrl = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
-    console.log(`Screenshot URL generated: ${screenshotUrl}`);
+        // Use the type to determine the filename format
+        let filename = `${type}-${timestamp}.png`;
 
-    return screenshotUrl;
+        const filePath = path.join(screenshotsDir, filename);
+
+        const savedFilePath = await new Promise((resolve, reject) => {
+            setTimeout(() => {
+                page.screenshot({ path: filePath, fullPage: true })
+                    .then(() => {
+                        resolve(filePath);
+                    }).catch((error) => {
+                        reject(error);
+                    });
+            }, 500)
+        });
+        console.log(`${type} screenshot taken and saved at: ${savedFilePath}`);
+
+        const savedFilename = path.basename(savedFilePath);
+
+        // Create a proper URL path using the /tmp/ endpoint
+        const screenshotUrl = `${process.env.WEB_ADDRESS}/tmp/${savedFilename}`;
+        console.log(`Screenshot URL generated: ${screenshotUrl}`);
+
+        return { screenshotUrl };
+    } catch (error) {
+        error.message = `${error.message} - Code: ERROR_SCREENSHOT_URL_GENERATION - Type: ${type}`;
+        throw error;
+    };
 };
 
 /**
- * Saves a screenshot from the page
+ * Safely closes browser and page instances, handling any potential errors
  * 
- * @param {Object} page - Puppeteer Page instance 
- * @param {String} type - Type of screenshot (error or success)
- * @returns {Promise<String>} Path to the saved screenshot
- * @throws {Error} Throws an error if the screenshot cannot be saved
- * @throws {Error} Throws an error if the screenshot directory cannot be created
+ * @param {Object} browser - Puppeteer Browser instance to close
+ * @param {Object} page - Puppeteer Page instance to close
+ * @returns {Promise<void>} Promise that resolves when browser and page are closed
+ * @throws {Error} Throws an error if closing the browser or page fails
+ * @throws {Error} Throws an error if the browser or page instances are not provided
  */
-async function saveScreenshot(page, type) {
-    // Use TMP_DIR from environment or fallback to default
-    const screenshotDir = process.env.TMP_DIR || path.join(process.cwd(), 'tmp');
-
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(screenshotDir)) {
-        fs.mkdirSync(screenshotDir, { recursive: true });
+async function exitBrowserAndPage(browser, page) {
+    if (page) {
+        await page.close().catch(error => console.error("Error closing page:", error));
     };
 
-    // Generate unique filename with timestamp
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-
-    // Use the type to determine the filename format
-    let filename;
-
-    // Use simple format for both success and error screenshots
-    if (type === 'success') {
-        filename = `success-${timestamp}.png`;
-    } else if (type === 'error') {
-        filename = `error-${timestamp}.png`;
-    } else {
-        filename = `${type}-${timestamp}.png`;
+    if (browser) {
+        await browser.close().catch(error => console.error("Error closing browser:", error));
     };
-
-    const filePath = path.join(screenshotDir, filename);
-
-    const savedFilePath = await new Promise((resolve, reject) => {
-        setTimeout(() => {
-            page.screenshot({ path: filePath, fullPage: true })
-                .then(() => {
-                    resolve(filePath);
-                }).catch((error) => {
-                    reject(error);
-                });
-        }, 500)
-    });
-    console.log(`${type} screenshot taken and saved at: ${savedFilePath}`);
-
-    return savedFilePath;
 };

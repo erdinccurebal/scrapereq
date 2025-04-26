@@ -13,7 +13,7 @@
  * @returns {object} - Formatted proxy configuration object
  * @throws {Error} If proxy server or port is not provided
  */
-export function helperProxiesRandomGetOne(proxies) {
+export function helperProxiesRandomGetOne({ proxies }) {
     // Randomly select a proxy from the provided list
     return proxies[Math.floor(Math.random() * proxies.length)];
 };
