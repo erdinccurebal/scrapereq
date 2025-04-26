@@ -386,6 +386,20 @@ Example validation error response:
 - **Required Step Checks**: Verifies that at least one navigate step with a valid URL is present
 - **Type Checking**: Makes sure all parameters match their expected types
 
+## ⚠️ Error Handling
+
+The application provides detailed error information including:
+
+| Error Detail | Description |
+|--------------|-------------|
+| 📍 **Step Index** | Index of the step where the error occurred (1-based indexing) |
+| 🔄 **Step Type** | Type of step where the error occurred |
+| 🔢 **Error Code** | Standardized error code (e.g., ERROR_UNKNOWN, ERROR_VALIDATION) |
+| 📋 **Error Stack** | Full error stack for debugging |
+| 🔢 **HTTP Status** | HTTP status codes with appropriate error messages |
+| 📸 **Error Screenshots** | Screenshots of the page state at the time of error (if enabled) |
+| 🌐 **Proxy Details** | Details about the proxy used during the failed request (if applicable) |
+
 ## 🔍 Enhanced Features
 
 ### reCAPTCHA Handling
@@ -431,9 +445,11 @@ The application provides detailed error information including:
 |--------------|-------------|
 | 📍 **Step Index** | Index of the step where the error occurred (1-based indexing) |
 | 🔄 **Step Type** | Type of step where the error occurred |
+| 🔢 **Error Code** | Standardized error code (e.g., ERROR_UNKNOWN, ERROR_VALIDATION) |
 | 📋 **Error Stack** | Full error stack for debugging |
 | 🔢 **HTTP Status** | HTTP status codes with appropriate error messages |
 | 📸 **Error Screenshots** | Screenshots of the page state at the time of error (if enabled) |
+| 🌐 **Proxy Details** | Details about the proxy used during the failed request (if applicable) |
 
 ## 📁 Project Structure
 

@@ -168,6 +168,18 @@ router.use(basicAuth({
  *                       example: [
  *                         "string",
  *                       ]
+ *                     code:
+ *                       type: string
+ *                       description: Standardized error code for easier error handling
+ *                       example: "ERROR_UNKNOWN"
+ *                     screenshotUrl:
+ *                       type: string
+ *                       description: URL to the error screenshot if errorScreenshot was enabled
+ *                       example: "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
+ *                     proxy:
+ *                       type: string
+ *                       description: Proxy details used during the failed request
+ *                       example: "--proxy-server=http://proxy1.example.com:8080"
  */
 router.get("/health", controllerHealth);
 
@@ -504,6 +516,18 @@ router.get("/health", controllerHealth);
  *                       type: array
  *                       items:
  *                         type: string
+ *                     code:
+ *                       type: string
+ *                       description: Standardized error code for easier error handling
+ *                       example: "ERROR_UNKNOWN"
+ *                     screenshotUrl:
+ *                       type: string
+ *                       description: URL to the error screenshot if errorScreenshot was enabled
+ *                       example: "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
+ *                     proxy:
+ *                       type: string
+ *                       description: Proxy details used during the failed request
+ *                       example: "--proxy-server=http://proxy1.example.com:8080"
  */
 router.post("/", controllerScraper);
 
@@ -542,6 +566,18 @@ router.post("/", controllerScraper);
  *                       example: [
  *                         "string",
  *                       ]
+ *                     code:
+ *                       type: string
+ *                       description: Standardized error code for easier error handling
+ *                       example: "ERROR_UNKNOWN"
+ *                     screenshotUrl:
+ *                       type: string
+ *                       description: URL to the error screenshot if errorScreenshot was enabled
+ *                       example: "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
+ *                     proxy:
+ *                       type: string
+ *                       description: Proxy details used during the failed request
+ *                       example: "--proxy-server=http://proxy1.example.com:8080"
  */
 router.post("/app-shutdown", controllerAppShutdown);
 
@@ -580,6 +616,18 @@ router.post("/app-shutdown", controllerAppShutdown);
  *                       example: [
  *                         "string",
  *                       ]
+ *                     code:
+ *                       type: string
+ *                       description: Standardized error code for easier error handling
+ *                       example: "ERROR_UNKNOWN"
+ *                     screenshotUrl:
+ *                       type: string
+ *                       description: URL to the error screenshot if errorScreenshot was enabled
+ *                       example: "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
+ *                     proxy:
+ *                       type: string
+ *                       description: Proxy details used during the failed request
+ *                       example: "--proxy-server=http://proxy1.example.com:8080"
  */
 router.post("/os-restart", controllerOsRestart);
 
