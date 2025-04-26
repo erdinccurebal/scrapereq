@@ -58,7 +58,7 @@ export async function controllerScraper(req, res, next) {
         const {
             proxies = [],
             proxyAuth = {},
-            title = "TITLE_NOT_FOUND",
+            title,
             speedMode = DEFAULT_SPEED_MODE,
             timeoutMode = DEFAULT_TIMEOUT_MODE,
             responseType = DEFAULT_RESPONSE_TYPE,
@@ -92,12 +92,12 @@ export async function controllerScraper(req, res, next) {
                 BROWSER_CONFIG.ARGS.NO_SANDBOX,
                 BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX,
                 BROWSER_CONFIG.ARGS.DISABLE_WEB_SECURITY,
-                // Çerezleri etkinleştirmek için argümanlar
+                // Arguments to enable cookies
                 '--enable-cookies',
                 '--enable-javascript',
                 '--enable-features=NetworkService',
                 '--disable-features=IsolateOrigins,site-per-process',
-                // Üçüncü taraf çerezlere izin ver
+                // Allow third-party cookies
                 '--disable-web-security',
                 '--disable-features=BlockThirdPartyCookies',
             ],
@@ -267,13 +267,13 @@ export async function controllerScraper(req, res, next) {
             if (responseType === RESPONSE_TYPE_NAMES.RAW) {
                 // For RAW responseType, we've already validated there's only one selector
                 const selector = selectors[0];
-                result = await processSelectorData(page, selector);
+                result = await processSelectorData({ page, selector });
             } else if (responseType === RESPONSE_TYPE_NAMES.JSON) {
                 // For JSON responseType, process all selectors and return a structured response
                 const selectorResults = {};
 
                 for (const selector of selectors) {
-                    const selectorValue = await processSelectorData(page, selector);
+                    const selectorValue = await processSelectorData({ page, selector });
                     selectorResults[selector.key] = selectorValue;
                 };
 
@@ -288,7 +288,7 @@ export async function controllerScraper(req, res, next) {
                     result.data.proxy = getProxy;
                 };
 
-                if (successScreenshot) {
+                if (successScreenshot && page) {
                     const screenshotUrl = await getScreenshotUrl({ page, type: 'success' });
                     result.data.screenshotUrl = screenshotUrl;
                 };
@@ -300,7 +300,7 @@ export async function controllerScraper(req, res, next) {
             res.send(result);
         } catch (error) {
             // Take error screenshot if enabled and not already taken
-            if (responseType === RESPONSE_TYPE_NAMES.JSON && errorScreenshot) {
+            if (responseType === RESPONSE_TYPE_NAMES.JSON && errorScreenshot && page) {
                 error.screenshotUrl = await getScreenshotUrl({ page, type: 'error' }); // Use success screenshot URL for error screenshot
             };
 
@@ -350,62 +350,57 @@ async function exitBrowserAndPage(browser, page) {
  * @param {Object} selector - Selector configuration object
  * @returns {Promise<String>} Extracted data from the page based on selector type
  * @throws {Error} Throws an error if selector processing fails
- * @throws {String} Returns "ERROR_NOT_FOUND_ELEMENT" if the element is not found
- * @throws {String} Returns "ERROR_SELECTOR" if the selector is invalid
- * @throws {String} Returns "ERROR_INVALID_SELECTOR_TYPE" if the selector type is invalid
- * @throws {String} Returns "ERROR_SELECTOR_PROCESSING_ERROR" if an error occurs during selector processing
- * @throws {String} Returns "ERROR_SELECTOR" if the selector processing fails
- * @throws {String} Returns "ERROR_SELECTOR_PROCESSING_ERROR" if an error occurs during selector processing
  */
-async function processSelectorData(page, selector) {
-    try {
-        const { type, value } = selector;
+async function processSelectorData({ page, selector }) {
+    const { type, value, key } = selector;
 
+    try {
         if (type === SELECTOR_TYPE_NAMES.FULL) {
-            // Return the entire page content
             return await page.content();
         } else if (type === SELECTOR_TYPE_NAMES.CSS) {
             // Extract content using CSS selector
-            return await page.$eval(value, (el) => {
-                return el ? el?.innerHTML : "ERROR_NOT_FOUND_ELEMENT";
-            }).catch(() => "ERROR_SELECTOR");
+            return await page.$eval(value, (element) => {
+                if (!element) {
+                    throw new Error("Element not found!");
+                };
+
+                // Get both innerHTML and textContent for more reliable data extraction
+                const innerHTML = element.innerHTML || "";
+                const textContent = element.textContent || "";
+
+                // If innerHTML is empty or just whitespace but textContent has content, return textContent
+                if (!innerHTML.trim() && textContent.trim()) {
+                    return textContent;
+                };
+
+                return innerHTML;
+            });
         } else if (type === SELECTOR_TYPE_NAMES.XPATH) {
             // Extract content using XPath selector
-            const getResult = await page.evaluate((xpath) => {
-                try {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            return await page.evaluate((value) => {
+                const element = document.evaluate(value, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
-                    if (!element) {
-                        return "ERROR_NOT_FOUND_ELEMENT";
-                    }
-
-                    // Get both innerHTML and textContent for more reliable data extraction
-                    const innerHTML = element.innerHTML || "";
-                    const textContent = element.textContent || "";
-
-                    // If innerHTML is empty or just whitespace but textContent has content, return textContent
-                    if (!innerHTML.trim() && textContent.trim()) {
-                        return textContent;
-                    }
-
-                    return innerHTML;
-                } catch (err) {
-                    console.error('XPath evaluation error:', err);
-                    return "ERROR_SELECTOR";
+                if (!element) {
+                    throw new Error("Element not found!");
                 }
-            }, value).catch((err) => {
-                console.error('XPath evaluate method error:', err);
-                return "ERROR_SELECTOR";
-            });
-            return getResult;
-        }
 
-        return "ERROR_INVALID_SELECTOR_TYPE";
+                // Get both innerHTML and textContent for more reliable data extraction
+                const innerHTML = element.innerHTML || "";
+                const textContent = element.textContent || "";
+
+                // If innerHTML is empty or just whitespace but textContent has content, return textContent
+                if (!innerHTML.trim() && textContent.trim()) {
+                    return textContent;
+                };
+
+                return innerHTML;
+            }, value);
+        };
     } catch (error) {
-        console.error('Error processing selector:', error);
-        return "ERROR_SELECTOR_PROCESSING_ERROR";
+        error.message = `${error.message} - Code: ERROR_SELECTOR_PROCESSING - Type: ${type} - Key: ${key} - Value: ${value}`;
+        throw error;
     }
-}
+};
 
 /**
  * Generate a URL for accessing the screenshot from the web application
@@ -419,22 +414,17 @@ async function processSelectorData(page, selector) {
  * @throws {String} Returns "ERROR_NOT_SAVED_SCREENSHOT" if the screenshot cannot be saved
  */
 async function getScreenshotUrl({ page, type }) {
-    try {
 
-        const screenshotPath = await saveScreenshot(page, type);
+    const screenshotPath = await saveScreenshot(page, type);
 
-        const filename = path.basename(screenshotPath);
+    const filename = path.basename(screenshotPath);
 
-        // Create a proper URL path using the /tmp/ endpoint
-        const screenshotUrl = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
-        console.log(`Screenshot URL generated: ${screenshotUrl}`);
+    // Create a proper URL path using the /tmp/ endpoint
+    const screenshotUrl = `${process.env.WEB_ADDRESS}/tmp/${filename}`;
+    console.log(`Screenshot URL generated: ${screenshotUrl}`);
 
-        return screenshotUrl;
-    } catch (error) {
-        console.error(`Error generating screenshot URL:`, error);
-        return "ERROR_NOT_SAVED_SCREENSHOT"; // Return null if there's an error generating the URL
-    };
-}
+    return screenshotUrl;
+};
 
 /**
  * Saves a screenshot from the page

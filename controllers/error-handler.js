@@ -34,21 +34,27 @@ export function controllerErrorHandler(error, _req, res, _next) {
   } else {
     // Default message if error doesn't contain one
     result.data.message = 'Internal Server Error';
-  }
+  };
 
   // Include stack trace only in development environment
   if (process.env.NODE_ENV === 'development' && error.stack) {
     result.data.stack = formatStackTrace(error.stack);
-  }
+  };
 
   // Add screenshot path to data object (if exists)
   if (error.screenshotUrl) {
     result.data.screenshotUrl = error.screenshotUrl;
-  }
+  };
+
+  if (result.data.message.includes("Code: ERROR_")) {
+    result.data.code = "ERROR_" + result.data.message.split("Code: ERROR_")[1].split(" ")[0];
+  } else {
+    result.data.code = "ERROR_UNKNOWN";
+  };
 
   if (error.proxy) {
     result.data.proxy = error.proxy;
-  }
+  };
 
   // Send response with appropriate status code
   // Use existing status code if set, otherwise default to 500
@@ -69,13 +75,13 @@ function formatValidationError(error) {
   // For Joi validation errors
   if (error.details && Array.isArray(error.details)) {
     return error.details.map(detail => formatErrorMessage(detail.message)).join(', ');
-  }
+  };
 
   // For custom validation errors
   if (error.message && error.message.includes('ValidationError')) {
     // Clean up the validation error message
     return formatErrorMessage(error.message.replace('ValidationError: ', ''));
-  }
+  };
 
   return formatErrorMessage(error.message) || 'Validation failed';
 };
