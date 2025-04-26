@@ -209,7 +209,11 @@ router.get("/health", controllerHealth);
  *               responseType:
  *                 type: string
  *                 enum: [NONE, JSON, RAW]
- *                 description: Output format of the scraped data
+ *                 description: |
+ *                   Output format of the scraped data:
+ *                   - NONE: No data is returned (for background operations)
+ *                   - JSON: Returns structured JSON with success status, data, proxy info, screenshots
+ *                   - RAW: Returns raw content directly from the first selector without any wrapping structure
  *                 example: "JSON"
  *               speedMode:
  *                 type: string
@@ -246,7 +250,8 @@ router.get("/health", controllerHealth);
  *                 description: |
  *                   Data extraction selector configurations for scraping.
  *                   - Required when responseType is not NONE, forbidden when responseType is NONE
- *                   - When responseType is RAW, only one selector is allowed
+ *                   - When responseType is RAW, only one selector is allowed and its content will be returned directly
+ *                   - When responseType is JSON, all selectors will be processed and returned in a structured format
  *                   - Only one selector with type FULL is allowed
  *                 items:
  *                   type: object

@@ -285,9 +285,31 @@ The scraper supports multiple response formats:
 
 | Type | Description |
 |------|-------------|
-| `JSON` | Returns structured JSON with success status and data |
-| `RAW` | Returns raw content without formatting |
+| `JSON` | Returns structured JSON with success status, data, proxy information, and screenshot URLs |
+| `RAW` | Returns raw content without formatting, directly from the first selector |
 | `NONE` | No response content (useful for headless operations) |
+
+### JSON Response Format Example
+
+```json
+{
+  "success": true,
+  "data": {
+    "catch": {
+      "search_results": "<div>Result content...</div>",
+      "page_title": "Example Search - Google Search"
+    },
+    "screenshotUrl": "http://localhost:3000/tmp/success-2025-04-26T14-32-48.png",
+    "proxy": "--proxy-server=http://proxy1.example.com:8080"
+  }
+}
+```
+
+### RAW Response Format
+
+When using `RAW` response type, only the first selector's content is returned directly without any wrapping JSON structure. This is useful for extracting specific HTML or text content that needs to be processed elsewhere.
+
+**Note:** When using `RAW` response type, only one selector can be provided.
 
 ## 🔍 Selector Types and Validation Rules
 
