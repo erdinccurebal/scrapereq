@@ -29,6 +29,7 @@ export function controllerAppShutdown(_req, res, next) {
       process.exit(0); // Exit with success code
     }, 3000);
   } catch (error) {
+    error.message = `${error.message} - Code: ERROR_APP_SHUTDOWN`;
     next(error); // Pass any errors to the global error handler
   };
 };

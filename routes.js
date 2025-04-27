@@ -107,15 +107,19 @@ router.use(basicAuth({
  *                               properties:
  *                                 testUrl:
  *                                   type: string
+ *                                   description: URL used for browser testing
  *                                   example: "https://www.google.com"
  *                                 resultUrl:
  *                                   type: string
+ *                                   description: Final URL after navigation
  *                                   example: "https://www.google.com/"
  *                                 resultTitle:
  *                                   type: string
+ *                                   description: Page title after navigation
  *                                   example: "Google"
  *                                 message:
  *                                   type: string
+ *                                   description: Status message about browser health
  *                                   example: "Puppeteer is working correctly."
  *                     system:
  *                       type: object

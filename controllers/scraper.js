@@ -49,6 +49,7 @@ export async function controllerScraper(req, res, next) {
         // Filter and process the steps to be executed
         const { filteredSteps } = helperFilterSteps({ steps: validateValue.steps });
 
+        // Assign default values to the request body data
         const {
             proxies,
             proxyAuth,
@@ -76,7 +77,6 @@ export async function controllerScraper(req, res, next) {
             const puppeteerVanilla = await import('puppeteer');
             const { addExtra } = await import('puppeteer-extra');
             const puppeteer = addExtra(puppeteerVanilla);
-
             const { createRunner, PuppeteerRunnerExtension } = await import('@puppeteer/replay');
 
             // Create Extension class dynamically
@@ -213,6 +213,7 @@ export async function controllerScraper(req, res, next) {
                     selectorResults[selector.key] = selectorValue;
                 };
 
+                // Create a structured response with selector results
                 result = {
                     success: true,
                     data: {
@@ -220,10 +221,12 @@ export async function controllerScraper(req, res, next) {
                     }
                 };
 
+                // Add proxy information to the response if available
                 if (getProxy) {
                     result.data.proxy = getProxy;
                 };
 
+                // Add success screenshot URL if enabled
                 if (successScreenshot && page) {
                     const { screenshotUrl } = await getScreenshotUrl({ page, type: 'success' });
                     result.data.screenshotUrl = screenshotUrl;
@@ -268,8 +271,7 @@ export async function controllerScraper(req, res, next) {
  * @param {Object} res - Express response object for sending error responses
  * @returns {Object} - Returns the validated request body value
  * @throws {Error} - Throws an error if the request body validation fails
- * 
- **/
+ */
 function reqBodyValidation({ req, res }) {
     try {
         // Validate the request body against the defined schema
@@ -285,17 +287,16 @@ function reqBodyValidation({ req, res }) {
     } catch (error) {
         error.message = `${error.message} - Code: ERROR_REQUEST_BODY_VALIDATION`;
         throw error;
-    }
+    };
 };
 
 /**
- *  Assigns default values to the approved request body data
+ * Assigns default values to the approved request body data
  * 
  * @param {Object} validateValue - The validated request body value
  * @returns {Object} - Returns the approved request body data with default values assigned
  * @throws {Error} - Throws an error if the assignment fails
- * 
- **/
+ */
 function assignDefaultDataToApprovedBodyData({ validateValue }) {
     try {
         const {
@@ -334,15 +335,16 @@ function assignDefaultDataToApprovedBodyData({ validateValue }) {
 };
 
 /**
- *  Checks if the access password is provided and matches the environment variable
+ * Generates browser launch options and configures proxy settings
  * 
  * @param {Object} res - Express response object for sending error responses
  * @param {Array} proxies - Array of proxy configurations
  * @param {String} accessPasswordWithoutProxy - Access password for bypassing proxy requirement
- * @return {Object} - Returns launch options and proxy information
+ * @param {Object} proxyAuth - Proxy authentication credentials and settings
+ * @returns {Object} - Returns launch options and proxy information
  * @throws {Error} - Throws an error if the access password is invalid or missing
- * 
- **/
+ * @throws {Error} - Throws an error if the proxy configuration fails
+ */
 function generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxyAuth }) {
     // Initialize getProxy variable
     let getProxy = null;
@@ -414,6 +416,7 @@ function generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxy
         error.message = `${error.message} - Code: ERROR_PROXY_SETUP`;
         throw error;
     };
+
     return { launchOptions, getProxy, pageAuthenticateEnabled, pageAuthenticateParams }; // Return the launch options and proxy information
 };
 
@@ -428,8 +431,7 @@ function generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxy
  * @param {String} timeoutMode - Timeout mode for the page
  * @returns {Promise<void>} - Returns a promise that resolves when the page is configured
  * @throws {Error} - Throws an error if the page configuration fails
- * 
- **/
+ */
 async function setPageGeneral({ page, acceptLanguage, userAgent, pageAuthenticateEnabled, pageAuthenticateParams, timeoutMode }) {
     try {
         // Proxy authentication if enabled and credentials are provided
@@ -454,12 +456,12 @@ async function setPageGeneral({ page, acceptLanguage, userAgent, pageAuthenticat
 };
 
 /**
- * Process selector data based on selector type
+ * Process selector data based on selector type (FULL, CSS, XPATH)
  * 
  * @param {Object} page - Puppeteer Page instance
- * @param {Object} selector - Selector configuration object
- * @returns {Promise<String>} Extracted data from the page based on selector type
- * @throws {Error} Throws an error if selector processing fails
+ * @param {Object} selector - Selector configuration object with type, value and key properties
+ * @returns {Promise<String>} - Extracted data from the page based on selector type
+ * @throws {Error} - Throws an error if selector processing fails or element is not found
  */
 async function processSelectorData({ page, selector }) {
     const { type, value, key } = selector;
@@ -509,7 +511,7 @@ async function processSelectorData({ page, selector }) {
     } catch (error) {
         error.message = `${error.message} - Code: ERROR_SELECTOR_PROCESSING - Type: ${type} - Key: ${key} - Value: ${value}`;
         throw error;
-    }
+    };
 };
 
 /**
@@ -517,7 +519,7 @@ async function processSelectorData({ page, selector }) {
  * 
  * @param {Object} page - Puppeteer Page instance
  * @param {String} type - Type of screenshot (success or error)
- * @returns {Promise<String>} - Returns the URL of the screenshot
+ * @returns {Promise<Object>} - Returns an object containing the screenshotUrl
  * @throws {Error} - Throws an error if the screenshot generation fails
  * @throws {Error} - Throws an error if the screenshot URL generation fails
  */
@@ -568,9 +570,8 @@ async function getScreenshotUrl({ page, type }) {
  * 
  * @param {Object} browser - Puppeteer Browser instance to close
  * @param {Object} page - Puppeteer Page instance to close
- * @returns {Promise<void>} Promise that resolves when browser and page are closed
- * @throws {Error} Throws an error if closing the browser or page fails
- * @throws {Error} Throws an error if the browser or page instances are not provided
+ * @returns {Promise<void>} - Promise that resolves when browser and page are closed
+ * @throws {Error} - Throws an error if closing the browser or page fails
  */
 async function exitBrowserAndPage(browser, page) {
     if (page) {

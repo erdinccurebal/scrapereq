@@ -42,6 +42,7 @@ export function controllerOsRestart(_req, res, next) {
     }, 1000);
 
   } catch (error) {
+    error.message = `${error.message} - Code: ERROR_OS_RESTART`;
     next(error);
   };
 };
