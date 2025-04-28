@@ -8,6 +8,9 @@
     <img src="https://img.shields.io/badge/Node.js-v18+-339933?style=flat-square&logo=node.js" alt="Node.js" />
     <img src="https://img.shields.io/badge/License-ISC-blue?style=flat-square" alt="License" />
   </p>
+  <p>
+    <a href="https://scrapereq.trial.town/docs" target="_blank">API Documentation</a>
+  </p>
 </div>
 
 ## 📋 Overview
