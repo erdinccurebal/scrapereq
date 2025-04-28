@@ -376,7 +376,7 @@ The application includes a comprehensive API documentation system:
 
 Access the interactive API documentation at:
 ```
-http://your-server:port/api-docs
+http://your-server:port/docs
 ```
 
 The Swagger UI provides:
