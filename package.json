@@ -1,5 +1,5 @@
 {
-  "name": "req-scrap",
+  "name": "scrapereq",
   "version": "1.0.0",
   "description": "Web scraping API using puppeteer",
   "main": "index.js",

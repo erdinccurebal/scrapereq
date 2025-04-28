@@ -20,7 +20,7 @@ const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Req Scrap',
+      title: 'Scrapereq',
       version: '1.0.0',
       description: 'Web scraping API using puppeteer.',
       contact: {

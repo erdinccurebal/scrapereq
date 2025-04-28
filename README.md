@@ -1,4 +1,4 @@
-# 🕸️ Req-Scrap
+# 🕸️ Scrapereq
 
 <div align="center">
   <h3>A powerful and flexible web scraping API built with Express.js and Puppeteer</h3>
@@ -12,7 +12,7 @@
 
 ## 📋 Overview
 
-Req-Scrap is a RESTful API service that allows you to perform web scraping operations by defining a series of steps executed by a headless browser. It provides a clean and secure way to extract data from websites with advanced features like proxy support, customizable scraping speeds, robust validation, and error handling.
+Scrapereq is a RESTful API service that allows you to perform web scraping operations by defining a series of steps executed by a headless browser. It provides a clean and secure way to extract data from websites with advanced features like proxy support, customizable scraping speeds, robust validation, and error handling.
 
 ## ✨ Features
 
@@ -55,8 +55,8 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/req-scrap.git
-   cd req-scrap
+   git clone https://github.com/yourusername/scrapereq.git
+   cd scrapereq
    ```
 
 2. **Install dependencies**:
@@ -82,7 +82,7 @@ Req-Scrap is a RESTful API service that allows you to perform web scraping opera
    CHROME_PATH=/path/to/chrome # Optional custom Chrome path
 
    # File Storage
-   TMP_DIR=/path/to/persistent/directory # For example: /var/www/req-scrap-data/tmp
+   TMP_DIR=/path/to/persistent/directory # For example: /var/www/scrapereq-data/tmp
    ```
 
 4. **Start the application**:
@@ -272,7 +272,7 @@ By default, screenshots are stored in the `tmp` directory within the project roo
 TMP_DIR=/path/to/persistent/directory
 ```
 
-For Ubuntu 24.04 deployments, consider using a path outside the application directory, such as `/var/www/req-scrap-data/tmp` to ensure screenshots are preserved when the application is redeployed.
+For Ubuntu 24.04 deployments, consider using a path outside the application directory, such as `/var/www/scrapereq-data/tmp` to ensure screenshots are preserved when the application is redeployed.
 
 The application automatically:
 - Creates the directory if it doesn't exist

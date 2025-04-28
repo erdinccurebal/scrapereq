@@ -65,7 +65,7 @@ router.use(basicAuth({
  *                       properties:
  *                         name:
  *                           type: string
- *                           example: "req-scrap"
+ *                           example: "scrapereq"
  *                         description:
  *                           type: string
  *                           example: "Web scraping API using puppeteer"

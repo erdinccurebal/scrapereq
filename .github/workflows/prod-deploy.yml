@@ -19,15 +19,15 @@ jobs:
           node-version: '23.x'
 
       - name: Service stop
-        run: systemctl stop req-scrap.service
+        run: systemctl stop scrapereq.service
 
       - name: Install dependencies
         run: npm install
 
       - name: Environment setup
-        run: cp /root/.env.req-scrap /root/actions-runner/_work/req-scrap/req-scrap/.env
+        run: cp /root/.env.scrapereq /root/actions-runner/_work/scrapereq/scrapereq/.env
 
       - name: Service start
-        run: systemctl start req-scrap.service
+        run: systemctl start scrapereq.service
         
 
