@@ -265,7 +265,6 @@ The application can be configured through:
 | 🛡️ **API Security** | API security settings |
 | 📸 **Screenshot Options** | Screenshot configurations |
 | ✅ **Validation Rules** | Enhanced validation rules for requests |
-| 🤖 **reCAPTCHA** | reCAPTCHA solving configurations |
 
 ### Screenshot Storage Configuration
 
@@ -303,7 +302,10 @@ The scraper supports multiple response formats:
       "page_title": "Example Search - Google Search"
     },
     "screenshotUrl": "http://localhost:3000/tmp/success-2025-04-26T14-32-48.png",
-    "proxy": "--proxy-server=http://proxy1.example.com:8080"
+    "proxy": {
+      "ip": "248.25.15.15",
+      "port": "3122"
+    }
   }
 }
 ```
@@ -426,24 +428,6 @@ The application provides detailed error information including:
 | 🌐 **Proxy Details** | Details about the proxy used during the failed request (if applicable) |
 
 ## 🔍 Enhanced Features
-
-### reCAPTCHA Handling
-
-The application supports solving reCAPTCHA challenges during scraping:
-
-```json
-"recaptcha": {
-  "enabled": true,
-  "id": "your_provider_id",
-  "token": "your_provider_token"
-}
-```
-
-This feature:
-- Automatically detects reCAPTCHA challenges on the page
-- Uses the configured provider to solve them
-- Provides visual feedback during solving (optional)
-- Continues with the scraping process once solved
 
 ### Browser Semaphore
 
