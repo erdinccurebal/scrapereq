@@ -304,7 +304,7 @@ The scraper supports multiple response formats:
     "screenshotUrl": "http://localhost:3000/tmp/success-2025-04-26T14-32-48.png",
     "proxy": {
       "ip": "248.25.15.15",
-      "port": "3122"
+      "port": 3122
     }
   }
 }
