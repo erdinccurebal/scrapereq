@@ -11,7 +11,7 @@ import Joi from 'joi';
 // Import constants
 import {
     SPEED_MODE_NAMES,
-    TIMEOUTS_MODE_NAMES, STEP_TYPES,
+    TIMEOUT_MODE_NAMES, STEP_TYPES,
     PROXY_PROTOCOLS,
     RESPONSE_TYPE_NAMES,
     SELECTOR_TYPE_NAMES
@@ -48,9 +48,9 @@ export const helperValidatorsScraper = Joi.object({
 
     // Timeout mode for controlling scraper execution time (SHORT, NORMAL, LONG)
     timeoutMode: Joi.string().valid(
-        TIMEOUTS_MODE_NAMES.SHORT,
-        TIMEOUTS_MODE_NAMES.NORMAL,
-        TIMEOUTS_MODE_NAMES.LONG
+        TIMEOUT_MODE_NAMES.SHORT,
+        TIMEOUT_MODE_NAMES.NORMAL,
+        TIMEOUT_MODE_NAMES.LONG
     ),
 
     // Access password for authentication

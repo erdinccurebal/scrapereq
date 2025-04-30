@@ -5,22 +5,22 @@
  * Returns system information and status metrics
  */
 
-// Import package.json as JSON module for version information
-import packageJson from '../package.json' with { type: "json" };
-
 // Node core modules
 import os from 'os';
 import process from 'process';
 
+// Import package.json as JSON module for version information
+import packageJson from '../../../../package.json' with { type: "json" };
+
 // Import constants for configuration
-import { HEALTH_CHECK_CONFIG, BROWSER_CONFIG } from '../constants.js';
+import { HEALTH_CHECK_CONFIG, BROWSER_CONFIG } from '../../../constants.js';
 
 // Constants for configuration
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Custom helpers
-import { helperBrowserSemaphore } from '../helpers/browser-semaphore.js';
-import { helperFormatUptime } from '../helpers/format-uptime.js';
+import { helperBrowserSemaphore } from '../../../helpers/browser-semaphore.js';
+import { helperFormatUptime } from '../../../helpers/format-uptime.js';
 
 /**
  * Health check controller function - GET /health endpoint handler
@@ -30,7 +30,7 @@ import { helperFormatUptime } from '../helpers/format-uptime.js';
  * @returns {Promise<void>} - Returns a promise that resolves when the response is sent
  * @throws {Error} - Throws an error if the health check fails
  */
-export async function controllerHealth(_req, res, next) {
+export async function controllerApiHealth(_req, res, next) {
     try {
 
         // Acquire browser semaphore lock

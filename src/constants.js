@@ -59,7 +59,7 @@ export const TIMEOUT_MODES = {
 /**
  * Timeout Mode Names as Enum
  */
-export const TIMEOUTS_MODE_NAMES = {
+export const TIMEOUT_MODE_NAMES = {
   SHORT: 'SHORT',
   NORMAL: 'NORMAL',
   LONG: 'LONG',
@@ -213,5 +213,48 @@ export const LOGGER_CONFIG = {
 export const HEALTH_CHECK_CONFIG = {
   TIMEOUT: TIMEOUT_MODES.NORMAL,  // 30 seconds timeout for health check operations
   TEST_URL: 'https://www.google.com', // URL to test puppeteer functionality
-  HEADLESS   // Run health check browser in headless mode
+  HEADLESS: HEADLESS  // Run health check browser in headless mode
+};
+
+/**
+ * Rate Limiter Configuration
+ * 
+ * WINDOW_MS: Time window for rate limiting in milliseconds
+ * MAX_REQUESTS: Maximum number of requests allowed per IP in the time window
+ * MESSAGE: Message to send when rate limit is exceeded
+ */
+export const RATE_LIMITER_CONFIG = {
+  WINDOW_MS: 15 * 60 * 1000, // 15 minutes
+  MAX_REQUESTS: 100, // limit each IP to 100 requests per windowMs
+  MESSAGE: 'Too many requests from this IP, please try again later'
+};
+
+/**
+ * Swagger Documentation Configuration
+ * 
+ * Settings for API documentation
+ */
+export const SWAGGER_CONFIG = {
+  OPENAPI_VERSION: '3.0.0',
+  INFO: {
+    TITLE: 'Scrapereq',
+    VERSION: '1.0.0',
+    DESCRIPTION: 'Web scraping API using puppeteer.',
+    CONTACT: {
+      NAME: 'API Support'
+    },
+    LICENSE: {
+      NAME: 'ISC'
+    }
+  },
+  SECURITY_SCHEMES: {
+    BASIC_AUTH: {
+      TYPE: 'http',
+      SCHEME: 'basic'
+    }
+  },
+  SERVERS: {
+    URL: process.env.WEB_ADDRESS || 'http://localhost:3000',
+    DESCRIPTION: 'API ADDRESS'
+  }
 };

@@ -12,7 +12,7 @@ import 'dotenv/config';
 import http from 'http';
 
 // Helpers
-import { helperCleanupOldScreenshots } from './helpers/cleanup-screenshots.js';
+import { helperCleanupOldScreenshots } from './src/helpers/cleanup-screenshots.js';
 
 /**
  * Set default environment variables if not already defined
@@ -35,7 +35,7 @@ if (!process.env.NODE_ENV) {
 }
 
 // Web server application
-import app from './app.js';
+import { expressApp } from './src/app.js';
 
 // Destructure environment variables for easier access
 const { PORT, HOST, NODE_ENV } = process.env;
@@ -44,38 +44,37 @@ const { PORT, HOST, NODE_ENV } = process.env;
  * Configure Express application settings
  * These settings are available via app.get('setting') throughout the application
  */
-app.set('env', NODE_ENV); // Set the environment in the app
-app.set('port', PORT); // Set the port in the app
-app.set('host', HOST); // Set the host in the app
+expressApp.set('env', NODE_ENV); // Set the environment in the app
+expressApp.set('port', PORT); // Set the port in the app
+expressApp.set('host', HOST); // Set the host in the app
 
 /**
  * Create HTTP server using our Express application
  * This allows for potential future upgrades (like WebSockets) without changing the app
  */
-const server = http.createServer(app);
+const server = http.createServer(expressApp);
 
 /**
  * Start the server and initialize scheduled tasks
  * Listens on the specified port and host
  */
-server.listen(PORT, HOST, () => {
+server.listen(PORT, HOST, async () => {
   console.log(`Server started on port http://${HOST}:${PORT} in ${NODE_ENV} mode.`);
 
   /**
    * Initial screenshot cleanup on server start
    * Removes old screenshot files that may have accumulated while the server was offline
    */
-  helperCleanupOldScreenshots()
-    .then(({ deleted }) => {
-      if (deleted > 0) {
-        console.log(`Initial cleanup: Removed ${deleted} old screenshot files`);
-      } else {
-        console.log('Initial cleanup: No old screenshot files to remove');
-      }
-    })
-    .catch(error => {
-      console.error('Error during initial screenshot cleanup:', error);
-    });
+  try {
+    const { deleted } = await helperCleanupOldScreenshots();
+    if (deleted > 0) {
+      console.log(`Initial cleanup: Removed ${deleted} old screenshot files`);
+    } else {
+      console.log('Initial cleanup: No old screenshot files to remove');
+    }
+  } catch (error) {
+    console.error('Error during initial screenshot cleanup:', error);
+  }
 
   /**
    * Set up scheduled cleanup to run periodically
@@ -106,6 +105,37 @@ process.on('uncaughtException', (error) => {
  * Global error handling for unhandled promise rejections
  * Prevents the server from crashing when promises are rejected without a catch handler
  */
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason, _promise) => {
   console.error('Unhandled promise rejection:', reason);
 });
+
+/**
+ * Graceful shutdown handlers
+ * Ensures the server closes cleanly on termination signals
+ * Allows pending requests to complete before shutting down
+ */
+process.on('SIGTERM', gracefulShutdown('SIGTERM'));
+process.on('SIGINT', gracefulShutdown('SIGINT'));
+
+/**
+ * Graceful shutdown function
+ * Closes server and exits process after completing pending connections
+ * @param {string} signal - The signal that triggered the shutdown
+ * @returns {Function} - Signal handler function
+ */
+function gracefulShutdown(signal) {
+  return () => {
+    console.log(`${signal} received. Starting graceful shutdown...`);
+    
+    server.close(() => {
+      console.log('Server closed. All connections were properly ended.');
+      process.exit(0);
+    });
+    
+    // Force shutdown after 10 seconds if connections haven't closed
+    setTimeout(() => {
+      console.warn('Forcing server shutdown after timeout.');
+      process.exit(1);
+    }, 10000);
+  };
+}

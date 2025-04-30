@@ -1,0 +1,161 @@
+// Node third-party modules
+import express from 'express';
+
+// Initialize Express Router
+const router = express.Router();
+
+// Import controller for health check
+import { controllerApiHealth } from '../../controllers/api/app/health.js';
+
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Checks system status
+ *     description: Verifies that API and Puppeteer are operational
+ *     tags: [App]
+ *     security:
+ *       - basicAuth: []
+ *     responses:
+ *       200:
+ *         description: API and browser are working
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     project:
+ *                       type: object
+ *                       properties:
+ *                         name:
+ *                           type: string
+ *                           example: "scrapereq"
+ *                         description:
+ *                           type: string
+ *                           example: "Web scraping API using puppeteer"
+ *                         version:
+ *                           type: string
+ *                           example: "1.0.0"
+ *                         author:
+ *                           type: string
+ *                           example: "Erdinç Cürebal"
+ *                         license:
+ *                           type: string
+ *                           example: "ISC"
+ *                     app:
+ *                       type: object
+ *                       properties:
+ *                         environment:
+ *                           type: string
+ *                           example: "development"
+ *                         port:
+ *                           type: string
+ *                           example: "3000"
+ *                         host:
+ *                           type: string
+ *                           example: "localhost"
+ *                         uptime:
+ *                           type: string
+ *                           example: "2m 24s"
+ *                         pid:
+ *                           type: number
+ *                           example: 2160
+ *                         puppeteer:
+ *                           type: object
+ *                           properties:
+ *                             success:
+ *                               type: boolean
+ *                               example: true
+ *                             data:
+ *                               type: object
+ *                               properties:
+ *                                 testUrl:
+ *                                   type: string
+ *                                   description: URL used for browser testing
+ *                                   example: "https://www.google.com"
+ *                                 resultUrl:
+ *                                   type: string
+ *                                   description: Final URL after navigation
+ *                                   example: "https://www.google.com/"
+ *                                 resultTitle:
+ *                                   type: string
+ *                                   description: Page title after navigation
+ *                                   example: "Google"
+ *                                 message:
+ *                                   type: string
+ *                                   description: Status message about browser health
+ *                                   example: "Puppeteer is working correctly."
+ *                     system:
+ *                       type: object
+ *                       properties:
+ *                         timestamp:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2025-04-19T17:08:23.717Z"
+ *                         timezone:
+ *                           type: string
+ *                           example: "Europe/Istanbul"
+ *                         platform:
+ *                           type: string
+ *                           example: "win32"
+ *                         arch:
+ *                           type: string
+ *                           example: "x64"
+ *                         release:
+ *                           type: string
+ *                           example: "10.0.19045"
+ *                         cpus:
+ *                           type: number
+ *                           example: 12
+ *                         totalmem:
+ *                           type: string
+ *                           example: "16331.95"
+ *                         freemem:
+ *                           type: string
+ *                           example: "9424.20"
+ *       500:
+ *         description: System error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "lorem is not a function"
+ *                     stack:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: [
+ *                         "string",
+ *                       ]
+ *                     code:
+ *                       type: string
+ *                       description: Standardized error code for easier error handling
+ *                       example: "ERROR_UNKNOWN"
+ *                     screenshotUrl:
+ *                       type: string
+ *                       description: URL to the error screenshot if errorScreenshot was enabled
+ *                       example: "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
+ *                     proxy:
+ *                       type: string
+ *                       description: Proxy details used during the failed request
+ *                       example: "--proxy-server=http://proxy1.example.com:8080"
+ */
+router.get("/health", controllerApiHealth);
+
+// Export the router for use in the application
+export const routerApiApp = router;

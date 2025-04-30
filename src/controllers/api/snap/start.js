@@ -18,13 +18,13 @@ import {
     DEFAULT_RESPONSE_TYPE,
     RESPONSE_TYPE_NAMES,
     SELECTOR_TYPE_NAMES,
-} from '../constants.js';
+} from '../../../constants.js';
 
 // Helper functions
-import { helperProxiesRandomGetOne } from '../helpers/proxies-random-get-one.js';
-import { helperValidatorsScraper } from '../helpers/validators.js';
-import { helperFilterSteps } from '../helpers/filter-steps.js';
-import { helperBrowserSemaphore } from '../helpers/browser-semaphore.js';
+import { helperProxiesRandomGetOne } from '../../../helpers/proxies-random-get-one.js';
+import { helperValidatorsScraper } from '../../../helpers/validators.js';
+import { helperFilterSteps } from '../../../helpers/filter-steps.js';
+import { helperBrowserSemaphore } from '../../../helpers/browser-semaphore.js';
 
 /**
  * Main scraper controller function
@@ -38,7 +38,7 @@ import { helperBrowserSemaphore } from '../helpers/browser-semaphore.js';
  * @throws {Error} - Throws an error if the request body validation fails
  * @throws {Error} - Throws an error if the browser or page instances cannot be created or closed
  */
-export async function controllerScraper(req, res, next) {
+export async function controllerApiSnapStart(req, res, next) {
     try {
         // Acquire browser semaphore lock
         await helperBrowserSemaphore.acquire();

@@ -11,181 +11,24 @@
  *     description: General operations and utilities
  */
 
+// Node core modules
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
 // Node third-party modules
 import express from 'express';
+import swaggerUi from 'swagger-ui-express';
 
 // Import basic authentication middleware
 import basicAuth from 'express-basic-auth';
 
 // Controller imports
-import { controllerScraper } from './controllers/scraper.js';
-import { controllerHealth } from './controllers/health.js';
-import { controllerAppShutdown } from './controllers/app-shutdown.js';
-import { controllerOsRestart } from './controllers/os-restart.js';
-
-// Import constants
-import { AUTH_DEFAULTS } from './constants.js';
+import { controllerApiSnapStart } from '../../controllers/api/snap/start.js';
+import { controllerApiSnapTest } from '../../controllers/api/snap/test.js';
 
 // Initialize Express Router
 const router = express.Router();
-
-// Basic auth middleware - Secures all routes with username/password authentication
-// Uses environment variables or defaults to defined constants if not set
-router.use(basicAuth({
-    users: {
-        [process.env.AUTH_USERNAME || AUTH_DEFAULTS.USERNAME]: process.env.AUTH_PASSWORD || AUTH_DEFAULTS.PASSWORD
-    }
-}));
-
-/**
- * @swagger
- * /health:
- *   get:
- *     summary: Checks system status
- *     description: Verifies that API and Puppeteer are operational
- *     tags: [Health]
- *     security:
- *       - basicAuth: []
- *     responses:
- *       200:
- *         description: API and browser are working
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     project:
- *                       type: object
- *                       properties:
- *                         name:
- *                           type: string
- *                           example: "scrapereq"
- *                         description:
- *                           type: string
- *                           example: "Web scraping API using puppeteer"
- *                         version:
- *                           type: string
- *                           example: "1.0.0"
- *                         author:
- *                           type: string
- *                           example: "Erdinç Cürebal"
- *                         license:
- *                           type: string
- *                           example: "ISC"
- *                     app:
- *                       type: object
- *                       properties:
- *                         environment:
- *                           type: string
- *                           example: "development"
- *                         port:
- *                           type: string
- *                           example: "3000"
- *                         host:
- *                           type: string
- *                           example: "localhost"
- *                         uptime:
- *                           type: string
- *                           example: "2m 24s"
- *                         pid:
- *                           type: number
- *                           example: 2160
- *                         puppeteer:
- *                           type: object
- *                           properties:
- *                             success:
- *                               type: boolean
- *                               example: true
- *                             data:
- *                               type: object
- *                               properties:
- *                                 testUrl:
- *                                   type: string
- *                                   description: URL used for browser testing
- *                                   example: "https://www.google.com"
- *                                 resultUrl:
- *                                   type: string
- *                                   description: Final URL after navigation
- *                                   example: "https://www.google.com/"
- *                                 resultTitle:
- *                                   type: string
- *                                   description: Page title after navigation
- *                                   example: "Google"
- *                                 message:
- *                                   type: string
- *                                   description: Status message about browser health
- *                                   example: "Puppeteer is working correctly."
- *                     system:
- *                       type: object
- *                       properties:
- *                         timestamp:
- *                           type: string
- *                           format: date-time
- *                           example: "2025-04-19T17:08:23.717Z"
- *                         timezone:
- *                           type: string
- *                           example: "Europe/Istanbul"
- *                         platform:
- *                           type: string
- *                           example: "win32"
- *                         arch:
- *                           type: string
- *                           example: "x64"
- *                         release:
- *                           type: string
- *                           example: "10.0.19045"
- *                         cpus:
- *                           type: number
- *                           example: 12
- *                         totalmem:
- *                           type: string
- *                           example: "16331.95"
- *                         freemem:
- *                           type: string
- *                           example: "9424.20"
- *       500:
- *         description: System error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 data:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: "lorem is not a function"
- *                     stack:
- *                       type: array
- *                       items:
- *                         type: string
- *                       example: [
- *                         "string",
- *                       ]
- *                     code:
- *                       type: string
- *                       description: Standardized error code for easier error handling
- *                       example: "ERROR_UNKNOWN"
- *                     screenshotUrl:
- *                       type: string
- *                       description: URL to the error screenshot if errorScreenshot was enabled
- *                       example: "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
- *                     proxy:
- *                       type: string
- *                       description: Proxy details used during the failed request
- *                       example: "--proxy-server=http://proxy1.example.com:8080"
- */
-router.get("/health", controllerHealth);
 
 /**
  * @swagger
@@ -538,107 +381,7 @@ router.get("/health", controllerHealth);
  *                       description: Proxy details used during the failed request
  *                       example: "--proxy-server=http://proxy1.example.com:8080"
  */
-router.post("/", controllerScraper);
+router.post("/", controllerApiSnapStart);
 
-/**
- * @swagger
- * /app-shutdown:
- *   post:
- *     summary: Shuts down the application
- *     description: Terminates the current application process
- *     tags: [General]
- *     security:
- *       - basicAuth: []
- *     responses:
- *       200:
- *         description: Application shutdown initiated successfully
- *       500:
- *         description: Server error during shutdown
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 data:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: "lorem is not a function"
- *                     stack:
- *                       type: array
- *                       items:
- *                         type: string
- *                       example: [
- *                         "string",
- *                       ]
- *                     code:
- *                       type: string
- *                       description: Standardized error code for easier error handling
- *                       example: "ERROR_UNKNOWN"
- *                     screenshotUrl:
- *                       type: string
- *                       description: URL to the error screenshot if errorScreenshot was enabled
- *                       example: "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
- *                     proxy:
- *                       type: string
- *                       description: Proxy details used during the failed request
- *                       example: "--proxy-server=http://proxy1.example.com:8080"
- */
-router.post("/app-shutdown", controllerAppShutdown);
-
-/**
- * @swagger
- * /os-restart:
- *   post:
- *     summary: Restarts the operating system
- *     description: Initiates an operating system restart
- *     tags: [General]
- *     security:
- *       - basicAuth: []
- *     responses:
- *       200:
- *         description: OS restart initiated successfully
- *       500:
- *         description: Server error during restart
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 data:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: "lorem is not a function"
- *                     stack:
- *                       type: array
- *                       items:
- *                         type: string
- *                       example: [
- *                         "string",
- *                       ]
- *                     code:
- *                       type: string
- *                       description: Standardized error code for easier error handling
- *                       example: "ERROR_UNKNOWN"
- *                     screenshotUrl:
- *                       type: string
- *                       description: URL to the error screenshot if errorScreenshot was enabled
- *                       example: "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
- *                     proxy:
- *                       type: string
- *                       description: Proxy details used during the failed request
- *                       example: "--proxy-server=http://proxy1.example.com:8080"
- */
-router.post("/os-restart", controllerOsRestart);
-
-// Export the router for use in the main application
-export default router;
+// Export the router for use in the application
+export const routerApiSnap = router;
