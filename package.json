@@ -5,7 +5,16 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node ."
+    "start": "node start.js",
+    "dev": "node start.js dev",
+    "prod": "node start.js prod",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "test": "node start.js test",
+    "docker:build": "docker build -t scrapereq .",
+    "docker:run": "docker run -p 3000:3000 -d --name scrapereq-container scrapereq",
+    "docker:start": "node start.js docker"
   },
   "keywords": [
     "puppeteer",
@@ -29,5 +38,12 @@
     "puppeteer-extra": "^3.3.6",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.25.1",
+    "eslint-config-prettier": "^10.1.2",
+    "jest": "^29.7.0",
+    "prettier": "^3.5.3",
+    "supertest": "^7.1.0"
   }
 }

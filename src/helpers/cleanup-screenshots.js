@@ -18,7 +18,7 @@ function extractDateFromFilename(filename) {
     try {
         // Match full date pattern in our screenshot filenames (including time)
         const dateMatch = filename.match(/-([\d]{4})-([\d]{2})-([\d]{2})T([\d]{2})-([\d]{2})-([\d]{2})-/);
-        if (!dateMatch) return null;
+        if (!dateMatch) return null
 
         const year = parseInt(dateMatch[1]);
         const month = parseInt(dateMatch[2]) - 1; // JS months are 0-based
@@ -33,14 +33,14 @@ function extractDateFromFilename(filename) {
         const date = new Date(timestamp);
 
         // Check if date is valid
-        if (isNaN(date.getTime())) return null;
+        if (isNaN(date.getTime())) return null
 
         return date;
     } catch (error) {
         console.error(`Error extracting date from filename ${filename}:`, error);
         return null;
-    };
-};
+    }
+}
 
 /**
  * Cleans up screenshot files older than the specified retention period
@@ -59,7 +59,7 @@ export async function helperCleanupOldScreenshots(retentionHours = 24) {
         if (!fs.existsSync(screenshotDir)) {
             console.log(`Screenshot directory does not exist at path: ${screenshotDir}. Nothing to clean up.`);
             return { deleted: 0, errors: 0 };
-        };
+        }
 
         // Calculate cutoff time (current time minus retention period)
         const now = new Date();
@@ -79,7 +79,7 @@ export async function helperCleanupOldScreenshots(retentionHours = 24) {
             // Only process screenshot PNG files
             if (!(file.startsWith('success-') || file.startsWith('error-')) || !file.endsWith('.png')) {
                 continue;
-            };
+            }
 
             const filePath = path.join(screenshotDir, file);
 
@@ -108,17 +108,17 @@ export async function helperCleanupOldScreenshots(retentionHours = 24) {
                     console.log(`Deleted old screenshot: ${file} (created: ${fileCreationTime.toISOString()})`);
                 } else {
                     console.log(`Keeping file: ${file} (created: ${fileCreationTime.toISOString()})`);
-                };
+                }
             } catch (error) {
                 errorCount++;
                 console.error(`Error processing file ${file}:`, error.message);
-            };
-        };
+            }
+        }
 
         console.log(`Screenshot cleanup completed. Deleted ${deletedCount} files. Errors: ${errorCount}`);
         return { deleted: deletedCount, errors: errorCount };
     } catch (error) {
         console.error('Error during screenshot cleanup:', error);
         throw error;
-    };
-};
+    }
+}

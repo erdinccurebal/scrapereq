@@ -38,7 +38,7 @@ import { helperBrowserSemaphore } from '../../../helpers/browser-semaphore.js';
  * @throws {Error} - Throws an error if the request body validation fails
  * @throws {Error} - Throws an error if the browser or page instances cannot be created or closed
  */
-export async function controllerApiSnapStart(req, res, next) {
+export async function controllerApiScrapeStart(req, res, next) {
     try {
         // Acquire browser semaphore lock
         await helperBrowserSemaphore.acquire();
@@ -95,7 +95,7 @@ export async function controllerApiSnapStart(req, res, next) {
                     this.timeout = timeout;
                     this.speedMode = speedMode;
                     this.currentStep = 0;
-                };
+                }
 
                 /**
                  * Hook executed before all steps run
@@ -108,7 +108,7 @@ export async function controllerApiSnapStart(req, res, next) {
 
                     console.log('Starting scraper execution:', flow.title);
                     console.log(`Speed Mode: ${this.speedMode}ms delay`);
-                };
+                }
 
                 /**
                  * Hook executed before each individual step
@@ -125,8 +125,8 @@ export async function controllerApiSnapStart(req, res, next) {
                     } catch (error) {
                         error.message = `Error at step ${this.currentStep}: ${error.message}`;
                         throw error;
-                    };
-                };
+                    }
+                }
 
                 /**
                  * Override step execution to catch errors with step index information
@@ -142,8 +142,8 @@ export async function controllerApiSnapStart(req, res, next) {
                     } catch (error) {
                         error.message = `Error executing step ${this.currentStep} (${step.type}): ${error.message}`;
                         throw error;
-                    };
-                };
+                    }
+                }
 
                 /**
                  * Hook executed after each individual step
@@ -161,14 +161,14 @@ export async function controllerApiSnapStart(req, res, next) {
                         if (this.speedMode > 0) {
                             console.log(`Applying speed mode delay: ${this.speedMode}ms`);
                             await new Promise(resolve => setTimeout(resolve, this.speedMode));
-                        };
+                        }
 
                         console.log(`Successfully completed step ${this.currentStep}: ${step.type}`);
                     } catch (error) {
                         error.message = `Error after step ${this.currentStep}: ${error.message}`;
                         throw error;
-                    };
-                };
+                    }
+                }
 
                 /**
                  * Hook executed after all steps are completed
@@ -179,7 +179,7 @@ export async function controllerApiSnapStart(req, res, next) {
                 async afterAllSteps(flow) {
                     await super.afterAllSteps(flow);
                     console.log(`Scraper execution completed. Total steps executed: ${this.currentStep}`);
-                };
+                }
             }
 
             // Launch browser and create a new page
@@ -211,7 +211,7 @@ export async function controllerApiSnapStart(req, res, next) {
                 for (const selector of selectors) {
                     const selectorValue = await processSelectorData({ page, selector });
                     selectorResults[selector.key] = selectorValue;
-                };
+                }
 
                 // Create a structured response with selector results
                 result = {
@@ -224,14 +224,14 @@ export async function controllerApiSnapStart(req, res, next) {
                 // Add proxy information to the response if available
                 if (getProxy) {
                     result.data.proxy = getProxy;
-                };
+                }
 
                 // Add success screenshot URL if enabled
                 if (successScreenshot && page) {
                     const { screenshotUrl } = await getScreenshotUrl({ page, type: 'success' });
                     result.data.screenshotUrl = screenshotUrl;
-                };
-            };
+                }
+            }
 
             await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
 
@@ -242,11 +242,11 @@ export async function controllerApiSnapStart(req, res, next) {
             if (responseType === RESPONSE_TYPE_NAMES.JSON && errorScreenshot && page) {
                 const { screenshotUrl } = await getScreenshotUrl({ page, type: 'error' });
                 error.screenshotUrl = screenshotUrl;
-            };
+            }
 
             if (getProxy) {
                 error.proxy = getProxy;
-            };
+            }
 
             await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
 
@@ -254,15 +254,15 @@ export async function controllerApiSnapStart(req, res, next) {
         } finally {
             if (!successScreenshot && !errorScreenshot) {
                 await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
-            };
-        };
+            }
+        }
     } catch (error) {
         next(error); // Pass the error to the next middleware for centralized error handling
     } finally {
         // Release the browser semaphore lock
         helperBrowserSemaphore.release();
-    };
-};
+    }
+}
 
 /**
  * Validates the request body against the defined schema
@@ -281,14 +281,14 @@ function reqBodyValidation({ req, res }) {
         if (error) {
             res.status(400);
             throw new Error(error);
-        };
+        }
 
         return { validateValue: value }; // Return the validated request body
     } catch (error) {
         error.message = `${error.message} - Code: ERROR_REQUEST_BODY_VALIDATION`;
         throw error;
-    };
-};
+    }
+}
 
 /**
  * Assigns default values to the approved request body data
@@ -331,8 +331,8 @@ function assignDefaultDataToApprovedBodyData({ validateValue }) {
     } catch (error) {
         error.message = `${error.message} - Code: ERROR_DEFAULT_DATA_ASSIGNMENT`;
         throw error;
-    };
-};
+    }
+}
 
 /**
  * Generates browser launch options and configures proxy settings
@@ -377,11 +377,11 @@ function generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxy
         const chromePath = process.env.CHROME_PATH;
         if (chromePath) {
             launchOptions.executablePath = chromePath;
-        };
+        }
     } catch (error) {
         error.message = `${error.message} - Code: ERROR_LAUNCH_OPTIONS_GENERATION`;
         throw error;
-    };
+    }
 
     try {
         // Check if the access password is provided and matches the environment variable
@@ -392,7 +392,7 @@ function generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxy
         if (!checkAccessPasswordWithoutProxy && (!proxies || proxies?.length == 0)) {
             res.status(401);
             throw new Error("Access denied. Proxy is required for this request.");
-        };
+        }
 
         // Proxies setup if provided
         // This allows for rotating proxies or specific proxy configurations
@@ -400,7 +400,7 @@ function generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxy
             getProxy = helperProxiesRandomGetOne({ proxies });
             const proxyServer = `--proxy-server=${getProxy.protocol || "http"}://${getProxy.server}:${getProxy.port}`;
             launchOptions.args.push(proxyServer);
-        };
+        }
 
         // Proxy authentication if enabled and credentials are provided
         // This allows for authentication with the proxy server
@@ -410,15 +410,15 @@ function generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxy
                 username: proxyAuth.username,
                 password: proxyAuth.password,
             };
-        };
+        }
 
     } catch (error) {
         error.message = `${error.message} - Code: ERROR_PROXY_SETUP`;
         throw error;
-    };
+    }
 
     return { launchOptions, getProxy, pageAuthenticateEnabled, pageAuthenticateParams }; // Return the launch options and proxy information
-};
+}
 
 /**
  * Sets up the page with general configurations
@@ -437,7 +437,7 @@ async function setPageGeneral({ page, acceptLanguage, userAgent, pageAuthenticat
         // Proxy authentication if enabled and credentials are provided
         if (pageAuthenticateEnabled) {
             await page.authenticate(pageAuthenticateParams);
-        };
+        }
 
         // Set timeout values for better reliability
         page.setDefaultTimeout(TIMEOUT_MODES[timeoutMode]);
@@ -452,8 +452,8 @@ async function setPageGeneral({ page, acceptLanguage, userAgent, pageAuthenticat
     } catch (error) {
         error.message = `${error.message} - Code: ERROR_PAGE_GENERAL_SETUP`;
         throw error;
-    };
-};
+    }
+}
 
 /**
  * Process selector data based on selector type (FULL, CSS, XPATH)
@@ -474,7 +474,7 @@ async function processSelectorData({ page, selector }) {
             return await page.$eval(value, (element) => {
                 if (!element) {
                     throw new Error("Element not found!");
-                };
+                }
 
                 // Get both innerHTML and textContent for more reliable data extraction
                 const innerHTML = element.innerHTML || "";
@@ -483,7 +483,7 @@ async function processSelectorData({ page, selector }) {
                 // If innerHTML is empty or just whitespace but textContent has content, return textContent
                 if (!innerHTML.trim() && textContent.trim()) {
                     return textContent;
-                };
+                }
 
                 return innerHTML;
             });
@@ -503,16 +503,16 @@ async function processSelectorData({ page, selector }) {
                 // If innerHTML is empty or just whitespace but textContent has content, return textContent
                 if (!innerHTML.trim() && textContent.trim()) {
                     return textContent;
-                };
+                }
 
                 return innerHTML;
             }, value);
-        };
+        }
     } catch (error) {
         error.message = `${error.message} - Code: ERROR_SELECTOR_PROCESSING - Type: ${type} - Key: ${key} - Value: ${value}`;
         throw error;
-    };
-};
+    }
+}
 
 /**
  * Generate a URL for accessing the screenshot from the web application
@@ -530,7 +530,7 @@ async function getScreenshotUrl({ page, type }) {
         // Create directory if it doesn't exist
         if (!fs.existsSync(screenshotsDir)) {
             fs.mkdirSync(screenshotsDir, { recursive: true });
-        };
+        }
 
         // Generate unique filename with timestamp
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -548,7 +548,7 @@ async function getScreenshotUrl({ page, type }) {
                     }).catch((error) => {
                         reject(error);
                     });
-            }, 500)
+            }, 500);
         });
         console.log(`${type} screenshot taken and saved at: ${savedFilePath}`);
 
@@ -562,8 +562,8 @@ async function getScreenshotUrl({ page, type }) {
     } catch (error) {
         error.message = `${error.message} - Code: ERROR_SCREENSHOT_URL_GENERATION - Type: ${type}`;
         throw error;
-    };
-};
+    }
+}
 
 /**
  * Safely closes browser and page instances, handling any potential errors
@@ -576,9 +576,9 @@ async function getScreenshotUrl({ page, type }) {
 async function exitBrowserAndPage(browser, page) {
     if (page) {
         await page.close().catch(error => console.error("Error closing page:", error));
-    };
+    }
 
     if (browser) {
         await browser.close().catch(error => console.error("Error closing browser:", error));
-    };
-};
+    }
+}

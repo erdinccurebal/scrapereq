@@ -5,8 +5,8 @@
  * Sets up environment variables, server configuration, and scheduled tasks.
  */
 
-// Load environment variables from .env file
-import 'dotenv/config';
+// Load environment variables from .env file and initialize config
+import { config } from './src/config.js';
 
 // Node core modules
 import http from 'http';
@@ -14,39 +14,16 @@ import http from 'http';
 // Helpers
 import { helperCleanupOldScreenshots } from './src/helpers/cleanup-screenshots.js';
 
-/**
- * Set default environment variables if not already defined
- * These provide fallback values for critical configuration
- */
-
-// Set default port if not specified in environment variables
-if (!process.env.PORT) {
-  process.env.PORT = 3000;
-}
-
-// Set default host if not specified in environment variables
-if (!process.env.HOST) {
-  process.env.HOST = 'localhost';
-}
-
-// Set default environment if not specified in environment variables
-if (!process.env.NODE_ENV) {
-  process.env.NODE_ENV = 'development';
-}
-
 // Web server application
 import { expressApp } from './src/app.js';
-
-// Destructure environment variables for easier access
-const { PORT, HOST, NODE_ENV } = process.env;
 
 /**
  * Configure Express application settings
  * These settings are available via app.get('setting') throughout the application
  */
-expressApp.set('env', NODE_ENV); // Set the environment in the app
-expressApp.set('port', PORT); // Set the port in the app
-expressApp.set('host', HOST); // Set the host in the app
+expressApp.set('env', config.server.env); // Set the environment in the app
+expressApp.set('port', config.server.port); // Set the port in the app
+expressApp.set('host', config.server.host); // Set the host in the app
 
 /**
  * Create HTTP server using our Express application
@@ -58,8 +35,8 @@ const server = http.createServer(expressApp);
  * Start the server and initialize scheduled tasks
  * Listens on the specified port and host
  */
-server.listen(PORT, HOST, async () => {
-  console.log(`Server started on port http://${HOST}:${PORT} in ${NODE_ENV} mode.`);
+server.listen(config.server.port, config.server.host, async () => {
+  console.log(`Server started on port http://${config.server.host}:${config.server.port} in ${config.server.env} mode.`);
 
   /**
    * Initial screenshot cleanup on server start

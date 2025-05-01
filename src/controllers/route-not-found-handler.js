@@ -21,5 +21,5 @@ export function controllerRouteNotFoundHandler(req, res, next) {
     error.message = `${error.message} - Code: ERROR_ROUTE_NOT_FOUND`; // Append a custom error code for easier identification
     // Forward the error to the central error handler
     next(error);
-  };
-};
+  }
+}

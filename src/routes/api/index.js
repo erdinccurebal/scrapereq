@@ -9,8 +9,6 @@
  *     description: Application operations
  *   - name: Os
  *     description: Operating system operations
- *   - name: Other
- *     description: Other operations
  */
 
 // Node core modules
@@ -25,8 +23,11 @@ import swaggerUi from 'swagger-ui-express';
 // Import basic authentication middleware
 import basicAuth from 'express-basic-auth';
 
+// Controllers imports
+import { controllerApiIndex } from '../../controllers/api/index.js';
+
 // Routes imports
-import { routerApiSnap } from './snap.js';
+import { routerApiScrape } from './scrape.js';
 import { routerApiOs } from './os.js';
 import { routerApiApp } from './app.js';
 
@@ -55,8 +56,8 @@ if (!fs.existsSync(TMP_DIR)) {
         console.log(`Created TMP_DIR at: ${TMP_DIR}`);
     } catch (error) {
         console.error(`Failed to create TMP_DIR at ${TMP_DIR}:`, error);
-    };
-};
+    }
+}
 
 // Initialize Express Router
 const router = express.Router();
@@ -81,6 +82,9 @@ router.use(
  */
 router.use('/tmp', express.static(TMP_DIR));
 
+// Define API index route
+router.get('/', controllerApiIndex);
+
 // Basic auth middleware - Secures all routes with username/password authentication
 // Uses environment variables or defaults to defined constants if not set
 router.use(basicAuth({
@@ -90,10 +94,9 @@ router.use(basicAuth({
 }));
 
 // Define API routes
+router.use("/scrape", routerApiScrape);
 router.use("/app", routerApiApp);
-router.use("/snap", routerApiSnap);
 router.use("/os", routerApiOs);
-
 
 // Export the router for use in the application
 export const routerApi = router;

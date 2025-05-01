@@ -32,7 +32,7 @@ export const helperBrowserSemaphore = {
             } else {
                 console.log('Browser is busy. Request added to queue.');
                 this.queue.push(resolve);
-            };
+            }
         });
     },
     
@@ -49,6 +49,6 @@ export const helperBrowserSemaphore = {
         } else {
             this.isLocked = false;
             console.log('Browser lock released. No pending requests.');
-        };
+        }
     }
 };

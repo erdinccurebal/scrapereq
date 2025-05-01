@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  # Main application service
+  scrapereq:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scrapereq-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - WEB_ADDRESS=http://localhost:3000
+      - AUTH_USERNAME=admin
+      - AUTH_PASSWORD=changeme
+      - TMP_DIR=/app/tmp
+    volumes:
+      - scrapereq-data:/app/tmp
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/app/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - scrapereq-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  # Proxy service example (optional)
+  # Uncomment if you want to use a proxy for outgoing requests
+  # proxy:
+  #   image: wernight/dante
+  #   container_name: scrapereq-proxy
+  #   restart: unless-stopped
+  #   ports:
+  #     - "1080:1080"
+  #   environment:
+  #     - PROXY_USER=proxyuser
+  #     - PROXY_PASSWORD=proxypass
+  #   networks:
+  #     - scrapereq-network
+
+# Custom network for containers
+networks:
+  scrapereq-network:
+    driver: bridge
+
+# Persistent volume for data storage
+volumes:
+  scrapereq-data:
+    driver: local

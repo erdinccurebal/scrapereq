@@ -9,6 +9,9 @@
 // Node third-party modules
 import express from 'express';
 
+// Import configuration
+import { config } from './config.js';
+
 // Import centralized routes
 import { routerParent } from './routes/index.js';
 
@@ -27,6 +30,9 @@ const app = express();
 
 // Hide Express information - Remove X-Powered-By header for security
 app.disable('x-powered-by');
+
+// Store configuration in app locals for access throughout the application
+app.locals.config = config;
 
 /**
  * Use Helmet to customize HTTP headers for enhanced security

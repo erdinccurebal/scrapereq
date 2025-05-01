@@ -10,7 +10,6 @@
  * @param {Response} res - Express response object
  * @param {Function} _next - Express next middleware function
  * @returns {void} - Sends a JSON response with the error details
- * @throws {void} - Does not throw any errors, but sends a response to the client
  */
 export function controllerErrorHandler(error, _req, res, _next) {
   // Log the complete error to server console for debugging
@@ -34,65 +33,59 @@ export function controllerErrorHandler(error, _req, res, _next) {
   } else {
     // Default message if error doesn't contain one
     result.data.message = 'Internal Server Error';
-  };
+  }
 
   // Include stack trace only in development environment
   if (process.env.NODE_ENV === 'development' && error.stack) {
     result.data.stack = formatStackTrace(error.stack);
-  };
+  }
 
   // Add screenshot path to data object (if exists)
   if (error.screenshotUrl) {
     result.data.screenshotUrl = error.screenshotUrl;
-  };
+  }
 
   if (result.data.message.includes("Code: ERROR_")) {
     result.data.code = "ERROR_" + result.data.message.split("Code: ERROR_")[1].split(" ")[0];
   } else {
     result.data.code = "ERROR_UNKNOWN";
-  };
+  }
 
   if (error.proxy) {
     result.data.proxy = error.proxy;
-  };
+  }
 
   // Send response with appropriate status code
   // Use existing status code if set, otherwise default to 500
   res.status(res.statusCode || 500).json(result);
-};
+}
 
 /**
  * Format validation error messages to be more user-friendly
  * 
  * @param {Error} error - Validation error object
- * @return {string} Formatted validation error message
- * @throws {null} If error is not provided
- * @return {null} Returns null if no error message is available
- * @return {string} Returns a string with formatted error message
- * @throws {string} If error message is not provided
+ * @returns {string} Formatted validation error message
  */
 function formatValidationError(error) {
   // For Joi validation errors
   if (error.details && Array.isArray(error.details)) {
     return error.details.map(detail => formatErrorMessage(detail.message)).join(', ');
-  };
+  }
 
   // For custom validation errors
   if (error.message && error.message.includes('ValidationError')) {
     // Clean up the validation error message
     return formatErrorMessage(error.message.replace('ValidationError: ', ''));
-  };
+  }
 
   return formatErrorMessage(error.message) || 'Validation failed';
-};
+}
 
 /**
  * Format any error message to remove escape characters and improve readability
  * 
  * @param {string} message - The error message to format
- * @return {string} Cleaned error message
- * @throws {null} If message is not provided
- * @return {null} Returns null if no message is available
+ * @returns {string} Cleaned error message
  */
 function formatErrorMessage(message) {
   if (!message) return '';
@@ -101,17 +94,14 @@ function formatErrorMessage(message) {
     .replace(/\\"/g, '"')  // Replace escaped quotes with regular quotes
     .replace(/"/g, '\'')   // Replace double quotes with single quotes
     .trim();
-};
+}
 
 /**
  * Format stack trace for error responses
  * Simple version without complex formatting
  * 
  * @param {string} stackTrace - Raw stack trace string
- * @return {Array} Basic stack trace as array of lines
- * @throws {null} If stack trace is not provided
- * @return {null} Returns null if no stack trace is available
- * @return {Array} Returns an array of formatted stack trace lines
+ * @returns {Array} Basic stack trace as array of lines
  */
 function formatStackTrace(stackTrace) {
   if (!stackTrace) return null;
@@ -121,4 +111,4 @@ function formatStackTrace(stackTrace) {
     .split('\n')
     .map(line => line.trim())
     .slice(0, 10);
-};
+}

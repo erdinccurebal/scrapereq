@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -20,8 +20,7 @@ pids
 lib-cov
 
 # Coverage directory used by tools like istanbul
-coverage
-*.lcov
+coverage/
 
 # nyc test coverage
 .nyc_output
@@ -74,10 +73,10 @@ web_modules/
 
 # dotenv environment variable files
 .env
+.env.local
 .env.development.local
 .env.test.local
 .env.production.local
-.env.local
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -89,7 +88,7 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
+dist/
 
 # Gatsby files
 .cache/
@@ -126,7 +125,7 @@ dist
 .tern-port
 
 # Stores VSCode versions used for testing VSCode extensions
-.vscode-test
+.vscode/
 
 # yarn v2
 .yarn/cache
@@ -139,3 +138,33 @@ dist
 .vscode/
 tmp/*
 !tmp/README.md
+
+# Node.js dependencies
+package-lock.json
+npm-debug.log
+yarn.lock
+
+# Environment variables
+.env.development
+.env.test
+.env.production
+
+# Build output
+build/
+
+# IDE specific files
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Temporary directories
+.tmp/
+
+# Screenshot files (except example ones in tmp/browser-records)
+tmp/*.png
+tmp/*.jpg
+tmp/*.jpeg

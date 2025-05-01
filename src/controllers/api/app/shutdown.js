@@ -11,7 +11,7 @@
  * @returns {Object} JSON response confirming shutdown initiation
  * @throws {Error} If an error occurs during the shutdown process
  */
-export function controllerAppShutdown(_req, res, next) {
+export function controllerApiAppShutdown(_req, res, next) {
   try {
     console.log('Application shutdown request received. Shutting down in 3 seconds...');
 
@@ -31,5 +31,5 @@ export function controllerAppShutdown(_req, res, next) {
   } catch (error) {
     error.message = `${error.message} - Code: ERROR_APP_SHUTDOWN`;
     next(error); // Pass any errors to the global error handler
-  };
-};
+  }
+}

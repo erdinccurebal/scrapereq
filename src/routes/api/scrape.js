@@ -1,42 +1,21 @@
-/**
- * Routes Configuration
- * Centralizes all route definitions for the application
- * @swagger
- * tags:
- *   - name: Health
- *     description: API status check operations
- *   - name: Scraper
- *     description: Web scraping operations
- *   - name: General
- *     description: General operations and utilities
- */
-
-// Node core modules
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-
 // Node third-party modules
 import express from 'express';
-import swaggerUi from 'swagger-ui-express';
-
-// Import basic authentication middleware
-import basicAuth from 'express-basic-auth';
 
 // Controller imports
-import { controllerApiSnapStart } from '../../controllers/api/snap/start.js';
-import { controllerApiSnapTest } from '../../controllers/api/snap/test.js';
+import { controllerApiScrapeStart } from '../../controllers/api/scrape/start.js';
+import { controllerApiScrapeTest } from '../../controllers/api/scrape/test.js';
+import { controllerApiScrapeMetrics, controllerApiScrapeMetricsReset } from '../../controllers/api/scrape/metrics.js';
 
 // Initialize Express Router
 const router = express.Router();
 
 /**
  * @swagger
- * /:
+ * /api/scrape/start:
  *   post:
  *     summary: Execute web scraping operations
  *     description: Perform web scraping based on defined steps and selectors
- *     tags: [Scraper]
+ *     tags: [Scrape]
  *     security:
  *       - basicAuth: []
  *     requestBody:
@@ -381,7 +360,180 @@ const router = express.Router();
  *                       description: Proxy details used during the failed request
  *                       example: "--proxy-server=http://proxy1.example.com:8080"
  */
-router.post("/", controllerApiSnapStart);
+router.post("/start", controllerApiScrapeStart);
+
+/**
+ * @swagger
+ * /api/scrape/test:
+ *   post:
+ *     summary: Test web scraping operations
+ *     description: Test web scraping configuration without executing full scrape
+ *     tags: [Scrape]
+ *     security:
+ *       - basicAuth: []
+ *     responses:
+ *       200:
+ *         description: Test completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       500:
+ *         description: Server error during test operation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "An unexpected error occurred during test operation"
+ *                     stack:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     code:
+ *                       type: string
+ *                       description: Standardized error code for easier error handling
+ *                       example: "ERROR_UNKNOWN"
+ */
+router.post("/test", controllerApiScrapeTest);
+
+/**
+ * @swagger
+ * /api/scrape/metrics:
+ *   get:
+ *     summary: Get scraping operation metrics
+ *     description: Retrieve performance and success metrics for scraping operations
+ *     tags: [Scrape]
+ *     security:
+ *       - basicAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: detailed
+ *         schema:
+ *           type: boolean
+ *         description: Whether to include detailed metrics (proxy, URL, response type breakdowns)
+ *     responses:
+ *       200:
+ *         description: Metrics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     operations:
+ *                       type: number
+ *                       example: 120
+ *                       description: Total number of scraping operations
+ *                     successful:
+ *                       type: number
+ *                       example: 105
+ *                       description: Number of successful operations
+ *                     failed:
+ *                       type: number
+ *                       example: 15
+ *                       description: Number of failed operations
+ *                     successRate:
+ *                       type: string
+ *                       example: "87.50%"
+ *                       description: Success rate as percentage
+ *                     averageDuration:
+ *                       type: string
+ *                       example: "1255ms"
+ *                       description: Average operation duration
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2025-05-01T12:30:45.123Z"
+ *                       description: Time when metrics were retrieved
+ *       500:
+ *         description: Server error retrieving metrics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Error retrieving metrics"
+ *                     code:
+ *                       type: string
+ *                       description: Standardized error code
+ *                       example: "ERROR_API_SCRAPE_METRICS"
+ */
+router.get("/metrics", controllerApiScrapeMetrics);
+
+/**
+ * @swagger
+ * /api/scrape/metrics/reset:
+ *   post:
+ *     summary: Reset scraping metrics
+ *     description: Clear all collected scraping metrics and start fresh
+ *     tags: [Scrape]
+ *     security:
+ *       - basicAuth: []
+ *     responses:
+ *       200:
+ *         description: Metrics reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Scraping metrics have been reset"
+ *       500:
+ *         description: Server error resetting metrics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Error resetting metrics"
+ *                     code:
+ *                       type: string
+ *                       description: Standardized error code
+ *                       example: "ERROR_API_SCRAPE_METRICS_RESET"
+ */
+router.post("/metrics/reset", controllerApiScrapeMetricsReset);
 
 // Export the router for use in the application
-export const routerApiSnap = router;
+export const routerApiScrape = router;

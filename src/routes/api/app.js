@@ -4,12 +4,13 @@ import express from 'express';
 // Initialize Express Router
 const router = express.Router();
 
-// Import controller for health check
-import { controllerApiHealth } from '../../controllers/api/app/health.js';
+// Import controllers
+import { controllerApiAppHealth } from '../../controllers/api/app/health.js';
+import { controllerApiAppShutdown } from '../../controllers/api/app/shutdown.js';
 
 /**
  * @swagger
- * /api/health:
+ * /api/app/health:
  *   get:
  *     summary: Checks system status
  *     description: Verifies that API and Puppeteer are operational
@@ -146,6 +147,48 @@ import { controllerApiHealth } from '../../controllers/api/app/health.js';
  *                       type: string
  *                       description: Standardized error code for easier error handling
  *                       example: "ERROR_UNKNOWN"
+ */
+router.get("/health", controllerApiAppHealth);
+
+/**
+ * @swagger
+ * /api/app/shutdown:
+ *   post:
+ *     summary: Shuts down the application
+ *     description: Terminates the current application process
+ *     tags: [App]
+ *     security:
+ *       - basicAuth: []
+ *     responses:
+ *       200:
+ *         description: Application shutdown initiated successfully
+ *       500:
+ *         description: Server error during shutdown
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "lorem is not a function"
+ *                     stack:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: [
+ *                         "string",
+ *                       ]
+ *                     code:
+ *                       type: string
+ *                       description: Standardized error code for easier error handling
+ *                       example: "ERROR_UNKNOWN"
  *                     screenshotUrl:
  *                       type: string
  *                       description: URL to the error screenshot if errorScreenshot was enabled
@@ -155,7 +198,7 @@ import { controllerApiHealth } from '../../controllers/api/app/health.js';
  *                       description: Proxy details used during the failed request
  *                       example: "--proxy-server=http://proxy1.example.com:8080"
  */
-router.get("/health", controllerApiHealth);
+router.post("/shutdown", controllerApiAppShutdown);
 
 // Export the router for use in the application
 export const routerApiApp = router;

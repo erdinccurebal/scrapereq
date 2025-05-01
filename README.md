@@ -38,6 +38,9 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 - **🔧 System Controls**: Application shutdown and OS restart endpoints
 - **💾 Persistent Storage**: Configurable screenshot directory for persistent storage across deployments
 - **🧹 Automatic Cleanup**: Automated cleanup of old screenshot files
+- **📈 Performance Metrics**: Track and analyze scraping performance with detailed metrics
+- **🔁 Retry Mechanism**: Intelligent retry functionality for handling transient errors
+- **🛠️ CLI Utilities**: User-friendly command-line interface for development and deployment
 
 ## 🛠️ Tech Stack
 
@@ -53,6 +56,7 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 - **🌐 Swagger-UI-Express v5.0.1**: Interactive API documentation
 - **🌐 CORS**: Cross-Origin Resource Sharing support
 - **⚙️ dotenv v16.5.0**: Environment configuration
+- **🧪 Jest & Supertest**: Testing framework
 
 ## 🚀 Installation
 
@@ -232,6 +236,58 @@ POST /os-restart
 ```
 Initiates an operating system restart (requires appropriate permissions).
 
+### 📊 Performance Metrics
+
+The application includes a performance metrics system that tracks and analyzes scraping operations:
+
+#### Metrics API Endpoints
+
+```http
+GET /api/scrape/metrics
+```
+Returns basic performance metrics for all scraping operations.
+
+```http
+GET /api/scrape/metrics?detailed=true
+```
+Returns detailed metrics including breakdowns by proxy, URL pattern, and response type.
+
+```http
+POST /api/scrape/metrics/reset
+```
+Resets all collected metrics.
+
+#### Metrics Provided
+
+| Metric | Description |
+|--------|-------------|
+| `operations` | Total number of scraping operations |
+| `successful` | Number of successful operations |
+| `failed` | Number of failed operations |
+| `successRate` | Percentage of successful operations |
+| `averageDuration` | Average operation duration in milliseconds |
+| `byProxy` | Breakdown of operations by proxy (detailed mode only) |
+| `byUrl` | Breakdown of operations by domain (detailed mode only) |
+| `byResponseType` | Breakdown by response type (detailed mode only) |
+| `errors` | Most common error types (detailed mode only) |
+| `recent` | Recent operations history (detailed mode only) |
+
+#### Sample Metrics Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "operations": 120,
+    "successful": 105,
+    "failed": 15,
+    "successRate": "87.50%",
+    "averageDuration": "1255ms",
+    "timestamp": "2025-05-01T12:30:45.123Z"
+  }
+}
+```
+
 ## 🔐 Authentication
 
 The API is secured with basic authentication:
@@ -370,126 +426,242 @@ This feature allows for:
 - Reduced chance of IP blocking during intensive scraping operations
 - Support for different proxy protocols (HTTP, HTTPS, SOCKS4, SOCKS5)
 
-## 📝 Enhanced API Documentation
+## 🔁 Retry Mechanism
 
-The application includes a comprehensive API documentation system:
+The application includes a sophisticated retry mechanism for handling transient errors during scraping operations:
 
-### Interactive Swagger UI
+### Features
 
-Access the interactive API documentation at:
-```
-http://your-server:port/docs
-```
+- **🔄 Exponential Backoff**: Automatically increases wait time between retry attempts
+- **🎲 Jitter**: Adds randomness to retry intervals to prevent thundering herd problems
+- **🔍 Error Detection**: Intelligent categorization of errors to determine if retry is appropriate
+- **📈 Configurable Retries**: Adjustable maximum retry attempts, initial delay, and maximum delay
 
-The Swagger UI provides:
-- Interactive API testing capabilities
-- Detailed request and response schemas
-- Example requests and responses
-- Authentication integration
-- Parameter descriptions and validation rules
+### Error Categories Handled
 
-### Validation Improvements
+| Error Type | Description | Default Behavior |
+|------------|-------------|------------------|
+| Network Errors | Connectivity issues, timeouts | Retry with backoff |
+| Browser Disconnection | Browser crashes or disconnects | Restart browser and retry |
+| Captcha Detection | Detection of captcha challenges | Rotate proxy and retry |
+| Selector Not Found | Element not found on page | Depends on configuration |
 
-Recent updates include enhanced request validation:
+### Implementation
 
-- **Consistent Enum Values**: All enum values have been standardized across the codebase
-- **Clear Error Messages**: Validation errors now provide specific guidance on what's wrong
-- **Conditional Validation**: Complex validation rules based on other field values
-- **Custom Validators**: Special validation logic for complex requirements
+The retry functionality is implemented in the `retry-operations.js` helper, which provides a generic retry wrapper for any async function:
 
-Example validation error response:
-```json
-{
-  "success": false,
-  "data": {
-    "message": "ValidationError: Selectors cannot be provided when responseType is NONE"
-  }
-}
+```javascript
+await helperRetryOperation(async () => {
+  // Your scraping operation here
+}, {
+  maxRetries: 3,
+  initialDelay: 1000,
+  maxDelay: 10000,
+  shouldRetry: (error) => helperErrorDetectors.isNetworkError(error)
+})
 ```
 
-### Step Validation Features
+## 🛠️ CLI Startup Utility
 
-- **URL Validation**: Ensures all navigation URLs are properly formatted
-- **Required Step Checks**: Verifies that at least one navigate step with a valid URL is present
-- **Type Checking**: Makes sure all parameters match their expected types
+The project includes a command-line interface (CLI) tool for easy startup and management:
 
-## ⚠️ Error Handling
+### Available Commands
 
-The application provides detailed error information including:
+```bash
+# Start in development mode with auto-reload (default)
+npm start
+# or
+npm run dev
 
-| Error Detail | Description |
-|--------------|-------------|
-| 📍 **Step Index** | Index of the step where the error occurred (1-based indexing) |
-| 🔄 **Step Type** | Type of step where the error occurred |
-| 🔢 **Error Code** | Standardized error code (e.g., ERROR_UNKNOWN, ERROR_VALIDATION) |
-| 📋 **Error Stack** | Full error stack for debugging |
-| 🔢 **HTTP Status** | HTTP status codes with appropriate error messages |
-| 📸 **Error Screenshots** | Screenshots of the page state at the time of error (if enabled) |
-| 🌐 **Proxy Details** | Details about the proxy used during the failed request (if applicable) |
+# Start in production mode
+npm run prod
 
-## 🔍 Enhanced Features
+# Run tests
+npm test
 
-### Browser Semaphore
+# Build and run with Docker
+npm run docker:start
+```
 
-To prevent resource exhaustion, the application uses a semaphore to limit the number of concurrent browser instances:
+### Features
 
-- Automatically queues scraping requests when limits are reached
-- Ensures browser resources are properly released after each operation
-- Manages browser lifecycle even during unexpected errors
+- **🔍 Environment Setup**: Automatically checks for and creates necessary files and directories
+- **🖥️ Development Mode**: Starts the application with file watching for auto-reload
+- **🏭 Production Mode**: Optimized for production environments
+- **🧪 Test Runner**: Simplified test execution
+- **🐳 Docker Integration**: Simplifies Docker build and run processes
+- **🎨 Colorized Output**: User-friendly terminal output with colors and icons
 
-### Improved Screenshot Management
+## 🚀 Getting Started
 
-Enhanced screenshot capabilities:
-- Option to take screenshots on success or error conditions
-- Automatic filename generation with timestamps
-- Configurable screenshot directory
-- Automatic cleanup of old screenshots
-- Direct URL access to screenshots via the application
+### Prerequisites
 
-## ⚠️ Error Handling
+- Node.js 18 or higher
+- npm or yarn
+- For Docker deployment: Docker and Docker Compose
 
-The application provides detailed error information including:
+### Quick Start
 
-| Error Detail | Description |
-|--------------|-------------|
-| 📍 **Step Index** | Index of the step where the error occurred (1-based indexing) |
-| 🔄 **Step Type** | Type of step where the error occurred |
-| 🔢 **Error Code** | Standardized error code (e.g., ERROR_UNKNOWN, ERROR_VALIDATION) |
-| 📋 **Error Stack** | Full error stack for debugging |
-| 🔢 **HTTP Status** | HTTP status codes with appropriate error messages |
-| 📸 **Error Screenshots** | Screenshots of the page state at the time of error (if enabled) |
-| 🌐 **Proxy Details** | Details about the proxy used during the failed request (if applicable) |
+1. Clone the repository and install dependencies:
+   ```bash
+   git clone https://github.com/yourusername/scrapereq.git
+   cd scrapereq
+   npm install
+   ```
+
+2. Create your environment configuration:
+   ```bash
+   # Copy the example config
+   cp .env.example .env
+   
+   # Edit with your settings
+   notepad .env  # On Windows
+   ```
+
+3. Start the application in development mode:
+   ```bash
+   npm start
+   ```
+
+4. Visit the API documentation to explore the endpoints:
+   ```
+   http://localhost:3000/docs
+   ```
+
+### Docker Deployment
+
+For containerized deployment:
+
+```bash
+# Start with Docker Compose
+docker-compose up -d
+
+# Or use the CLI utility
+npm run docker:start
+```
+
+### Example: Simple Scraping Request
+
+Here's a minimal example to get started with scraping:
+
+```bash
+curl -X POST http://localhost:3000/api/scrape/start \
+  -u admin:admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Simple Example",
+    "responseType": "JSON",
+    "speedMode": "NORMAL",
+    "errorScreenshot": true,
+    "selectors": [
+      {
+        "key": "title",
+        "type": "CSS",
+        "value": "title"
+      }
+    ],
+    "steps": [
+      {
+        "type": "navigate",
+        "url": "https://example.com"
+      }
+    ]
+  }'
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Here's how you can contribute:
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow the existing code style
+- Add tests for new features
+- Update documentation when necessary
+- Keep dependencies up to date
+
+## 📚 Additional Resources
+
+- [Puppeteer Documentation](https://pptr.dev/)
+- [Express.js Documentation](https://expressjs.com/)
+- [Joi Validation Documentation](https://joi.dev/api/)
+- [Docker Documentation](https://docs.docker.com/)
 
 ## 📁 Project Structure
 
 ```
 .
-├── app.js                # Express application setup
-├── constants.js          # Application constants
-├── index.js              # Entry point
-├── routes.js             # API route definitions
-├── swagger.js            # Swagger API documentation configuration
+├── index.js                # Entry point
+├── start.js                # CLI startup script with development utilities
+├── app.js                  # Express application setup
+├── config.js               # Centralized configuration
+├── constants.js            # Application constants
+├── Dockerfile              # Docker image definition
+├── docker-compose.yml      # Docker Compose configuration
+├── .env.example            # Example environment variables
+├── package.json            # Project dependencies and scripts
+├── jest.config.js          # Jest test configuration
 │
-├── controllers/          # Request handlers
-│   ├── app-shutdown.js   # Application shutdown handler
-│   ├── error-handler.js  # Error handling middleware
-│   ├── health.js         # Health check endpoint
-│   ├── os-restart.js     # OS restart handler
-│   └── scraper.js        # Main scraping controller
+├── src/                    # Application source code
+│   ├── app.js              # Express app configuration
+│   ├── config.js           # Configuration module
+│   ├── constants.js        # Constants and enums
+│   │
+│   ├── controllers/        # Request handlers
+│   │   ├── error-handler.js        # Error handling middleware
+│   │   ├── route-not-found-handler.js  # 404 handler
+│   │   ├── api/
+│   │   │   ├── app/               # Application control endpoints
+│   │   │   │   ├── health.js      # Health check endpoint
+│   │   │   │   └── shutdown.js    # Application shutdown handler
+│   │   │   ├── os/
+│   │   │   │   └── restart.js     # OS restart handler
+│   │   │   └── scrape/
+│   │   │       ├── metrics.js     # Scraping metrics endpoints
+│   │   │       ├── start.js       # Main scraping controller
+│   │   │       └── test.js        # Test scraping endpoint
+│   │
+│   ├── helpers/           # Helper functions
+│   │   ├── browser-semaphore.js   # Limit concurrent browser instances
+│   │   ├── cleanup-screenshots.js # Automatically clean up old screenshots
+│   │   ├── filter-steps.js        # Process scraping steps
+│   │   ├── format-uptime.js       # Format system uptime
+│   │   ├── proxies-random-get-one.js # Random proxy selection
+│   │   ├── retry-operations.js    # Retry mechanism for error handling
+│   │   ├── scraping-metrics.js    # Performance monitoring for scraping operations
+│   │   └── validators.js          # Request validation schemas
+│   │
+│   ├── routes/            # API route definitions
+│   │   ├── api/
+│   │   │   ├── app.js     # Application control routes
+│   │   │   ├── os.js      # OS operation routes
+│   │   │   └── scrape.js  # Scraping routes
+│   │
+│   └── utils/             # Utility middleware
+│       ├── cors.js        # CORS configuration
+│       ├── helmet.js      # Security headers
+│       ├── json-parser.js # JSON body parser
+│       ├── logger.js      # HTTP request logging
+│       ├── rate-limiter.js # Rate limiting
+│       └── swagger.js     # API documentation
 │
-├── helpers/              # Helper functions
-│   ├── browser-semaphore.js # Limit concurrent browser instances
-│   ├── cleanup-screenshots.js # Automatically clean up old screenshots
-│   ├── filter-steps.js   # Process scraping steps
-│   ├── puppeteer-health.js # Browser health checks
-│   ├── setup-proxies.js  # Enhanced proxy configuration and rotation
-│   └── validators.js     # Request validation schemas
+├── __tests__/             # Test files
+│   ├── api/
+│   │   └── endpoints.test.js  # API endpoint tests
+│   └── helpers/
+│       └── helpers.test.js    # Helper function tests
 │
-└── tmp/                  # Default temporary files directory
+└── tmp/                  # Temporary files directory
     ├── browser-records/  # Browser recording samples
     ├── request-body-example/ # Request body examples
     ├── response-example/ # Response examples
-    └── *.png             # Screenshot files
+    └── *.png             # Screenshot files (not tracked in git)
 ```
 
 ## ⚡ Performance Considerations

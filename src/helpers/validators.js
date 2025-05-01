@@ -39,10 +39,10 @@ export const helperValidatorsScraper = Joi.object({
     ),
 
     // Error handling options
-    // errorSnapshot: boolean to indicate if a snapshot should be taken on error
+    // errorScreenshot: boolean to indicate if a screenshot should be taken on error
     errorScreenshot: Joi.boolean(),
 
-    // successSnapshot: boolean to indicate if a snapshot should be taken on success
+    // successScreenshot: boolean to indicate if a screenshot should be taken on success
     // This is optional and defaults to false if not provided
     successScreenshot: Joi.boolean(),
 
@@ -152,7 +152,7 @@ export const helperValidatorsScraper = Joi.object({
             // URL for navigation steps
             url: Joi.string().uri().allow(''),
 
-            // CSS selectors for targeting elements - farklı formatlarda olabilir
+            // CSS selectors for targeting elements - can be in different formats
             selectors: Joi.array(),
 
             // Click position offset coordinates
@@ -175,7 +175,7 @@ export const helperValidatorsScraper = Joi.object({
             // Target for step operations
             target: Joi.string(),
 
-            // Frame identifier for actions in iframes - string veya array olabilir
+            // Frame identifier for actions in iframes - can be string or array
             frame: Joi.alternatives().try(Joi.string(), Joi.array()),
 
             // Duration settings for interactions

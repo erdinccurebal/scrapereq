@@ -14,7 +14,7 @@ import { exec } from 'child_process';
  * @returns {void}
  * @throws {Error} - Throws an error if the restart command fails
  */
-export function controllerOsRestart(_req, res, next) {
+export function controllerApiOsRestart(_req, res, next) {
   try {
     console.log('OS restart request received. Initiating immediate system restart...');
 
@@ -37,12 +37,12 @@ export function controllerOsRestart(_req, res, next) {
         if (error) {
           console.error('Restart failed:', error);
           // Cannot send response here as it's already sent
-        };
+        }
       });
     }, 1000);
 
   } catch (error) {
-    error.message = `${error.message} - Code: ERROR_OS_RESTART`;
+    error.message = `${error.message} - Code: ERROR_API_OS_RESTART`;
     next(error);
-  };
-};
+  }
+}
