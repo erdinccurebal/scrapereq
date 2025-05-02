@@ -103,13 +103,13 @@ export const SELECTOR_TYPE_NAMES = {
 
 // Headless mode configuration
 // In development mode, headless mode is disabled for debugging purposes
-// In production mode, headless mode is enabled for performance
-const HEADLESS = process.env.NODE_ENV === 'development' ? false : true;
+// In production mode, headless 'new' mode is enabled for performance
+const HEADLESS = process.env.NODE_ENV === 'development' ? false : 'new';
 
 /**
  * Browser Configuration
  * 
- * HEADLESS: Whether the browser runs in headless mode
+ * HEADLESS: Whether the browser runs in headless mode ('new' for modern versions)
  * USER_AGENT: The user agent string for the browser
  * ACCEPT_LANGUAGE: Language preferences for the browser
  * ARGS: Additional arguments for browser configuration
@@ -121,7 +121,11 @@ export const BROWSER_CONFIG = {
   ARGS: {
     NO_SANDBOX: '--no-sandbox',
     DISABLE_SETUID_SANDBOX: '--disable-setuid-sandbox',
-    DISABLE_WEB_SECURITY: '--disable-web-security'
+    DISABLE_WEB_SECURITY: '--disable-web-security',
+    DISABLE_DEV_SHM_USAGE: '--disable-dev-shm-usage',
+    JS_FLAGS: '--js-flags=--expose-gc',
+    DISABLE_EXTENSIONS: '--disable-extensions',
+    DISABLE_GPU: '--disable-gpu'
   }
 };
 
@@ -232,29 +236,65 @@ export const RATE_LIMITER_CONFIG = {
 /**
  * Swagger Documentation Configuration
  * 
- * Settings for API documentation
+ * Settings for API documentation with OpenAPI 3.0 standards
  */
 export const SWAGGER_CONFIG = {
   OPENAPI_VERSION: '3.0.0',
   INFO: {
     TITLE: 'Scrapereq',
     VERSION: '1.0.0',
-    DESCRIPTION: 'Web scraping API using puppeteer.',
+    DESCRIPTION: 'Web scraping API using puppeteer for automated web data extraction.',
     CONTACT: {
-      NAME: 'API Support'
+      NAME: 'API Support',
+      EMAIL: 'support@example.com',
+      URL: 'https://github.com/username/scrapereq'
     },
     LICENSE: {
-      NAME: 'ISC'
-    }
+      NAME: 'ISC',
+      URL: 'https://opensource.org/licenses/ISC'
+    },
+    TERMS_OF_SERVICE: 'https://example.com/terms/'
   },
   SECURITY_SCHEMES: {
     BASIC_AUTH: {
       TYPE: 'http',
-      SCHEME: 'basic'
+      SCHEME: 'basic',
+      DESCRIPTION: 'Basic authentication using username and password'
+    },
+    API_KEY: {
+      TYPE: 'apiKey',
+      NAME: 'x-api-key',
+      IN: 'header',
+      DESCRIPTION: 'API key authentication'
     }
   },
-  SERVERS: {
-    URL: process.env.WEB_ADDRESS || 'http://localhost:3000',
-    DESCRIPTION: 'API ADDRESS'
+  SERVERS: [
+    {
+      URL: process.env.WEB_ADDRESS || 'http://localhost:3000',
+      DESCRIPTION: 'Development Server'
+    },
+    {
+      URL: 'https://api.example.com',
+      DESCRIPTION: 'Production Server'
+    }
+  ],
+  TAGS: [
+    {
+      NAME: 'scrape',
+      DESCRIPTION: 'Web scraping operations'
+    },
+    {
+      NAME: 'health',
+      DESCRIPTION: 'Health check endpoints'
+    },
+    {
+      NAME: 'system',
+      DESCRIPTION: 'System operations'
+    }
+  ],
+  OPTIONS: {
+    EXPLORER: true,
+    CUSTOM_CSS: '.swagger-ui .topbar { display: none }',
+    CUSTOM_FAVICON: '/favicon.ico'
   }
 };

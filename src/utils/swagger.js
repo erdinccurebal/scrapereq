@@ -9,6 +9,7 @@ import { dirname, join } from 'path';
 
 // Node third-party modules
 import swaggerJsDoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 // Application constants
 import { SWAGGER_CONFIG } from '../constants.js';
@@ -27,33 +28,82 @@ const swaggerOptions = {
       description: SWAGGER_CONFIG.INFO.DESCRIPTION,
       contact: {
         name: SWAGGER_CONFIG.INFO.CONTACT.NAME,
+        email: SWAGGER_CONFIG.INFO.CONTACT.EMAIL,
+        url: SWAGGER_CONFIG.INFO.CONTACT.URL
       },
       license: {
         name: SWAGGER_CONFIG.INFO.LICENSE.NAME,
+        url: SWAGGER_CONFIG.INFO.LICENSE.URL
       },
+      termsOfService: SWAGGER_CONFIG.INFO.TERMS_OF_SERVICE
     },
-    servers: [
-      {
-        url: SWAGGER_CONFIG.SERVERS.URL,
-        description: SWAGGER_CONFIG.SERVERS.DESCRIPTION,
-      },
-    ],
+    servers: SWAGGER_CONFIG.SERVERS.map(server => ({
+      url: server.URL,
+      description: server.DESCRIPTION
+    })),
     components: {
       securitySchemes: {
         basicAuth: {
           type: SWAGGER_CONFIG.SECURITY_SCHEMES.BASIC_AUTH.TYPE,
           scheme: SWAGGER_CONFIG.SECURITY_SCHEMES.BASIC_AUTH.SCHEME,
+          description: SWAGGER_CONFIG.SECURITY_SCHEMES.BASIC_AUTH.DESCRIPTION
         },
-      },
+        apiKey: {
+          type: SWAGGER_CONFIG.SECURITY_SCHEMES.API_KEY.TYPE,
+          name: SWAGGER_CONFIG.SECURITY_SCHEMES.API_KEY.NAME,
+          in: SWAGGER_CONFIG.SECURITY_SCHEMES.API_KEY.IN,
+          description: SWAGGER_CONFIG.SECURITY_SCHEMES.API_KEY.DESCRIPTION
+        }
+      }
     },
-    security: [{
-      basicAuth: [],
-    }],
+    security: [{ basicAuth: [] }],
+    tags: SWAGGER_CONFIG.TAGS.map(tag => ({
+      name: tag.NAME,
+      description: tag.DESCRIPTION
+    }))
   },
   apis: [
     join(__dirname, '../routes/**/*.js'),
+    join(__dirname, '../controllers/**/*.js')
   ],
 };
 
 // Initialize swagger-jsdoc
 export const swaggerDocs = swaggerJsDoc(swaggerOptions);
+
+// Swagger UI setup options
+export const swaggerUiOptions = {
+  explorer: SWAGGER_CONFIG.OPTIONS.EXPLORER,
+  customCss: SWAGGER_CONFIG.OPTIONS.CUSTOM_CSS,
+  customfavIcon: SWAGGER_CONFIG.OPTIONS.CUSTOM_FAVICON,
+  swaggerOptions: {
+    docExpansion: 'list',
+    filter: true,
+    displayRequestDuration: true
+  }
+};
+
+/**
+ * Setup Swagger documentation for Express app
+ * 
+ * @param {Object} app - Express application instance
+ * @param {String} path - URL path for swagger documentation (default: /api/docs)
+ * @returns {void}
+ */
+export function setupSwagger(app, path = '/api/docs') {
+  if (!app) {
+    throw new Error('Express app instance is required');
+  }
+  
+  // Serve swagger documentation at specified path
+  app.use(path, swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
+  
+  // Serve swagger spec as JSON at /api/docs.json
+  app.get(`${path}.json`, (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerDocs);
+  });
+  
+  console.log(`Swagger documentation available at ${path}`);
+  console.log(`Swagger spec available at ${path}.json`);
+}

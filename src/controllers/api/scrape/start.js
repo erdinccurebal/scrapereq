@@ -27,6 +27,23 @@ import { helperFilterSteps } from '../../../helpers/filter-steps.js';
 import { helperBrowserSemaphore } from '../../../helpers/browser-semaphore.js';
 
 /**
+ * Dynamically import Puppeteer and plugins for each request
+ * This allows for better memory management and isolation between requests
+ */
+const importPuppeteerDependencies = async () => {
+  try {
+    const puppeteerVanilla = await import('puppeteer');
+    const { addExtra } = await import('puppeteer-extra');
+    const puppeteer = addExtra(puppeteerVanilla);
+    const { createRunner, PuppeteerRunnerExtension } = await import('@puppeteer/replay');
+    
+    return { puppeteer, createRunner, PuppeteerRunnerExtension };
+  } catch (error) {
+    throw new Error(`Error importing Puppeteer dependencies: ${error.message}`);
+  }
+};
+
+/**
  * Main scraper controller function
  * Processes incoming web scraping requests and executes defined steps on target websites
  * 
@@ -74,10 +91,7 @@ export async function controllerApiScrapeStart(req, res, next) {
 
         try {
             // Dynamically import Puppeteer and plugins for each request
-            const puppeteerVanilla = await import('puppeteer');
-            const { addExtra } = await import('puppeteer-extra');
-            const puppeteer = addExtra(puppeteerVanilla);
-            const { createRunner, PuppeteerRunnerExtension } = await import('@puppeteer/replay');
+            const { puppeteer, createRunner, PuppeteerRunnerExtension } = await importPuppeteerDependencies();
 
             // Create Extension class dynamically
             class Extension extends PuppeteerRunnerExtension {

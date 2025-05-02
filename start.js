@@ -84,27 +84,29 @@ function checkTmpDirectory() {
   }
 }
 
-// Command to run the application in development mode
+/**
+ * Command to run the application in development mode
+ */
 function runDev() {
-  print.header('Starting Scrapereq in development mode')
-  print.info('Running with file watching enabled')
+  print.header('Starting Scrapereq in development mode');
+  print.info('Running with file watching enabled');
   
   // Check and setup environment
-  setupEnvFile()
-  checkTmpDirectory()
+  setupEnvFile();
+  checkTmpDirectory();
   
   // Create environment variables for the child process
-  const env = Object.assign({}, process.env, { NODE_ENV: 'development' })
+  const env = Object.assign({}, process.env, { NODE_ENV: 'development' });
   
   // Run the application with file watching
   const childProcess = spawn('node', ['--watch', 'index.js'], { 
     stdio: 'inherit',
     env: env
-  })
+  });
   
   childProcess.on('error', (error) => {
-    print.error(`Failed to start application: ${error.message}`)
-  })
+    print.error(`Failed to start application: ${error.message}`);
+  });
 }
 
 // Command to run the application in production mode

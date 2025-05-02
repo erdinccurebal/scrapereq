@@ -46,5 +46,3 @@ export const config = {
     maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100 // Limit each IP to 100 requests per windowMs
   }
 }
-
-export default config
