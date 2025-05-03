@@ -13,13 +13,13 @@ import { controllerApiAppShutdown } from '../../controllers/api/app/shutdown.js'
  * /api/app/health:
  *   get:
  *     summary: Checks system status
- *     description: Verifies that API and Puppeteer are operational
+ *     description: Verifies that API is operational
  *     tags: [App]
  *     security:
  *       - basicAuth: []
  *     responses:
  *       200:
- *         description: API and browser are working
+ *         description: API is working
  *         content:
  *           application/json:
  *             schema:
@@ -63,42 +63,17 @@ import { controllerApiAppShutdown } from '../../controllers/api/app/shutdown.js'
  *                           example: "localhost"
  *                         uptime:
  *                           type: string
- *                           example: "2m 24s"
+ *                           example: "21s"
  *                         pid:
  *                           type: number
- *                           example: 2160
- *                         puppeteer:
- *                           type: object
- *                           properties:
- *                             success:
- *                               type: boolean
- *                               example: true
- *                             data:
- *                               type: object
- *                               properties:
- *                                 testUrl:
- *                                   type: string
- *                                   description: URL used for browser testing
- *                                   example: "https://www.google.com"
- *                                 resultUrl:
- *                                   type: string
- *                                   description: Final URL after navigation
- *                                   example: "https://www.google.com/"
- *                                 resultTitle:
- *                                   type: string
- *                                   description: Page title after navigation
- *                                   example: "Google"
- *                                 message:
- *                                   type: string
- *                                   description: Status message about browser health
- *                                   example: "Puppeteer is working correctly."
+ *                           example: 4368
  *                     system:
  *                       type: object
  *                       properties:
  *                         timestamp:
  *                           type: string
  *                           format: date-time
- *                           example: "2025-04-19T17:08:23.717Z"
+ *                           example: "2025-05-03T18:58:18.359Z"
  *                         timezone:
  *                           type: string
  *                           example: "Europe/Istanbul"
@@ -119,7 +94,7 @@ import { controllerApiAppShutdown } from '../../controllers/api/app/shutdown.js'
  *                           example: "16331.95"
  *                         freemem:
  *                           type: string
- *                           example: "9424.20"
+ *                           example: "7096.45"
  *       500:
  *         description: System error
  *         content:
