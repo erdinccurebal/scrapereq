@@ -8,16 +8,16 @@
 // Node third-party modules
 import express from 'express'
 
-// Import central configuration
-import { config } from '../config.js'
+// Import central configuration and constants
+import { JSON_PARSER_CONFIG } from '../constants.js'
 
 /**
  * Configure and return the JSON parsing middleware with application-specific settings
  * @returns {Function} Configured JSON parsing middleware
  */
 export function setupJsonParser() {
-  // Return express.json middleware with a reasonable size limit
+  // Return express.json middleware with configured size limit
   return express.json({ 
-    limit: '10mb' // Limit JSON payload size to prevent abuse
+    limit: JSON_PARSER_CONFIG.JSON_LIMIT
   })
 }

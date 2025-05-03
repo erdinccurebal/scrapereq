@@ -8,8 +8,9 @@
 // Node third-party modules
 import helmet from 'helmet'
 
-// Import central configuration
+// Import central configuration and constants
 import { config } from '../config.js'
+import { HELMET_CONFIG } from '../constants.js'
 
 /**
  * Configure and return the Helmet middleware with application-specific security settings
@@ -19,26 +20,9 @@ export function setupHelmet() {
   // Return helmet configuration appropriate for the environment
   if (config.server.env === 'production') {
     // Enhanced security settings for production
-    return helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", "data:"]
-        }
-      },
-      hsts: {
-        maxAge: 31536000, // 1 year in seconds
-        includeSubDomains: true,
-        preload: true
-      },
-      frameguard: {
-        action: 'deny'
-      }
-    })
+    return helmet(HELMET_CONFIG.PRODUCTION)
   }
   
   // Basic configuration for development
-  return helmet()
+  return helmet(HELMET_CONFIG.DEVELOPMENT)
 }

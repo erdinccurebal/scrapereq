@@ -8,8 +8,8 @@
 // Node third-party modules
 import cors from 'cors'
 
-// Import central configuration
-import { config } from '../config.js'
+// Import central configuration and constants
+import { CORS_CONFIG } from '../constants.js'
 
 /**
  * Configure and return the CORS middleware with application-specific settings
@@ -18,8 +18,8 @@ import { config } from '../config.js'
 export function setupCors() {
   // Return configured CORS middleware
   return cors({
-    origin: '*', // Allow all origins by default, could be restricted from config
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    origin: CORS_CONFIG.ORIGIN,
+    methods: CORS_CONFIG.METHODS,
+    allowedHeaders: CORS_CONFIG.ALLOWED_HEADERS
   })
 }

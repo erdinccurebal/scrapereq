@@ -32,10 +32,17 @@ import { helperBrowserSemaphore } from '../../../helpers/browser-semaphore.js';
  */
 const importPuppeteerDependencies = async () => {
   try {
-    const puppeteerVanilla = await import('puppeteer');
-    const { addExtra } = await import('puppeteer-extra');
+    const [
+      puppeteerVanilla,
+      { addExtra },
+      { createRunner, PuppeteerRunnerExtension }
+    ] = await Promise.all([
+      import('puppeteer'),
+      import('puppeteer-extra'),
+      import('@puppeteer/replay')
+    ]);
+    
     const puppeteer = addExtra(puppeteerVanilla);
-    const { createRunner, PuppeteerRunnerExtension } = await import('@puppeteer/replay');
     
     return { puppeteer, createRunner, PuppeteerRunnerExtension };
   } catch (error) {
@@ -360,34 +367,47 @@ function assignDefaultDataToApprovedBodyData({ validateValue }) {
  * @throws {Error} - Throws an error if the proxy configuration fails
  */
 function generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxyAuth }) {
-    // Initialize getProxy variable
+    // Initialize variables
     let getProxy = null;
     let launchOptions = null;
     let pageAuthenticateEnabled = false;
     let pageAuthenticateParams = {};
 
     try {
-        // Configure launch options for Puppeteer
+        // Configure launch options for Puppeteer with modern defaults
         launchOptions = {
             headless: BROWSER_CONFIG.HEADLESS,
             args: [
                 BROWSER_CONFIG.ARGS.NO_SANDBOX,
                 BROWSER_CONFIG.ARGS.DISABLE_SETUID_SANDBOX,
                 BROWSER_CONFIG.ARGS.DISABLE_WEB_SECURITY,
-                // Arguments to enable cookies
+                // Performance and feature flags
+                '--disable-dev-shm-usage',  // Fix for Docker containers with limited memory
+                '--disable-gpu',            // Disable GPU acceleration in headless mode
+                '--disable-setuid-sandbox', // Enhanced security
+                // Cookie and JavaScript related settings
                 '--enable-cookies',
                 '--enable-javascript',
                 '--enable-features=NetworkService',
                 '--disable-features=IsolateOrigins,site-per-process',
-                // Allow third-party cookies
+                // Allow third-party cookies for site compatibility
                 '--disable-web-security',
                 '--disable-features=BlockThirdPartyCookies',
+                // Memory optimization
+                '--js-flags=--max-old-space-size=512' // Control memory usage
             ],
             ignoreHTTPSErrors: true,
+            defaultViewport: {
+                width: 1366,
+                height: 768,
+                deviceScaleFactor: 1,
+                isMobile: false,
+                hasTouch: false,
+                isLandscape: true
+            }
         };
 
         // Chrome path from environment variable if set
-        // This allows for custom Chrome installations or debugging
         const chromePath = process.env.CHROME_PATH;
         if (chromePath) {
             launchOptions.executablePath = chromePath;
@@ -398,32 +418,50 @@ function generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxy
     }
 
     try {
-        // Check if the access password is provided and matches the environment variable
-        // This is used to allow access without a proxy if the password is correct
-        const checkAccessPasswordWithoutProxy = accessPasswordWithoutProxy == process.env.ACCESS_PASSWORD_WITHOUT_PROXY;
+        // Check if proxy bypass is enabled via password
+        const checkAccessPasswordWithoutProxy = accessPasswordWithoutProxy === process.env.ACCESS_PASSWORD_WITHOUT_PROXY;
 
-        // Check if the proxy is enabled and set the access password
-        if (!checkAccessPasswordWithoutProxy && (!proxies || proxies?.length == 0)) {
+        // Validate proxy requirements
+        if (!checkAccessPasswordWithoutProxy && (!proxies || !Array.isArray(proxies) || proxies.length === 0)) {
             res.status(401);
-            throw new Error("Access denied. Proxy is required for this request.");
+            throw new Error("Access denied. Valid proxy configuration is required for this request.");
         }
 
-        // Proxies setup if provided
-        // This allows for rotating proxies or specific proxy configurations
-        if (!checkAccessPasswordWithoutProxy && proxies && proxies.length > 0) {
-            getProxy = helperProxiesRandomGetOne({ proxies });
-            const proxyServer = `--proxy-server=${getProxy.protocol || "http"}://${getProxy.server}:${getProxy.port}`;
-            launchOptions.args.push(proxyServer);
+        // Setup proxy if required and available
+        if (!checkAccessPasswordWithoutProxy && Array.isArray(proxies) && proxies.length > 0) {
+            try {
+                // Use the helper to get a random proxy from the list
+                getProxy = helperProxiesRandomGetOne({ proxies });
+                
+                // Validate proxy structure
+                if (!getProxy || !getProxy.server || !getProxy.port) {
+                    throw new Error("Invalid proxy configuration structure");
+                }
+                
+                // Construct the proxy server argument with protocol (default to HTTP if not specified)
+                const proxyProtocol = (getProxy.protocol || "http").toLowerCase();
+                const proxyServer = `--proxy-server=${proxyProtocol}://${getProxy.server}:${getProxy.port}`;
+                launchOptions.args.push(proxyServer);
+                
+                // Log proxy usage (without sensitive details)
+                console.log(`Using proxy: ${proxyProtocol}://${getProxy.server}:${getProxy.port}`);
+            } catch (proxyError) {
+                throw new Error(`Proxy selection failed: ${proxyError.message}`);
+            }
         }
 
-        // Proxy authentication if enabled and credentials are provided
-        // This allows for authentication with the proxy server
-        if (!checkAccessPasswordWithoutProxy && proxyAuth?.enabled && proxyAuth?.username && proxyAuth?.password) {
+        // Setup proxy authentication if enabled and credentials are provided
+        if (!checkAccessPasswordWithoutProxy && 
+            proxyAuth && 
+            proxyAuth.enabled === true && 
+            proxyAuth.username && 
+            proxyAuth.password) {
             pageAuthenticateEnabled = true;
             pageAuthenticateParams = {
                 username: proxyAuth.username,
                 password: proxyAuth.password,
             };
+            console.log(`Proxy authentication enabled for user: ${proxyAuth.username}`);
         }
 
     } catch (error) {
@@ -431,7 +469,7 @@ function generateLaunchOptions({ res, proxies, accessPasswordWithoutProxy, proxy
         throw error;
     }
 
-    return { launchOptions, getProxy, pageAuthenticateEnabled, pageAuthenticateParams }; // Return the launch options and proxy information
+    return { launchOptions, getProxy, pageAuthenticateEnabled, pageAuthenticateParams };
 }
 
 /**
@@ -481,18 +519,36 @@ async function processSelectorData({ page, selector }) {
     const { type, value, key } = selector;
 
     try {
+        // Validate input parameters
+        if (!page) {
+            throw new Error("Puppeteer page instance is required");
+        }
+        
+        if (!selector || !type || value === undefined) {
+            throw new Error("Invalid selector configuration");
+        }
+
         if (type === SELECTOR_TYPE_NAMES.FULL) {
             return await page.content();
         } else if (type === SELECTOR_TYPE_NAMES.CSS) {
-            // Extract content using CSS selector
+            // First check if element exists
+            const elementExists = await page.$(value);
+            if (!elementExists) {
+                throw new Error(`CSS Selector not found on page: ${value}`);
+            }
+            
+            // Extract content using CSS selector with enhanced error handling
             return await page.$eval(value, (element) => {
-                if (!element) {
-                    throw new Error("Element not found!");
-                }
-
                 // Get both innerHTML and textContent for more reliable data extraction
                 const innerHTML = element.innerHTML || "";
                 const textContent = element.textContent || "";
+                const value = element.value || "";  // For input elements
+                
+                // Special handling for input, select, and textarea elements
+                const tagName = element.tagName.toLowerCase();
+                if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+                    return value || textContent;
+                }
 
                 // If innerHTML is empty or just whitespace but textContent has content, return textContent
                 if (!innerHTML.trim() && textContent.trim()) {
@@ -502,17 +558,36 @@ async function processSelectorData({ page, selector }) {
                 return innerHTML;
             });
         } else if (type === SELECTOR_TYPE_NAMES.XPATH) {
-            // Extract content using XPath selector
-            return await page.evaluate((value) => {
-                const element = document.evaluate(value, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-
+            // Verify XPath selector exists first
+            const elementExists = await page.$x(value);
+            if (!elementExists || elementExists.length === 0) {
+                throw new Error(`XPath selector not found on page: ${value}`);
+            }
+            
+            // Extract content using XPath selector with enhanced error handling
+            return await page.evaluate((xpathValue) => {
+                const element = document.evaluate(
+                    xpathValue, 
+                    document, 
+                    null, 
+                    XPathResult.FIRST_ORDERED_NODE_TYPE, 
+                    null
+                ).singleNodeValue;
+                
                 if (!element) {
-                    throw new Error("Element not found!");
+                    throw new Error("Element not found during evaluation");
                 }
 
                 // Get both innerHTML and textContent for more reliable data extraction
                 const innerHTML = element.innerHTML || "";
                 const textContent = element.textContent || "";
+                const value = element.value || "";  // For input elements
+                
+                // Special handling for input, select, and textarea elements
+                const tagName = element.tagName.toLowerCase();
+                if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+                    return value || textContent;
+                }
 
                 // If innerHTML is empty or just whitespace but textContent has content, return textContent
                 if (!innerHTML.trim() && textContent.trim()) {
@@ -521,9 +596,13 @@ async function processSelectorData({ page, selector }) {
 
                 return innerHTML;
             }, value);
+        } else {
+            throw new Error(`Unsupported selector type: ${type}`);
         }
     } catch (error) {
-        error.message = `${error.message} - Code: ERROR_SELECTOR_PROCESSING - Type: ${type} - Key: ${key} - Value: ${value}`;
+        // Enhance error message with context information
+        const contextMessage = `Error processing selector - Type: ${type} - Key: ${key} - Value: ${value}`;
+        error.message = `${error.message} - Code: ERROR_SELECTOR_PROCESSING - ${contextMessage}`;
         throw error;
     }
 }
@@ -535,7 +614,6 @@ async function processSelectorData({ page, selector }) {
  * @param {String} type - Type of screenshot (success or error)
  * @returns {Promise<Object>} - Returns an object containing the screenshotUrl
  * @throws {Error} - Throws an error if the screenshot generation fails
- * @throws {Error} - Throws an error if the screenshot URL generation fails
  */
 async function getScreenshotUrl({ page, type }) {
     try {
@@ -546,35 +624,41 @@ async function getScreenshotUrl({ page, type }) {
             fs.mkdirSync(screenshotsDir, { recursive: true });
         }
 
-        // Generate unique filename with timestamp
+        // Generate unique filename with UUID and timestamp for better uniqueness
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-
-        // Use the type to determine the filename format
-        let filename = `${type}-${timestamp}.png`;
-
+        const randomId = Math.random().toString(36).substring(2, 8); // Simple unique ID generator
+        const filename = `${type}-${timestamp}-${randomId}.png`;
         const filePath = path.join(screenshotsDir, filename);
 
-        const savedFilePath = await new Promise((resolve, reject) => {
-            setTimeout(() => {
-                page.screenshot({ path: filePath, fullPage: true })
-                    .then(() => {
-                        resolve(filePath);
-                    }).catch((error) => {
-                        reject(error);
-                    });
-            }, 500);
-        });
-        console.log(`${type} screenshot taken and saved at: ${savedFilePath}`);
+        // Wait a brief moment before taking screenshot to allow page to stabilize
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Use try/catch specifically for screenshot to provide better error details
+        try {
+            // Take the screenshot with more options for better quality
+            await page.screenshot({ 
+                path: filePath, 
+                fullPage: true,
+                quality: 80,
+                omitBackground: false
+            });
+        } catch (screenshotError) {
+            throw new Error(`Failed to take screenshot: ${screenshotError.message}`);
+        }
+        
+        console.log(`${type} screenshot taken and saved at: ${filePath}`);
 
-        const savedFilename = path.basename(savedFilePath);
+        // Get the base filename for the URL
+        const savedFilename = path.basename(filePath);
 
         // Create a proper URL path using the /tmp/ endpoint
-        const screenshotUrl = `${process.env.WEB_ADDRESS}/tmp/${savedFilename}`;
+        const webAddress = process.env.WEB_ADDRESS || `http://${config.server.host}:${config.server.port}`;
+        const screenshotUrl = `${webAddress}/tmp/${savedFilename}`;
         console.log(`Screenshot URL generated: ${screenshotUrl}`);
 
         return { screenshotUrl };
     } catch (error) {
-        error.message = `${error.message} - Code: ERROR_SCREENSHOT_URL_GENERATION - Type: ${type}`;
+        error.message = `Error generating screenshot: ${error.message} - Code: ERROR_SCREENSHOT_URL_GENERATION - Type: ${type}`;
         throw error;
     }
 }
@@ -585,14 +669,27 @@ async function getScreenshotUrl({ page, type }) {
  * @param {Object} browser - Puppeteer Browser instance to close
  * @param {Object} page - Puppeteer Page instance to close
  * @returns {Promise<void>} - Promise that resolves when browser and page are closed
- * @throws {Error} - Throws an error if closing the browser or page fails
  */
 async function exitBrowserAndPage(browser, page) {
-    if (page) {
-        await page.close().catch(error => console.error("Error closing page:", error));
-    }
+    try {
+        // First close the page if it exists and is not closed
+        if (page) {
+            try {
+                await page.close();
+            } catch (error) {
+                console.error("Error closing page:", error.message);
+            }
+        }
 
-    if (browser) {
-        await browser.close().catch(error => console.error("Error closing browser:", error));
+        // Then close the browser if it exists
+        if (browser) {
+            try {
+                await browser.close();
+            } catch (error) {
+                console.error("Error closing browser:", error.message);
+            }
+        }
+    } catch (error) {
+        console.error("Unexpected error during browser/page cleanup:", error.message);
     }
 }

@@ -11,6 +11,7 @@ import rateLimit from 'express-rate-limit'
 
 // Import central configuration module
 import { config } from '../config.js'
+import { RATE_LIMITER_CONFIG } from '../constants.js'
 
 /**
  * Configure and return the rate limiter middleware with application-specific settings
@@ -20,12 +21,6 @@ export function setupRateLimiter() {
   return rateLimit({
     windowMs: config.rateLimit.windowMs, // Request window (e.g., 15 minutes)
     max: config.rateLimit.maxRequests, // Maximum number of requests allowed within this period
-    message: {
-      success: false,
-      data: {
-        message: 'Too many requests made, please try again later',
-        code: 'ERROR_RATE_LIMIT_EXCEEDED'
-      }
-    }
+    message: RATE_LIMITER_CONFIG.ERROR_MESSAGE
   })
 }

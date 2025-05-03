@@ -23,6 +23,9 @@ import swaggerUi from 'swagger-ui-express';
 // Import basic authentication middleware
 import basicAuth from 'express-basic-auth';
 
+// Import utilities
+import { setupSwagger } from '../../utils/swagger.js';
+
 // Controllers imports
 import { controllerApiIndex } from '../../controllers/api/index.js';
 
@@ -75,6 +78,13 @@ router.use(
         customCss: '.swagger-ui .topbar { display: none }',
     })
 );
+
+/**
+ * Set up Swagger API documentation
+ * Makes API documentation available at /api/docs
+ * This should be done before applying routes to ensure proper documentation
+ */
+setupSwagger(router);
 
 /**
  * Serve static files from tmp directory

@@ -35,7 +35,6 @@ const swaggerOptions = {
         name: SWAGGER_CONFIG.INFO.LICENSE.NAME,
         url: SWAGGER_CONFIG.INFO.LICENSE.URL
       },
-      termsOfService: SWAGGER_CONFIG.INFO.TERMS_OF_SERVICE
     },
     servers: SWAGGER_CONFIG.SERVERS.map(server => ({
       url: server.URL,
@@ -48,19 +47,9 @@ const swaggerOptions = {
           scheme: SWAGGER_CONFIG.SECURITY_SCHEMES.BASIC_AUTH.SCHEME,
           description: SWAGGER_CONFIG.SECURITY_SCHEMES.BASIC_AUTH.DESCRIPTION
         },
-        apiKey: {
-          type: SWAGGER_CONFIG.SECURITY_SCHEMES.API_KEY.TYPE,
-          name: SWAGGER_CONFIG.SECURITY_SCHEMES.API_KEY.NAME,
-          in: SWAGGER_CONFIG.SECURITY_SCHEMES.API_KEY.IN,
-          description: SWAGGER_CONFIG.SECURITY_SCHEMES.API_KEY.DESCRIPTION
-        }
       }
     },
-    security: [{ basicAuth: [] }],
-    tags: SWAGGER_CONFIG.TAGS.map(tag => ({
-      name: tag.NAME,
-      description: tag.DESCRIPTION
-    }))
+    security: [{ basicAuth: [] }]
   },
   apis: [
     join(__dirname, '../routes/**/*.js'),
@@ -75,7 +64,6 @@ export const swaggerDocs = swaggerJsDoc(swaggerOptions);
 export const swaggerUiOptions = {
   explorer: SWAGGER_CONFIG.OPTIONS.EXPLORER,
   customCss: SWAGGER_CONFIG.OPTIONS.CUSTOM_CSS,
-  customfavIcon: SWAGGER_CONFIG.OPTIONS.CUSTOM_FAVICON,
   swaggerOptions: {
     docExpansion: 'list',
     filter: true,
@@ -86,20 +74,20 @@ export const swaggerUiOptions = {
 /**
  * Setup Swagger documentation for Express app
  * 
- * @param {Object} app - Express application instance
+ * @param {Object} router - Express router instance
  * @param {String} path - URL path for swagger documentation (default: /api/docs)
  * @returns {void}
  */
-export function setupSwagger(app, path = '/api/docs') {
-  if (!app) {
-    throw new Error('Express app instance is required');
+export function setupSwagger(router, path = "/docs") {
+  if (!router) {
+    throw new Error('Express router instance is required');
   }
   
   // Serve swagger documentation at specified path
-  app.use(path, swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
+  router.use(path, swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
   
   // Serve swagger spec as JSON at /api/docs.json
-  app.get(`${path}.json`, (req, res) => {
+  router.get(`${path}.json`, (_req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerDocs);
   });

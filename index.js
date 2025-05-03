@@ -32,16 +32,33 @@ expressApp.set('host', config.server.host); // Set the host in the app
 const server = http.createServer(expressApp);
 
 /**
+ * Schedule screenshot cleanup task
+ * Runs every hour to clean up old screenshots and prevent disk space issues
+ * 
+ * @returns {Promise<void>} Promise that resolves when the cleanup is complete
+ */
+async function scheduleScreenshotCleanup() {
+  try {
+    const { deleted } = await helperCleanupOldScreenshots();
+    if (deleted > 0) {
+      console.log(`Scheduled cleanup: Removed ${deleted} old screenshot files`);
+    }
+  } catch (error) {
+    console.error('Error during scheduled screenshot cleanup:', error);
+  }
+  
+  // Schedule next cleanup
+  setTimeout(scheduleScreenshotCleanup, 60 * 60 * 1000); // Run every 1 hour
+}
+
+/**
  * Start the server and initialize scheduled tasks
  * Listens on the specified port and host
  */
 server.listen(config.server.port, config.server.host, async () => {
   console.log(`Server started on port http://${config.server.host}:${config.server.port} in ${config.server.env} mode.`);
 
-  /**
-   * Initial screenshot cleanup on server start
-   * Removes old screenshot files that may have accumulated while the server was offline
-   */
+  // Perform initial screenshot cleanup
   try {
     const { deleted } = await helperCleanupOldScreenshots();
     if (deleted > 0) {
@@ -49,25 +66,12 @@ server.listen(config.server.port, config.server.host, async () => {
     } else {
       console.log('Initial cleanup: No old screenshot files to remove');
     }
+    
+    // Start the scheduled cleanup
+    setTimeout(scheduleScreenshotCleanup, 60 * 60 * 1000);
   } catch (error) {
     console.error('Error during initial screenshot cleanup:', error);
   }
-
-  /**
-   * Set up scheduled cleanup to run periodically
-   * Automatically removes old screenshot files to prevent disk space issues
-   * Runs every hour to maintain disk space without excessive processing
-   */
-  setInterval(async () => {
-    try {
-      const { deleted } = await helperCleanupOldScreenshots();
-      if (deleted > 0) {
-        console.log(`Scheduled cleanup: Removed ${deleted} old screenshot files`);
-      }
-    } catch (error) {
-      console.error('Error during scheduled screenshot cleanup:', error);
-    }
-  }, 60 * 60 * 1000); // Run every 1 hour
 });
 
 /**

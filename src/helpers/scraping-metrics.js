@@ -53,41 +53,29 @@ export function helperRecordMetrics(metrics) {
   // Track by URL patterns (domain level)
   try {
     const domain = new URL(url).hostname
-    if (!scrapingMetrics.byUrl[domain]) {
-      scrapingMetrics.byUrl[domain] = { count: 0, successful: 0, failed: 0 }
-    }
-    scrapingMetrics.byUrl[domain].count++
-    if (success) {
-      scrapingMetrics.byUrl[domain].successful++
-    } else {
-      scrapingMetrics.byUrl[domain].failed++
+    // Use object spread to create or update domain metrics
+    scrapingMetrics.byUrl[domain] = {
+      count: (scrapingMetrics.byUrl[domain]?.count || 0) + 1,
+      successful: (scrapingMetrics.byUrl[domain]?.successful || 0) + (success ? 1 : 0),
+      failed: (scrapingMetrics.byUrl[domain]?.failed || 0) + (!success ? 1 : 0)
     }
   } catch (e) {
-    // Handle invalid URLs
     console.error(`Invalid URL in metrics: ${url}`)
   }
   
-  // Track by response type
-  if (!scrapingMetrics.byResponseType[responseType]) {
-    scrapingMetrics.byResponseType[responseType] = { count: 0, successful: 0, failed: 0 }
-  }
-  scrapingMetrics.byResponseType[responseType].count++
-  if (success) {
-    scrapingMetrics.byResponseType[responseType].successful++
-  } else {
-    scrapingMetrics.byResponseType[responseType].failed++
+  // Track by response type - use object spread for cleaner code
+  scrapingMetrics.byResponseType[responseType] = {
+    count: (scrapingMetrics.byResponseType[responseType]?.count || 0) + 1,
+    successful: (scrapingMetrics.byResponseType[responseType]?.successful || 0) + (success ? 1 : 0),
+    failed: (scrapingMetrics.byResponseType[responseType]?.failed || 0) + (!success ? 1 : 0)
   }
   
-  // Track by proxy
+  // Track by proxy - only if proxy is provided
   if (proxy) {
-    if (!scrapingMetrics.byProxy[proxy]) {
-      scrapingMetrics.byProxy[proxy] = { count: 0, successful: 0, failed: 0 }
-    }
-    scrapingMetrics.byProxy[proxy].count++
-    if (success) {
-      scrapingMetrics.byProxy[proxy].successful++
-    } else {
-      scrapingMetrics.byProxy[proxy].failed++
+    scrapingMetrics.byProxy[proxy] = {
+      count: (scrapingMetrics.byProxy[proxy]?.count || 0) + 1,
+      successful: (scrapingMetrics.byProxy[proxy]?.successful || 0) + (success ? 1 : 0),
+      failed: (scrapingMetrics.byProxy[proxy]?.failed || 0) + (!success ? 1 : 0)
     }
   }
   
@@ -98,12 +86,8 @@ export function helperRecordMetrics(metrics) {
     duration,
     url,
     responseType,
-    proxy
-  }
-  
-  if (!success) {
-    recentOperation.error = error
-    recentOperation.errorCode = errorCode
+    proxy,
+    ...(success ? {} : { error, errorCode }) // Conditionally add error properties
   }
   
   scrapingMetrics.recent.unshift(recentOperation)
@@ -124,8 +108,8 @@ export function helperGetMetrics(detailed = false) {
     successful: scrapingMetrics.successful,
     failed: scrapingMetrics.failed,
     successRate: scrapingMetrics.operations ? 
-      (scrapingMetrics.successful / scrapingMetrics.operations * 100).toFixed(2) + '%' : '0%',
-    averageDuration: Math.round(scrapingMetrics.averageDuration) + 'ms',
+      `${(scrapingMetrics.successful / scrapingMetrics.operations * 100).toFixed(2)}%` : '0%',
+    averageDuration: `${Math.round(scrapingMetrics.averageDuration)}ms`,
     timestamp: new Date().toISOString()
   }
   
@@ -145,9 +129,13 @@ export function helperGetMetrics(detailed = false) {
 /**
  * Reset all scraping metrics
  * 
- * @returns {void}
+ * @returns {Object} The previous metrics before reset
  */
 export function helperResetMetrics() {
+  // Store previous metrics for potential logging or return
+  const previousMetrics = { ...scrapingMetrics }
+  
+  // Reset all metrics
   scrapingMetrics.operations = 0
   scrapingMetrics.successful = 0
   scrapingMetrics.failed = 0
@@ -158,4 +146,6 @@ export function helperResetMetrics() {
   scrapingMetrics.byResponseType = {}
   scrapingMetrics.errors = {}
   scrapingMetrics.recent = []
+  
+  return previousMetrics
 }

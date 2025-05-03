@@ -41,12 +41,16 @@ const print = {
 // Check if a command exists in the path
 function commandExists(command) {
   try {
-    // Try to find the command
+    // Use spawn to check if command exists
     const childProcess = spawn(command, ['--version'], { stdio: 'ignore' })
-    childProcess.on('error', () => false)
-    return true
+    
+    // Set up promise to handle process completion or error
+    return new Promise((resolve) => {
+      childProcess.on('error', () => resolve(false))
+      childProcess.on('close', (code) => resolve(code === 0))
+    })
   } catch (error) {
-    return false
+    return Promise.resolve(false)
   }
 }
 

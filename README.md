@@ -90,6 +90,9 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 
    # File Storage
    TMP_DIR=/path/to/persistent/directory # For example: /var/www/scrapereq-data/tmp
+   
+   # Browser Concurrency
+   MAX_CONCURRENT_BROWSERS=2 # Number of concurrent browser instances
    ```
 
 4. **Start the application**:
@@ -201,8 +204,12 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
       "search_results": "<div>Result content...</div>",
       "page_title": "Example Search - Google Search"
     },
-    "screenshotUrl": "http://localhost:3000/tmp/success-2025-04-21T14-32-48.png",
-    "proxy": "--proxy-server=http://proxy1.example.com:8080"
+    "screenshotUrl": "http://localhost:3000/tmp/success-2025-04-21T14-32-48-a1b2c3.png",
+    "proxy": {
+      "server": "proxy1.example.com",
+      "port": 8080,
+      "protocol": "HTTP"
+    }
   }
 }
 ```
@@ -215,10 +222,14 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
 {
   "success": false,
   "data": {
-    "message": "Error at step 3: Selector not found",
+    "message": "Error at step 3: CSS Selector not found on page: .search-input",
     "stack": ["...error stack trace..."],
-    "screenshotUrl": "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png",
-    "proxy": "--proxy-server=http://proxy1.example.com:8080"
+    "screenshotUrl": "http://localhost:3000/tmp/error-2025-04-21T14-35-18-d4e5f6.png",
+    "proxy": {
+      "server": "proxy1.example.com",
+      "port": 8080,
+      "protocol": "HTTP"
+    }
   }
 }
 ```
@@ -238,7 +249,7 @@ Initiates an operating system restart (requires appropriate permissions).
 
 ### 📊 Performance Metrics
 
-The application includes a performance metrics system that tracks and analyzes scraping operations:
+The application includes a comprehensive performance metrics system that tracks and analyzes scraping operations:
 
 #### Metrics API Endpoints
 
@@ -321,6 +332,7 @@ The application can be configured through:
 | 🛡️ **API Security** | API security settings |
 | 📸 **Screenshot Options** | Screenshot configurations |
 | ✅ **Validation Rules** | Enhanced validation rules for requests |
+| 🧵 **Concurrency** | Control number of concurrent browser instances |
 
 ### Screenshot Storage Configuration
 
@@ -357,10 +369,11 @@ The scraper supports multiple response formats:
       "search_results": "<div>Result content...</div>",
       "page_title": "Example Search - Google Search"
     },
-    "screenshotUrl": "http://localhost:3000/tmp/success-2025-04-26T14-32-48.png",
+    "screenshotUrl": "http://localhost:3000/tmp/success-2025-04-26T14-32-48-a1b2c3.png",
     "proxy": {
-      "ip": "248.25.15.15",
-      "port": 3122
+      "server": "proxy1.example.com",
+      "port": 8080,
+      "protocol": "HTTP"
     }
   }
 }
@@ -388,6 +401,13 @@ Data can be extracted using different selector methods:
 - When `responseType` is set to `RAW`, only one selector can be used
 - Maximum one `FULL` type selector is allowed regardless of response type
 - Each selector requires `key`, `type`, and `value` properties
+
+### Enhanced Form Element Support
+
+The selector processing has been improved to better handle form elements:
+- Special handling for `input`, `textarea`, and `select` elements to extract their values
+- Smart content detection that chooses between innerHTML, textContent, and value based on context
+- Improved error messages when selectors don't match any element
 
 ## 🌐 Enhanced Proxy Support
 
@@ -420,11 +440,25 @@ The application supports advanced proxy configurations:
 ]
 ```
 
-This feature allows for:
-- Load balancing across multiple proxy servers
-- Automatic failover if one proxy becomes unavailable
-- Reduced chance of IP blocking during intensive scraping operations
-- Support for different proxy protocols (HTTP, HTTPS, SOCKS4, SOCKS5)
+The improved proxy support includes:
+- Weighted proxy selection based on success rates
+- Better validation of proxy configurations
+- Enhanced error handling for proxy failures
+- More detailed logging of proxy usage for debugging
+
+## 🧵 Browser Concurrency Management
+
+Control the number of concurrent browser instances with the `MAX_CONCURRENT_BROWSERS` environment variable:
+
+```env
+MAX_CONCURRENT_BROWSERS=2
+```
+
+This feature includes:
+- Configurable concurrency limits
+- Queue management for pending requests
+- Detailed statistics on browser usage
+- Improved error handling during browser creation and cleanup
 
 ## 🔁 Retry Mechanism
 
@@ -701,4 +735,4 @@ Erdinç Cürebal
 
 ## 🔄 Last Updated
 
-April 27, 2025
+May 3, 2025

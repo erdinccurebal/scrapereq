@@ -130,18 +130,34 @@ export const BROWSER_CONFIG = {
 };
 
 /**
- * API Configuration
+ * JSON Parser Configuration
  * 
  * JSON_LIMIT: Maximum size for JSON payloads
- * CORS: Cross-Origin Resource Sharing settings
+ */
+export const JSON_PARSER_CONFIG = {
+  JSON_LIMIT: '50mb'
+};
+
+/**
+ * CORS Configuration
+ * 
+ * ORIGIN: Allowed origins for CORS
+ * METHODS: Allowed HTTP methods
+ * ALLOWED_HEADERS: Allowed headers in requests
+ */
+export const CORS_CONFIG = {
+  ORIGIN: '*',
+  METHODS: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  ALLOWED_HEADERS: ['Content-Type', 'Authorization']
+};
+
+/**
+ * API Configuration
+ * 
+ * General API-related configuration
  */
 export const API_CONFIG = {
-  JSON_LIMIT: '50mb',
-  CORS: {
-    ORIGIN: '*',
-    METHODS: ['GET', 'POST'],
-    ALLOWED_HEADERS: ['Content-Type', 'Authorization']
-  }
+  // API general settings
 };
 
 /**
@@ -205,6 +221,8 @@ export const LOGGER_CONFIG = {
   },
   OPTIONS: {
     SKIP_HEALTH: (req) => req.url.includes('/health'), // Skip logging health check requests
+    SKIP_FAVICON: (req) => req.url.includes('/favicon.ico'), // Skip logging favicon requests
+    SKIP_HEALTH_AND_FAVICON: (req) => req.url.includes('/health') || req.url.includes('/favicon.ico'), // Skip both health and favicon
     SKIP_NONE: () => false,                            // Log all requests
   }
 };
@@ -225,12 +243,18 @@ export const HEALTH_CHECK_CONFIG = {
  * 
  * WINDOW_MS: Time window for rate limiting in milliseconds
  * MAX_REQUESTS: Maximum number of requests allowed per IP in the time window
- * MESSAGE: Message to send when rate limit is exceeded
+ * ERROR_MESSAGE: Structured error message object to return when rate limit is exceeded
  */
 export const RATE_LIMITER_CONFIG = {
   WINDOW_MS: 15 * 60 * 1000, // 15 minutes
   MAX_REQUESTS: 100, // limit each IP to 100 requests per windowMs
-  MESSAGE: 'Too many requests from this IP, please try again later'
+  ERROR_MESSAGE: {
+    success: false,
+    data: {
+      message: 'Too many requests made, please try again later',
+      code: 'ERROR_RATE_LIMIT_EXCEEDED'
+    }
+  }
 };
 
 /**
@@ -246,55 +270,56 @@ export const SWAGGER_CONFIG = {
     DESCRIPTION: 'Web scraping API using puppeteer for automated web data extraction.',
     CONTACT: {
       NAME: 'API Support',
-      EMAIL: 'support@example.com',
-      URL: 'https://github.com/username/scrapereq'
+      EMAIL: 'erdinc@curebal.dev',
+      URL: 'https://erdinc.curebal.dev'
     },
     LICENSE: {
       NAME: 'ISC',
       URL: 'https://opensource.org/licenses/ISC'
     },
-    TERMS_OF_SERVICE: 'https://example.com/terms/'
   },
   SECURITY_SCHEMES: {
     BASIC_AUTH: {
       TYPE: 'http',
       SCHEME: 'basic',
       DESCRIPTION: 'Basic authentication using username and password'
-    },
-    API_KEY: {
-      TYPE: 'apiKey',
-      NAME: 'x-api-key',
-      IN: 'header',
-      DESCRIPTION: 'API key authentication'
     }
   },
   SERVERS: [
     {
       URL: process.env.WEB_ADDRESS || 'http://localhost:3000',
-      DESCRIPTION: 'Development Server'
+      DESCRIPTION: 'API Server'
     },
-    {
-      URL: 'https://api.example.com',
-      DESCRIPTION: 'Production Server'
-    }
-  ],
-  TAGS: [
-    {
-      NAME: 'scrape',
-      DESCRIPTION: 'Web scraping operations'
-    },
-    {
-      NAME: 'health',
-      DESCRIPTION: 'Health check endpoints'
-    },
-    {
-      NAME: 'system',
-      DESCRIPTION: 'System operations'
-    }
   ],
   OPTIONS: {
     EXPLORER: true,
     CUSTOM_CSS: '.swagger-ui .topbar { display: none }',
-    CUSTOM_FAVICON: '/favicon.ico'
   }
+};
+
+/**
+ * Helmet Security Configuration
+ * 
+ * Settings for Helmet security middleware in different environments
+ */
+export const HELMET_CONFIG = {
+  PRODUCTION: {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"]
+      }
+    },
+    hsts: {
+      maxAge: 31536000, // 1 year in seconds
+      includeSubDomains: true,
+      preload: true
+    },
+    frameguard: {
+      action: 'deny'
+    }
+  },
+  DEVELOPMENT: {}  // Basic configuration for development
 };

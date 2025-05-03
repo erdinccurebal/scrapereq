@@ -21,7 +21,6 @@ import { setupCors } from './utils/cors.js';
 import { setupHelmet } from './utils/helmet.js';
 import { setupJsonParser } from './utils/json-parser.js';
 import { setupRateLimiter } from './utils/rate-limiter.js';
-import { setupSwagger } from './utils/swagger.js';
 
 /**
  * Initialize Express application
@@ -75,18 +74,6 @@ app.use(setupRateLimiter());
  */
 app.use(setupJsonParser());
 
-/**
- * Set up Swagger API documentation
- * Makes API documentation available at /api/docs
- * This should be done before applying routes to ensure proper documentation
- */
-setupSwagger(app);
-
-/**
- * Serve static files from tmp directory
- * This allows access to screenshots and other temporary files
- */
-app.use('/tmp', express.static(process.env.TMP_DIR || 'tmp'));
 
 /**
  * Apply all routes defined in the routes.js file
