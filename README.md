@@ -4,12 +4,12 @@
   <h3>A powerful and flexible web scraping API built with Express.js and Puppeteer</h3>
   <p>
     <img src="https://img.shields.io/badge/Express-5.1.0-000000?style=flat-square&logo=express" alt="Express.js" />
-    <img src="https://img.shields.io/badge/Puppeteer-24.7.0-40B5A4?style=flat-square&logo=puppeteer" alt="Puppeteer" />
+    <img src="https://img.shields.io/badge/Puppeteer-24.7.2-40B5A4?style=flat-square&logo=puppeteer" alt="Puppeteer" />
     <img src="https://img.shields.io/badge/Node.js-v18+-339933?style=flat-square&logo=node.js" alt="Node.js" />
     <img src="https://img.shields.io/badge/License-ISC-blue?style=flat-square" alt="License" />
   </p>
   <p>
-    <a href="https://scrapereq.trial.town/docs" target="_blank">API Documentation</a>
+    <a href="https://scrapereq.trial.town/api/docs" target="_blank">API Documentation</a>
   </p>
 </div>
 
@@ -46,7 +46,7 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 
 - **📦 Node.js**: JavaScript runtime
 - **🚀 Express.js v5.1.0**: Web application framework
-- **🤖 Puppeteer v24.7.0**: Headless Chrome browser automation
+- **🤖 Puppeteer v24.7.2**: Headless Chrome browser automation
 - **🧩 Puppeteer-Extra v3.3.6**: Plugin system for Puppeteer
 - **⏺️ @puppeteer/replay v3.1.1**: Record and replay browser interactions
 - **✅ Joi v17.13.3**: Request validation
@@ -62,7 +62,7 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/scrapereq.git
+   git clone https://github.com/erdinccurebal/scrapereq.git
    cd scrapereq
    ```
 
@@ -104,7 +104,7 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 
 ### 🔍 Health Check
 ```http
-GET /health
+GET /api/app/health
 ```
 ✅ Returns detailed system information and checks if all components are working correctly:
 - Project metadata and versions
@@ -114,7 +114,7 @@ GET /health
 
 ### 🕸️ Scraper
 ```http
-POST /
+POST /api/scrape/start
 ```
 Main endpoint for web scraping operations. Configure your scraping workflow with a detailed JSON structure.
 
@@ -140,6 +140,23 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
       "key": "page_title",
       "type": "CSS",
       "value": "title"
+    }
+  ],
+    "proxyAuth": {
+    "enabled": true,
+    "username": "user",
+    "password": "pass"
+  },
+  "proxies": [
+    {
+      "server": "proxy1.example.com",
+      "port": 8080,
+      "protocol": "HTTP"
+    },
+    {
+      "server": "proxy2.example.com",
+      "port": 8081,
+      "protocol": "HTTPS"
     }
   ],
   "steps": [
@@ -168,23 +185,6 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
     {
       "type": "waitForElement",
       "selectors": [".search-results"]
-    }
-  ],
-  "proxyAuth": {
-    "enabled": true,
-    "username": "user",
-    "password": "pass"
-  },
-  "proxies": [
-    {
-      "server": "proxy1.example.com",
-      "port": 8080,
-      "protocol": "HTTP"
-    },
-    {
-      "server": "proxy2.example.com",
-      "port": 8081,
-      "protocol": "HTTPS"
     }
   ]
 }
@@ -238,12 +238,12 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
 ### 🔧 System Management
 
 ```http
-POST /app-shutdown
+POST /api/app/shutdown
 ```
 Safely shuts down the application with a 3-second delay.
 
 ```http
-POST /os-restart
+POST /api/os/restart
 ```
 Initiates an operating system restart (requires appropriate permissions).
 
@@ -538,7 +538,7 @@ npm run docker:start
 
 1. Clone the repository and install dependencies:
    ```bash
-   git clone https://github.com/yourusername/scrapereq.git
+   git clone https://github.com/erdinccurebal/scrapereq.git
    cd scrapereq
    npm install
    ```
