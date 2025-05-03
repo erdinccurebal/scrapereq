@@ -40,6 +40,7 @@ const swaggerOptions = {
       url: server.URL,
       description: server.DESCRIPTION
     })),
+    tags: SWAGGER_CONFIG.TAGS,
     components: {
       securitySchemes: {
         basicAuth: {
@@ -58,10 +59,10 @@ const swaggerOptions = {
 };
 
 // Initialize swagger-jsdoc
-export const swaggerDocs = swaggerJsDoc(swaggerOptions);
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
 // Swagger UI setup options
-export const swaggerUiOptions = {
+const swaggerUiOptions = {
   explorer: SWAGGER_CONFIG.OPTIONS.EXPLORER,
   customCss: SWAGGER_CONFIG.OPTIONS.CUSTOM_CSS,
   swaggerOptions: {
@@ -75,23 +76,19 @@ export const swaggerUiOptions = {
  * Setup Swagger documentation for Express app
  * 
  * @param {Object} router - Express router instance
- * @param {String} path - URL path for swagger documentation (default: /api/docs)
  * @returns {void}
  */
-export function setupSwagger(router, path = "/docs") {
+export function setupSwagger(router) {
+  const path = "/docs";
+
   if (!router) {
     throw new Error('Express router instance is required');
   }
-  
-  // Serve swagger documentation at specified path
+
   router.use(path, swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
-  
-  // Serve swagger spec as JSON at /api/docs.json
+
   router.get(`${path}.json`, (_req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerDocs);
   });
-  
-  console.log(`Swagger documentation available at ${path}`);
-  console.log(`Swagger spec available at ${path}.json`);
 }

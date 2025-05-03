@@ -294,7 +294,21 @@ export const SWAGGER_CONFIG = {
   OPTIONS: {
     EXPLORER: true,
     CUSTOM_CSS: '.swagger-ui .topbar { display: none }',
-  }
+  },
+  TAGS: [
+    {
+      name: 'Scrape',
+      description: 'Web scraping operations'
+    },
+    {
+      name: 'App',
+      description: 'Application operations'
+    },
+    {
+      name: 'Os',
+      description: 'Operating system operations'
+    }
+  ]
 };
 
 /**

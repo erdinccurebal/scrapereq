@@ -23,7 +23,7 @@ import {
  * Defines the expected structure and validation rules for incoming scraper requests.
  * Ensures all required fields are present and properly formatted before processing.
  */
-export const helperValidatorsScraper = Joi.object({
+export const helperValidatorsApiScrapeStart = Joi.object({
     // Title of the scraping task - required for identification
     title: Joi.string().required(),
 

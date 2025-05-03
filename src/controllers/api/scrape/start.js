@@ -22,7 +22,7 @@ import {
 
 // Helper functions
 import { helperProxiesRandomGetOne } from '../../../helpers/proxies-random-get-one.js';
-import { helperValidatorsScraper } from '../../../helpers/validators.js';
+import { helperValidatorsApiScrapeStart } from '../../../helpers/validators.js';
 import { helperFilterSteps } from '../../../helpers/filter-steps.js';
 import { helperBrowserSemaphore } from '../../../helpers/browser-semaphore.js';
 
@@ -296,7 +296,7 @@ export async function controllerApiScrapeStart(req, res, next) {
 function reqBodyValidation({ req, res }) {
     try {
         // Validate the request body against the defined schema
-        const { error, value } = helperValidatorsScraper.validate(req.body, { abortEarly: false });
+        const { error, value } = helperValidatorsApiScrapeStart.validate(req.body, { abortEarly: false });
 
         // Return validation errors if request is invalid
         if (error) {
