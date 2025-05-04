@@ -1,10 +1,10 @@
 /**
  * Global Error Handler Middleware
- * 
+ *
  * This middleware captures all errors thrown during request processing
  * and formats them into a consistent JSON response structure.
  * It's customized to hide framework-specific information for security purposes.
- * 
+ *
  * @param {Error} error - The error object captured by Express
  * @param {Request} _req - Express request object
  * @param {Response} res - Express response object
@@ -19,7 +19,7 @@ export function controllerErrorHandler(error, _req, res, _next) {
   const result = {
     success: false,
     data: {
-      message: null,
+      message: null
     }
   };
 
@@ -45,10 +45,10 @@ export function controllerErrorHandler(error, _req, res, _next) {
     result.data.screenshotUrl = error.screenshotUrl;
   }
 
-  if (result.data.message.includes("Code: ERROR_")) {
-    result.data.code = "ERROR_" + result.data.message.split("Code: ERROR_")[1].split(" ")[0];
+  if (result.data.message.includes('Code: ERROR_')) {
+    result.data.code = 'ERROR_' + result.data.message.split('Code: ERROR_')[1].split(' ')[0];
   } else {
-    result.data.code = "ERROR_UNKNOWN";
+    result.data.code = 'ERROR_UNKNOWN';
   }
 
   if (error.proxy) {
@@ -62,7 +62,7 @@ export function controllerErrorHandler(error, _req, res, _next) {
 
 /**
  * Format validation error messages to be more user-friendly
- * 
+ *
  * @param {Error} error - Validation error object
  * @returns {string} Formatted validation error message
  */
@@ -83,7 +83,7 @@ function formatValidationError(error) {
 
 /**
  * Format any error message to remove escape characters and improve readability
- * 
+ *
  * @param {string} message - The error message to format
  * @returns {string} Cleaned error message
  */
@@ -91,15 +91,15 @@ function formatErrorMessage(message) {
   if (!message) return '';
 
   return message
-    .replace(/\\"/g, '"')  // Replace escaped quotes with regular quotes
-    .replace(/"/g, '\'')   // Replace double quotes with single quotes
+    .replace(/\\"/g, '"') // Replace escaped quotes with regular quotes
+    .replace(/"/g, '\'') // Replace double quotes with single quotes
     .trim();
 }
 
 /**
  * Format stack trace for error responses
  * Simple version without complex formatting
- * 
+ *
  * @param {string} stackTrace - Raw stack trace string
  * @returns {Array} Basic stack trace as array of lines
  */

@@ -1,12 +1,12 @@
 /**
  * Application Constants
- * 
+ *
  * This file defines constants used throughout the application
  */
 
 /**
  * Scraper Speed Modes
- * 
+ *
  * TURBO: No delay between steps - fastest mode
  * FAST: Minimal delay for quick scraping
  * NORMAL: Moderate delay for balanced scraping
@@ -16,13 +16,13 @@
  * STEALTH: Maximum delay for absolute stealth
  */
 export const SPEED_MODES = {
-  TURBO: 0,      // 0ms delay between steps
-  FAST: 500,     // 500ms delay between steps
-  NORMAL: 1000,  // 1000ms (1 second) delay between steps
-  SLOW: 1500,    // 1500ms (1.5 seconds) delay between steps
+  TURBO: 0, // 0ms delay between steps
+  FAST: 500, // 500ms delay between steps
+  NORMAL: 1000, // 1000ms (1 second) delay between steps
+  SLOW: 1500, // 1500ms (1.5 seconds) delay between steps
   SLOWEST: 2000, // 2000ms (2 seconds) delay between steps
-  CRAWL: 2500,   // 2500ms (2.5 seconds) delay between steps
-  STEALTH: 3000  // 3000ms (3 seconds) delay between steps
+  CRAWL: 2500, // 2500ms (2.5 seconds) delay between steps
+  STEALTH: 3000 // 3000ms (3 seconds) delay between steps
 };
 
 /**
@@ -45,15 +45,15 @@ export const DEFAULT_SPEED_MODE = 'NORMAL';
 
 /**
  * Timeout Configuration
- * 
+ *
  * SHORT: 10 seconds for shorter operations
  * NORMAL: 30 seconds default timeout
  * LONG: 60 seconds for longer operations
  */
 export const TIMEOUT_MODES = {
-  SHORT: 10000,      // 10 seconds for shorter operations
-  NORMAL: 30000,    // 30 seconds default timeout
-  LONG: 60000,       // 60 seconds for longer operations
+  SHORT: 10000, // 10 seconds for shorter operations
+  NORMAL: 30000, // 30 seconds default timeout
+  LONG: 60000 // 60 seconds for longer operations
 };
 
 /**
@@ -62,7 +62,7 @@ export const TIMEOUT_MODES = {
 export const TIMEOUT_MODE_NAMES = {
   SHORT: 'SHORT',
   NORMAL: 'NORMAL',
-  LONG: 'LONG',
+  LONG: 'LONG'
 };
 
 /**
@@ -72,7 +72,7 @@ export const DEFAULT_TIMEOUT_MODE = 'NORMAL';
 
 /**
  * Response Types
- * 
+ *
  * NONE: No response expected
  * JSON: JSON response expected
  * RAW: Raw response expected
@@ -80,7 +80,7 @@ export const DEFAULT_TIMEOUT_MODE = 'NORMAL';
 export const RESPONSE_TYPE_NAMES = {
   NONE: 'NONE',
   JSON: 'JSON',
-  RAW: 'RAW',
+  RAW: 'RAW'
 };
 
 /**
@@ -90,7 +90,7 @@ export const DEFAULT_RESPONSE_TYPE = 'NONE';
 
 /**
  * Selector Types
- * 
+ *
  * CSS: CSS selector type
  * XPATH: XPath selector type
  * FULL: Full selector type
@@ -98,7 +98,7 @@ export const DEFAULT_RESPONSE_TYPE = 'NONE';
 export const SELECTOR_TYPE_NAMES = {
   CSS: 'CSS',
   XPATH: 'XPATH',
-  FULL: 'FULL',
+  FULL: 'FULL'
 };
 
 // Headless mode configuration
@@ -108,7 +108,7 @@ const HEADLESS = process.env.NODE_ENV === 'development' ? false : 'new';
 
 /**
  * Browser Configuration
- * 
+ *
  * HEADLESS: Whether the browser runs in headless mode ('new' for modern versions)
  * USER_AGENT: The user agent string for the browser
  * ACCEPT_LANGUAGE: Language preferences for the browser
@@ -116,7 +116,8 @@ const HEADLESS = process.env.NODE_ENV === 'development' ? false : 'new';
  */
 export const BROWSER_CONFIG = {
   HEADLESS,
-  USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+  USER_AGENT:
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
   ACCEPT_LANGUAGE: 'en-US,en;q=0.9',
   ARGS: {
     NO_SANDBOX: '--no-sandbox',
@@ -131,7 +132,7 @@ export const BROWSER_CONFIG = {
 
 /**
  * JSON Parser Configuration
- * 
+ *
  * JSON_LIMIT: Maximum size for JSON payloads
  */
 export const JSON_PARSER_CONFIG = {
@@ -140,7 +141,7 @@ export const JSON_PARSER_CONFIG = {
 
 /**
  * CORS Configuration
- * 
+ *
  * ORIGIN: Allowed origins for CORS
  * METHODS: Allowed HTTP methods
  * ALLOWED_HEADERS: Allowed headers in requests
@@ -153,7 +154,7 @@ export const CORS_CONFIG = {
 
 /**
  * API Configuration
- * 
+ *
  * General API-related configuration
  */
 export const API_CONFIG = {
@@ -162,7 +163,7 @@ export const API_CONFIG = {
 
 /**
  * Authentication Defaults
- * 
+ *
  * USERNAME: Default username for authentication
  * PASSWORD: Default password for authentication
  */
@@ -173,7 +174,7 @@ export const AUTH_DEFAULTS = {
 
 /**
  * Step Types for Scraper
- * 
+ *
  * NAVIGATE: Navigate to a URL
  * CLICK: Perform a click action
  * WAIT: Wait for a specified duration
@@ -192,7 +193,7 @@ export const STEP_TYPES = {
 
 /**
  * Proxy Protocol Types
- * 
+ *
  * HTTP: HTTP protocol for proxy
  * HTTPS: HTTPS protocol for proxy
  * SOCKS4: SOCKS4 protocol for proxy
@@ -207,40 +208,41 @@ export const PROXY_PROTOCOLS = {
 
 /**
  * Logging Configuration
- * 
+ *
  * FORMATS: Different log formats for different environments
  * OPTIONS: Additional options for morgan logger
  */
 export const LOGGER_CONFIG = {
   FORMATS: {
-    DEVELOPMENT: 'dev',           // Concise colored output for development
-    PRODUCTION: 'combined',       // Apache-style logging for production
-    SHORT: 'short',               // Shorter than default, includes response time
-    TINY: 'tiny',                 // Minimal output
-    CUSTOM: ':method :url :status :res[content-length] - :response-time ms'  // Example custom format
+    DEVELOPMENT: 'dev', // Concise colored output for development
+    PRODUCTION: 'combined', // Apache-style logging for production
+    SHORT: 'short', // Shorter than default, includes response time
+    TINY: 'tiny', // Minimal output
+    CUSTOM: ':method :url :status :res[content-length] - :response-time ms' // Example custom format
   },
   OPTIONS: {
     SKIP_HEALTH: (req) => req.url.includes('/health'), // Skip logging health check requests
     SKIP_FAVICON: (req) => req.url.includes('/favicon.ico'), // Skip logging favicon requests
-    SKIP_HEALTH_AND_FAVICON: (req) => req.url.includes('/health') || req.url.includes('/favicon.ico'), // Skip both health and favicon
-    SKIP_NONE: () => false,                            // Log all requests
+    SKIP_HEALTH_AND_FAVICON: (req) =>
+      req.url.includes('/health') || req.url.includes('/favicon.ico'), // Skip both health and favicon
+    SKIP_NONE: () => false // Log all requests
   }
 };
 
 /**
  * Health Check Configuration
- * 
+ *
  * Settings for health check operations
  */
 export const HEALTH_CHECK_CONFIG = {
-  TIMEOUT: TIMEOUT_MODES.NORMAL,  // 30 seconds timeout for health check operations
+  TIMEOUT: TIMEOUT_MODES.NORMAL, // 30 seconds timeout for health check operations
   TEST_URL: 'https://www.google.com', // URL to test puppeteer functionality
-  HEADLESS: HEADLESS  // Run health check browser in headless mode
+  HEADLESS: HEADLESS // Run health check browser in headless mode
 };
 
 /**
  * Rate Limiter Configuration
- * 
+ *
  * WINDOW_MS: Time window for rate limiting in milliseconds
  * MAX_REQUESTS: Maximum number of requests allowed per IP in the time window
  * ERROR_MESSAGE: Structured error message object to return when rate limit is exceeded
@@ -259,7 +261,7 @@ export const RATE_LIMITER_CONFIG = {
 
 /**
  * Swagger Documentation Configuration
- * 
+ *
  * Settings for API documentation with OpenAPI 3.0 standards
  */
 export const SWAGGER_CONFIG = {
@@ -276,7 +278,7 @@ export const SWAGGER_CONFIG = {
     LICENSE: {
       NAME: 'ISC',
       URL: 'https://opensource.org/licenses/ISC'
-    },
+    }
   },
   SECURITY_SCHEMES: {
     BASIC_AUTH: {
@@ -289,11 +291,11 @@ export const SWAGGER_CONFIG = {
     {
       URL: process.env.WEB_ADDRESS || 'http://localhost:3000',
       DESCRIPTION: 'API Server'
-    },
+    }
   ],
   OPTIONS: {
     EXPLORER: true,
-    CUSTOM_CSS: '.swagger-ui .topbar { display: none }',
+    CUSTOM_CSS: '.swagger-ui .topbar { display: none }'
   },
   TAGS: [
     {
@@ -313,7 +315,7 @@ export const SWAGGER_CONFIG = {
 
 /**
  * Helmet Security Configuration
- * 
+ *
  * Settings for Helmet security middleware in different environments
  */
 export const HELMET_CONFIG = {
@@ -323,7 +325,7 @@ export const HELMET_CONFIG = {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:"]
+        imgSrc: ["'self'", 'data:']
       }
     },
     hsts: {
@@ -335,5 +337,5 @@ export const HELMET_CONFIG = {
       action: 'deny'
     }
   },
-  DEVELOPMENT: {}  // Basic configuration for development
+  DEVELOPMENT: {} // Basic configuration for development
 };

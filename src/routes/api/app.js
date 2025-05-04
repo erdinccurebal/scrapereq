@@ -123,7 +123,7 @@ import { controllerApiAppShutdown } from '../../controllers/api/app/shutdown.js'
  *                       description: Standardized error code for easier error handling
  *                       example: "ERROR_UNKNOWN"
  */
-router.get("/health", controllerApiAppHealth);
+router.get('/health', controllerApiAppHealth);
 
 /**
  * @swagger
@@ -164,16 +164,8 @@ router.get("/health", controllerApiAppHealth);
  *                       type: string
  *                       description: Standardized error code for easier error handling
  *                       example: "ERROR_UNKNOWN"
- *                     screenshotUrl:
- *                       type: string
- *                       description: URL to the error screenshot if errorScreenshot was enabled
- *                       example: "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
- *                     proxy:
- *                       type: string
- *                       description: Proxy details used during the failed request
- *                       example: "--proxy-server=http://proxy1.example.com:8080"
  */
-router.post("/shutdown", controllerApiAppShutdown);
+router.post('/shutdown', controllerApiAppShutdown);
 
 // Export the router for use in the application
 export const routerApiApp = router;

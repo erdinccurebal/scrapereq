@@ -4,10 +4,10 @@ This project is currently in early development (version 1.0.0) and is private.
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.0   | ✅ Yes              |
-| < 1.0.0 | ❌ No               |
+| Version | Supported |
+| ------- | --------- |
+| 1.0.0   | ✅ Yes    |
+| < 1.0.0 | ❌ No     |
 
 ## Reporting a Vulnerability
 

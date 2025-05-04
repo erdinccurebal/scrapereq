@@ -10,7 +10,7 @@
     "prod": "node start.js prod",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
+    "format": "prettier --write . --single-quote --no-bracket-spacing=false --quote-props=preserve",
     "test": "node start.js test",
     "docker:build": "docker build -t scrapereq .",
     "docker:run": "docker run -p 3000:3000 -d --name scrapereq-container scrapereq",

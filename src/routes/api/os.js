@@ -61,7 +61,7 @@ import { controllerApiOsRestart } from '../../controllers/api/os/restart.js';
  *                       description: Standardized error code for easier error handling
  *                       example: "ERROR_UNKNOWN"
  */
-router.post("/restart", controllerApiOsRestart);
+router.post('/restart', controllerApiOsRestart);
 
 // Export the router for use in the application
 export const routerApiOs = router;

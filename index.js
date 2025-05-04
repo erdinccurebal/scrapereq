@@ -1,6 +1,6 @@
 /**
  * Application Entry Point
- * 
+ *
  * This file initializes and starts the HTTP server for the application.
  * Sets up environment variables, server configuration, and scheduled tasks.
  */
@@ -34,7 +34,7 @@ const server = http.createServer(expressApp);
 /**
  * Schedule screenshot cleanup task
  * Runs every hour to clean up old screenshots and prevent disk space issues
- * 
+ *
  * @returns {Promise<void>} Promise that resolves when the cleanup is complete
  */
 async function scheduleScreenshotCleanup() {
@@ -46,7 +46,7 @@ async function scheduleScreenshotCleanup() {
   } catch (error) {
     console.error('Error during scheduled screenshot cleanup:', error);
   }
-  
+
   // Schedule next cleanup
   setTimeout(scheduleScreenshotCleanup, 60 * 60 * 1000); // Run every 1 hour
 }
@@ -56,7 +56,9 @@ async function scheduleScreenshotCleanup() {
  * Listens on the specified port and host
  */
 server.listen(config.server.port, config.server.host, async () => {
-  console.log(`Server started on port http://${config.server.host}:${config.server.port} in ${config.server.env} mode.`);
+  console.log(
+    `Server started on port http://${config.server.host}:${config.server.port} in ${config.server.env} mode.`
+  );
 
   // Perform initial screenshot cleanup
   try {
@@ -66,7 +68,7 @@ server.listen(config.server.port, config.server.host, async () => {
     } else {
       console.log('Initial cleanup: No old screenshot files to remove');
     }
-    
+
     // Start the scheduled cleanup
     setTimeout(scheduleScreenshotCleanup, 60 * 60 * 1000);
   } catch (error) {
@@ -78,7 +80,7 @@ server.listen(config.server.port, config.server.host, async () => {
  * Global error handling for uncaught exceptions
  * Prevents the server from crashing when unexpected errors occur
  */
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error('Uncaught exception:', error);
 });
 
@@ -107,12 +109,12 @@ process.on('SIGINT', gracefulShutdown('SIGINT'));
 function gracefulShutdown(signal) {
   return () => {
     console.log(`${signal} received. Starting graceful shutdown...`);
-    
+
     server.close(() => {
       console.log('Server closed. All connections were properly ended.');
       process.exit(0);
     });
-    
+
     // Force shutdown after 10 seconds if connections haven't closed
     setTimeout(() => {
       console.warn('Forcing server shutdown after timeout.');

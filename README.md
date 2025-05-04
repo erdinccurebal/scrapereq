@@ -5,7 +5,7 @@
   <p>
     <img src="https://img.shields.io/badge/Express-5.1.0-000000?style=flat-square&logo=express" alt="Express.js" />
     <img src="https://img.shields.io/badge/Puppeteer-24.7.2-40B5A4?style=flat-square&logo=puppeteer" alt="Puppeteer" />
-    <img src="https://img.shields.io/badge/Node.js-v18+-339933?style=flat-square&logo=node.js" alt="Node.js" />
+    <img src="https://img.shields.io/badge/Node.js-v20+-339933?style=flat-square&logo=node.js" alt="Node.js" />
     <img src="https://img.shields.io/badge/License-ISC-blue?style=flat-square" alt="License" />
   </p>
   <p>
@@ -20,18 +20,21 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 ## ✨ Features
 
 ### Core Capabilities
+
 - **🔄 Step-Based Scraping**: Define your scraping workflow as a series of steps (navigate, click, wait, setViewport, etc.)
 - **⚡ Speed Control**: Multiple speed modes (TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH)
 - **🔍 Selector Support**: Extract data using CSS, XPath, or full page HTML selectors
 - **✅ Enhanced Validation**: Comprehensive request validation with clear error messages
 
 ### Security & Reliability
+
 - **🔐 Built-in Security**: Basic authentication, helmet protection, and CORS configuration
 - **🌐 Enhanced Proxy Support**: Advanced proxy configuration with authentication and multiple proxy rotation
 - **🔄 Error Handling**: Comprehensive error reporting with step indexing
 - **💪 Browser Resilience**: Automatic disconnection detection and resource management
 
 ### Advanced Features
+
 - **📸 Screenshot Capabilities**: Capture success and error screenshots with configurable options
 - **📊 API Monitoring**: Detailed health check endpoint with system information
 - **📝 Swagger Documentation**: Interactive API documentation with detailed request/response examples
@@ -61,19 +64,22 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 ## 🚀 Installation
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/erdinccurebal/scrapereq.git
    cd scrapereq
    ```
 
 2. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 3. **Create a configuration file**:
-   
+
    Create a `.env` file in the root directory based on the following template:
+
    ```env
    # Server Configuration
    PORT=3000
@@ -90,7 +96,7 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 
    # File Storage
    TMP_DIR=/path/to/persistent/directory # For example: /var/www/scrapereq-data/tmp
-   
+
    # Browser Concurrency
    MAX_CONCURRENT_BROWSERS=2 # Number of concurrent browser instances
    ```
@@ -103,22 +109,28 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 ## 🔌 API Endpoints
 
 ### 🔍 Health Check
+
 ```http
 GET /api/app/health
 ```
+
 ✅ Returns detailed system information and checks if all components are working correctly:
+
 - Project metadata and versions
 - Application status and uptime
 - Puppeteer browser functionality test
 - System information (OS, memory, CPU)
 
 ### 🕸️ Scraper
+
 ```http
 POST /api/scrape/start
 ```
+
 Main endpoint for web scraping operations. Configure your scraping workflow with a detailed JSON structure.
 
 #### Example Request:
+
 <details>
 <summary>📋 View example request body</summary>
 
@@ -142,7 +154,7 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
       "value": "title"
     }
   ],
-    "proxyAuth": {
+  "proxyAuth": {
     "enabled": true,
     "username": "user",
     "password": "pass"
@@ -189,6 +201,7 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
   ]
 }
 ```
+
 </details>
 
 #### Response Examples:
@@ -213,6 +226,7 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
   }
 }
 ```
+
 </details>
 
 <details>
@@ -233,6 +247,7 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
   }
 }
 ```
+
 </details>
 
 ### 🔧 System Management
@@ -240,11 +255,13 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
 ```http
 POST /api/app/shutdown
 ```
+
 Safely shuts down the application with a 3-second delay.
 
 ```http
 POST /api/os/restart
 ```
+
 Initiates an operating system restart (requires appropriate permissions).
 
 ### 📊 Performance Metrics
@@ -256,32 +273,35 @@ The application includes a comprehensive performance metrics system that tracks 
 ```http
 GET /api/scrape/metrics
 ```
+
 Returns basic performance metrics for all scraping operations.
 
 ```http
 GET /api/scrape/metrics?detailed=true
 ```
+
 Returns detailed metrics including breakdowns by proxy, URL pattern, and response type.
 
 ```http
 POST /api/scrape/metrics/reset
 ```
+
 Resets all collected metrics.
 
 #### Metrics Provided
 
-| Metric | Description |
-|--------|-------------|
-| `operations` | Total number of scraping operations |
-| `successful` | Number of successful operations |
-| `failed` | Number of failed operations |
-| `successRate` | Percentage of successful operations |
-| `averageDuration` | Average operation duration in milliseconds |
-| `byProxy` | Breakdown of operations by proxy (detailed mode only) |
-| `byUrl` | Breakdown of operations by domain (detailed mode only) |
-| `byResponseType` | Breakdown by response type (detailed mode only) |
-| `errors` | Most common error types (detailed mode only) |
-| `recent` | Recent operations history (detailed mode only) |
+| Metric            | Description                                            |
+| ----------------- | ------------------------------------------------------ |
+| `operations`      | Total number of scraping operations                    |
+| `successful`      | Number of successful operations                        |
+| `failed`          | Number of failed operations                            |
+| `successRate`     | Percentage of successful operations                    |
+| `averageDuration` | Average operation duration in milliseconds             |
+| `byProxy`         | Breakdown of operations by proxy (detailed mode only)  |
+| `byUrl`           | Breakdown of operations by domain (detailed mode only) |
+| `byResponseType`  | Breakdown by response type (detailed mode only)        |
+| `errors`          | Most common error types (detailed mode only)           |
+| `recent`          | Recent operations history (detailed mode only)         |
 
 #### Sample Metrics Response
 
@@ -303,9 +323,9 @@ Resets all collected metrics.
 
 The API is secured with basic authentication:
 
-| Username | Password | Configuration |
-|----------|----------|---------------|
-| `admin` | `admin` | Default values |
+| Username | Password | Configuration  |
+| -------- | -------- | -------------- |
+| `admin`  | `admin`  | Default values |
 
 You can change these values in the `.env` file or in the `constants.js` file:
 
@@ -318,21 +338,22 @@ AUTH_PASSWORD=secure_password
 ## ⚙️ Configuration
 
 The application can be configured through:
+
 - **.env file**: For environment variables
 - **constants.js**: For constant values
 
 ### Key Configuration Options
 
-| Category | Description |
-|----------|-------------|
-| 🔄 **Speed Modes** | Controls scraping pace (TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH) |
-| ⏱️ **Timeout Values** | Timeout values for operations (SHORT, NORMAL, LONG) |
-| 🌐 **Browser Settings** | Browser configurations (user agent, headless mode, etc.) |
-| 🔐 **Proxy Settings** | Proxy server configurations |
-| 🛡️ **API Security** | API security settings |
-| 📸 **Screenshot Options** | Screenshot configurations |
-| ✅ **Validation Rules** | Enhanced validation rules for requests |
-| 🧵 **Concurrency** | Control number of concurrent browser instances |
+| Category                  | Description                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| 🔄 **Speed Modes**        | Controls scraping pace (TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH) |
+| ⏱️ **Timeout Values**     | Timeout values for operations (SHORT, NORMAL, LONG)                         |
+| 🌐 **Browser Settings**   | Browser configurations (user agent, headless mode, etc.)                    |
+| 🔐 **Proxy Settings**     | Proxy server configurations                                                 |
+| 🛡️ **API Security**       | API security settings                                                       |
+| 📸 **Screenshot Options** | Screenshot configurations                                                   |
+| ✅ **Validation Rules**   | Enhanced validation rules for requests                                      |
+| 🧵 **Concurrency**        | Control number of concurrent browser instances                              |
 
 ### Screenshot Storage Configuration
 
@@ -345,6 +366,7 @@ TMP_DIR=/path/to/persistent/directory
 For Ubuntu 24.04 deployments, consider using a path outside the application directory, such as `/var/www/scrapereq-data/tmp` to ensure screenshots are preserved when the application is redeployed.
 
 The application automatically:
+
 - Creates the directory if it doesn't exist
 - Serves static files from this directory under the `/tmp` URL path
 - Cleans up screenshots older than 24 hours on a regular schedule
@@ -353,11 +375,11 @@ The application automatically:
 
 The scraper supports multiple response formats:
 
-| Type | Description |
-|------|-------------|
+| Type   | Description                                                                               |
+| ------ | ----------------------------------------------------------------------------------------- |
 | `JSON` | Returns structured JSON with success status, data, proxy information, and screenshot URLs |
-| `RAW` | Returns raw content without formatting, directly from the first selector |
-| `NONE` | No response content (useful for headless operations) |
+| `RAW`  | Returns raw content without formatting, directly from the first selector                  |
+| `NONE` | No response content (useful for headless operations)                                      |
 
 ### JSON Response Format Example
 
@@ -389,11 +411,11 @@ When using `RAW` response type, only the first selector's content is returned di
 
 Data can be extracted using different selector methods:
 
-| Selector Type | Usage |
-|---------------|-------|
-| `CSS` | Standard CSS selectors |
-| `XPATH` | XPath expressions |
-| `FULL` | Retrieves the full page HTML content |
+| Selector Type | Usage                                |
+| ------------- | ------------------------------------ |
+| `CSS`         | Standard CSS selectors               |
+| `XPATH`       | XPath expressions                    |
+| `FULL`        | Retrieves the full page HTML content |
 
 ### Selector Validation Rules:
 
@@ -405,6 +427,7 @@ Data can be extracted using different selector methods:
 ### Enhanced Form Element Support
 
 The selector processing has been improved to better handle form elements:
+
 - Special handling for `input`, `textarea`, and `select` elements to extract their values
 - Smart content detection that chooses between innerHTML, textContent, and value based on context
 - Improved error messages when selectors don't match any element
@@ -441,6 +464,7 @@ The application supports advanced proxy configurations:
 ```
 
 The improved proxy support includes:
+
 - Weighted proxy selection based on success rates
 - Better validation of proxy configurations
 - Enhanced error handling for proxy failures
@@ -455,6 +479,7 @@ MAX_CONCURRENT_BROWSERS=2
 ```
 
 This feature includes:
+
 - Configurable concurrency limits
 - Queue management for pending requests
 - Detailed statistics on browser usage
@@ -473,26 +498,29 @@ The application includes a sophisticated retry mechanism for handling transient 
 
 ### Error Categories Handled
 
-| Error Type | Description | Default Behavior |
-|------------|-------------|------------------|
-| Network Errors | Connectivity issues, timeouts | Retry with backoff |
-| Browser Disconnection | Browser crashes or disconnects | Restart browser and retry |
-| Captcha Detection | Detection of captcha challenges | Rotate proxy and retry |
-| Selector Not Found | Element not found on page | Depends on configuration |
+| Error Type            | Description                     | Default Behavior          |
+| --------------------- | ------------------------------- | ------------------------- |
+| Network Errors        | Connectivity issues, timeouts   | Retry with backoff        |
+| Browser Disconnection | Browser crashes or disconnects  | Restart browser and retry |
+| Captcha Detection     | Detection of captcha challenges | Rotate proxy and retry    |
+| Selector Not Found    | Element not found on page       | Depends on configuration  |
 
 ### Implementation
 
 The retry functionality is implemented in the `retry-operations.js` helper, which provides a generic retry wrapper for any async function:
 
 ```javascript
-await helperRetryOperation(async () => {
-  // Your scraping operation here
-}, {
-  maxRetries: 3,
-  initialDelay: 1000,
-  maxDelay: 10000,
-  shouldRetry: (error) => helperErrorDetectors.isNetworkError(error)
-})
+await helperRetryOperation(
+  async () => {
+    // Your scraping operation here
+  },
+  {
+    maxRetries: 3,
+    initialDelay: 1000,
+    maxDelay: 10000,
+    shouldRetry: error => helperErrorDetectors.isNetworkError(error)
+  }
+);
 ```
 
 ## 🛠️ CLI Startup Utility
@@ -537,6 +565,7 @@ npm run docker:start
 ### Quick Start
 
 1. Clone the repository and install dependencies:
+
    ```bash
    git clone https://github.com/erdinccurebal/scrapereq.git
    cd scrapereq
@@ -544,15 +573,17 @@ npm run docker:start
    ```
 
 2. Create your environment configuration:
+
    ```bash
    # Copy the example config
    cp .env.example .env
-   
+
    # Edit with your settings
    notepad .env  # On Windows
    ```
 
 3. Start the application in development mode:
+
    ```bash
    npm start
    ```
@@ -718,9 +749,7 @@ Contributions are welcome! Here's how you can contribute:
 When deploying this application, consider the following:
 
 1. **💾 Persistent Storage**: Configure the `TMP_DIR` environment variable to point to a persistent directory that won't be deleted during redeployments.
-   
 2. **📂 File Permissions**: Ensure the application has read/write permissions for the configured `TMP_DIR`.
-   
 3. **🧹 Screenshot Cleanup**: The application automatically cleans up screenshots older than 24 hours. Adjust the cleanup schedule in `index.js` if necessary.
 
 4. **🌐 Static File Serving**: The application serves files in `TMP_DIR` under the `/tmp` path. No additional configuration is required for static file serving.
@@ -735,4 +764,4 @@ Erdinç Cürebal
 
 ## 🔄 Last Updated
 
-May 3, 2025
+May 4, 2025

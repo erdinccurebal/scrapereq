@@ -8,11 +8,11 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -29,5 +29,3 @@ jobs:
 
       - name: Service start
         run: systemctl start scrapereq.service
-        
-

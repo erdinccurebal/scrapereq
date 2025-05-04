@@ -38,9 +38,9 @@ router.get('/', controllerApiIndex);
 setupBasicAuth(router);
 
 // Define API routes
-router.use("/scrape", routerApiScrape);
-router.use("/app", routerApiApp);
-router.use("/os", routerApiOs);
+router.use('/scrape', routerApiScrape);
+router.use('/app', routerApiApp);
+router.use('/os', routerApiOs);
 
 // Export the router for use in the application
 export const routerApi = router;

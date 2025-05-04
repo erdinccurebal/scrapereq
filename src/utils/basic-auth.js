@@ -10,9 +10,12 @@ export function setupBasicAuth(router) {
   }
 
   // Apply basic authentication to all routes
-  router.use(basicAuth({
-    users: {
-      [process.env.AUTH_USERNAME || AUTH_DEFAULTS.USERNAME]: process.env.AUTH_PASSWORD || AUTH_DEFAULTS.PASSWORD
-    }
-  }));
+  router.use(
+    basicAuth({
+      users: {
+        [process.env.AUTH_USERNAME || AUTH_DEFAULTS.USERNAME]:
+          process.env.AUTH_PASSWORD || AUTH_DEFAULTS.PASSWORD
+      }
+    })
+  );
 }

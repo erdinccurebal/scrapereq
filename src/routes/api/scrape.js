@@ -4,7 +4,10 @@ import express from 'express';
 // Controller imports
 import { controllerApiScrapeStart } from '../../controllers/api/scrape/start.js';
 import { controllerApiScrapeTest } from '../../controllers/api/scrape/test.js';
-import { controllerApiScrapeMetrics, controllerApiScrapeMetricsReset } from '../../controllers/api/scrape/metrics.js';
+import {
+  controllerApiScrapeMetrics,
+  controllerApiScrapeMetricsReset
+} from '../../controllers/api/scrape/metrics.js';
 
 // Initialize Express Router
 const router = express.Router();
@@ -360,7 +363,7 @@ const router = express.Router();
  *                       description: Proxy details used during the failed request
  *                       example: "--proxy-server=http://proxy1.example.com:8080"
  */
-router.post("/start", controllerApiScrapeStart);
+router.post('/start', controllerApiScrapeStart);
 
 /**
  * @swagger
@@ -407,7 +410,7 @@ router.post("/start", controllerApiScrapeStart);
  *                       description: Standardized error code for easier error handling
  *                       example: "ERROR_UNKNOWN"
  */
-router.post("/test", controllerApiScrapeTest);
+router.post('/test', controllerApiScrapeTest);
 
 /**
  * @swagger
@@ -484,7 +487,7 @@ router.post("/test", controllerApiScrapeTest);
  *                       description: Standardized error code
  *                       example: "ERROR_API_SCRAPE_METRICS"
  */
-router.get("/metrics", controllerApiScrapeMetrics);
+router.get('/metrics', controllerApiScrapeMetrics);
 
 /**
  * @swagger
@@ -533,7 +536,7 @@ router.get("/metrics", controllerApiScrapeMetrics);
  *                       description: Standardized error code
  *                       example: "ERROR_API_SCRAPE_METRICS_RESET"
  */
-router.post("/metrics/reset", controllerApiScrapeMetricsReset);
+router.post('/metrics/reset', controllerApiScrapeMetricsReset);
 
 // Export the router for use in the application
 export const routerApiScrape = router;

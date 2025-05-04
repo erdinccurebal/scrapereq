@@ -1,6 +1,6 @@
 /**
  * Main Application Setup
- * 
+ *
  * This file configures the Express application with necessary middleware,
  * routes, and error handlers. It serves as the central configuration point
  * for the web application.
@@ -73,7 +73,6 @@ app.use(setupRateLimiter());
  * Applied after rate limiting but before routes to ensure all route handlers have parsed JSON available
  */
 app.use(setupJsonParser());
-
 
 /**
  * Apply all routes defined in the routes.js file

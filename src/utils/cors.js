@@ -1,15 +1,15 @@
 /**
  * CORS Configuration Utility
- * 
+ *
  * This file provides CORS (Cross-Origin Resource Sharing) configuration for the application.
  * It centralizes all CORS-related functionality in one place and offers a clean API.
  */
 
 // Node third-party modules
-import cors from 'cors'
+import cors from 'cors';
 
 // Import central configuration and constants
-import { CORS_CONFIG } from '../constants.js'
+import { CORS_CONFIG } from '../constants.js';
 
 /**
  * Configure and return the CORS middleware with application-specific settings
@@ -21,5 +21,5 @@ export function setupCors() {
     origin: CORS_CONFIG.ORIGIN,
     methods: CORS_CONFIG.METHODS,
     allowedHeaders: CORS_CONFIG.ALLOWED_HEADERS
-  })
+  });
 }

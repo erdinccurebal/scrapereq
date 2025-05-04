@@ -34,7 +34,7 @@ const swaggerOptions = {
       license: {
         name: SWAGGER_CONFIG.INFO.LICENSE.NAME,
         url: SWAGGER_CONFIG.INFO.LICENSE.URL
-      },
+      }
     },
     servers: SWAGGER_CONFIG.SERVERS.map(server => ({
       url: server.URL,
@@ -47,15 +47,12 @@ const swaggerOptions = {
           type: SWAGGER_CONFIG.SECURITY_SCHEMES.BASIC_AUTH.TYPE,
           scheme: SWAGGER_CONFIG.SECURITY_SCHEMES.BASIC_AUTH.SCHEME,
           description: SWAGGER_CONFIG.SECURITY_SCHEMES.BASIC_AUTH.DESCRIPTION
-        },
+        }
       }
     },
     security: [{ basicAuth: [] }]
   },
-  apis: [
-    join(__dirname, '../routes/**/*.js'),
-    join(__dirname, '../controllers/**/*.js')
-  ],
+  apis: [join(__dirname, '../routes/**/*.js'), join(__dirname, '../controllers/**/*.js')]
 };
 
 // Initialize swagger-jsdoc
@@ -74,12 +71,12 @@ const swaggerUiOptions = {
 
 /**
  * Setup Swagger documentation for Express app
- * 
+ *
  * @param {Object} router - Express router instance
  * @returns {void}
  */
 export function setupSwagger(router) {
-  const path = "/docs";
+  const path = '/docs';
 
   if (!router) {
     throw new Error('Express router instance is required');

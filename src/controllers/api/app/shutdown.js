@@ -1,10 +1,10 @@
 /**
  * Application Shutdown Controller
- * 
+ *
  * Provides an endpoint to safely shutdown the application with a delayed timer.
  * This allows for graceful termination of connections and processes.
  * Typically used during maintenance or deployment processes.
- * 
+ *
  * @param {Object} _req - Express request object (unused but kept for middleware signature consistency)
  * @param {Object} res - Express response object
  * @param {Function} next - Express next middleware function
@@ -19,7 +19,7 @@ export function controllerApiAppShutdown(_req, res, next) {
     res.json({
       success: true,
       data: {
-        message: 'Application is shutting down in 3 seconds...',
+        message: 'Application is shutting down in 3 seconds...'
       }
     });
 
