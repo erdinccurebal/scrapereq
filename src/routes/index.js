@@ -6,16 +6,14 @@ import { controllerRouteNotFoundHandler } from '../controllers/route-not-found-h
 import { controllerErrorHandler } from '../controllers/error-handler.js';
 import { controllerIndex } from '../controllers/index.js';
 
+// Routes import
+import { routerApi } from './api/index.js';
+
 // Express Router instance
 const router = express.Router();
 
-// Routes
-import { routerApi } from './api/index.js';
-
-// Load controller for the root path
+// Main application routes
 router.get('/', controllerIndex);
-
-// Load API routes
 router.use('/api', routerApi);
 
 /**

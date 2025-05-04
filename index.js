@@ -2,11 +2,12 @@
  * Application Entry Point
  *
  * This file initializes and starts the HTTP server for the application.
- * Sets up environment variables, server configuration, and scheduled tasks.
+ * Sets up server configuration and scheduled tasks for maintenance operations.
  */
 
-// Load environment variables from .env file and initialize config
+// Load configuration
 import { config } from './src/config.js';
+import { TIME_CONSTANTS } from './src/constants.js';
 
 // Node core modules
 import http from 'http';
@@ -19,15 +20,15 @@ import { expressApp } from './src/app.js';
 
 /**
  * Configure Express application settings
- * These settings are available via app.get('setting') throughout the application
+ * These settings are accessible via app.get('setting') throughout the application
  */
-expressApp.set('env', config.server.env); // Set the environment in the app
-expressApp.set('port', config.server.port); // Set the port in the app
-expressApp.set('host', config.server.host); // Set the host in the app
+expressApp.set('env', config.server.env);
+expressApp.set('port', config.server.port);
+expressApp.set('host', config.server.host);
 
 /**
- * Create HTTP server using our Express application
- * This allows for potential future upgrades (like WebSockets) without changing the app
+ * Create HTTP server using Express application
+ * This allows for future upgrades (like WebSockets) without changing the Express app
  */
 const server = http.createServer(expressApp);
 
@@ -41,14 +42,16 @@ async function scheduleScreenshotCleanup() {
   try {
     const { deleted } = await helperCleanupOldScreenshots();
     if (deleted > 0) {
-      console.log(`Scheduled cleanup: Removed ${deleted} old screenshot files`);
+      console.log(
+        `Scheduled cleanup: Removed ${deleted} old screenshot file${deleted !== 1 ? 's' : ''}`
+      );
     }
   } catch (error) {
     console.error('Error during scheduled screenshot cleanup:', error);
   }
 
   // Schedule next cleanup
-  setTimeout(scheduleScreenshotCleanup, 60 * 60 * 1000); // Run every 1 hour
+  setTimeout(scheduleScreenshotCleanup, TIME_CONSTANTS.ONE_HOUR_MS);
 }
 
 /**
@@ -57,20 +60,22 @@ async function scheduleScreenshotCleanup() {
  */
 server.listen(config.server.port, config.server.host, async () => {
   console.log(
-    `Server started on port http://${config.server.host}:${config.server.port} in ${config.server.env} mode.`
+    `Server started at http://${config.server.host}:${config.server.port} in ${config.server.env} mode`
   );
 
   // Perform initial screenshot cleanup
   try {
     const { deleted } = await helperCleanupOldScreenshots();
     if (deleted > 0) {
-      console.log(`Initial cleanup: Removed ${deleted} old screenshot files`);
+      console.log(
+        `Initial cleanup: Removed ${deleted} old screenshot file${deleted !== 1 ? 's' : ''}`
+      );
     } else {
       console.log('Initial cleanup: No old screenshot files to remove');
     }
 
     // Start the scheduled cleanup
-    setTimeout(scheduleScreenshotCleanup, 60 * 60 * 1000);
+    setTimeout(scheduleScreenshotCleanup, TIME_CONSTANTS.ONE_HOUR_MS);
   } catch (error) {
     console.error('Error during initial screenshot cleanup:', error);
   }
@@ -80,7 +85,7 @@ server.listen(config.server.port, config.server.host, async () => {
  * Global error handling for uncaught exceptions
  * Prevents the server from crashing when unexpected errors occur
  */
-process.on('uncaughtException', error => {
+process.on('uncaughtException', (error) => {
   console.error('Uncaught exception:', error);
 });
 
@@ -103,6 +108,7 @@ process.on('SIGINT', gracefulShutdown('SIGINT'));
 /**
  * Graceful shutdown function
  * Closes server and exits process after completing pending connections
+ *
  * @param {string} signal - The signal that triggered the shutdown
  * @returns {Function} - Signal handler function
  */
@@ -115,10 +121,12 @@ function gracefulShutdown(signal) {
       process.exit(0);
     });
 
-    // Force shutdown after 10 seconds if connections haven't closed
+    // Force shutdown after timeout if connections haven't closed
     setTimeout(() => {
-      console.warn('Forcing server shutdown after timeout.');
+      console.warn(
+        `Forcing server shutdown after ${TIME_CONSTANTS.FORCE_SHUTDOWN_TIMEOUT_MS}ms timeout.`
+      );
       process.exit(1);
-    }, 10000);
+    }, TIME_CONSTANTS.FORCE_SHUTDOWN_TIMEOUT_MS);
   };
 }

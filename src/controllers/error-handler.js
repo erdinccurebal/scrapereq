@@ -45,12 +45,14 @@ export function controllerErrorHandler(error, _req, res, _next) {
     result.data.screenshotUrl = error.screenshotUrl;
   }
 
+  // Extract error code if available, otherwise use a default
   if (result.data.message.includes('Code: ERROR_')) {
     result.data.code = 'ERROR_' + result.data.message.split('Code: ERROR_')[1].split(' ')[0];
   } else {
     result.data.code = 'ERROR_UNKNOWN';
   }
 
+  // Include proxy information if available
   if (error.proxy) {
     result.data.proxy = error.proxy;
   }
@@ -63,21 +65,21 @@ export function controllerErrorHandler(error, _req, res, _next) {
 /**
  * Format validation error messages to be more user-friendly
  *
- * @param {Error} error - Validation error object
+ * @param {Error} error - Validation error object (typically Joi validation error)
  * @returns {string} Formatted validation error message
  */
 function formatValidationError(error) {
-  // For Joi validation errors
+  // For Joi validation errors with details array
   if (error.details && Array.isArray(error.details)) {
-    return error.details.map(detail => formatErrorMessage(detail.message)).join(', ');
+    return error.details.map((detail) => formatErrorMessage(detail.message)).join(', ');
   }
 
-  // For custom validation errors
+  // For custom validation errors that include the ValidationError text
   if (error.message && error.message.includes('ValidationError')) {
-    // Clean up the validation error message
     return formatErrorMessage(error.message.replace('ValidationError: ', ''));
   }
 
+  // Fallback for other validation errors
   return formatErrorMessage(error.message) || 'Validation failed';
 }
 
@@ -92,23 +94,23 @@ function formatErrorMessage(message) {
 
   return message
     .replace(/\\"/g, '"') // Replace escaped quotes with regular quotes
-    .replace(/"/g, '\'') // Replace double quotes with single quotes
+    .replace(/"/g, "'") // Replace double quotes with single quotes
     .trim();
 }
 
 /**
  * Format stack trace for error responses
- * Simple version without complex formatting
+ * Returns a simplified version of the stack trace for better readability
  *
  * @param {string} stackTrace - Raw stack trace string
- * @returns {Array} Basic stack trace as array of lines
+ * @returns {Array<string>|null} Formatted stack trace as array of lines or null if not available
  */
 function formatStackTrace(stackTrace) {
   if (!stackTrace) return null;
 
-  // Split stack by lines and take first 10 lines
+  // Split stack by lines and take first 10 lines for conciseness
   return stackTrace
     .split('\n')
-    .map(line => line.trim())
+    .map((line) => line.trim())
     .slice(0, 10);
 }

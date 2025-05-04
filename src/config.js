@@ -1,8 +1,9 @@
 /**
  * Configuration Module
  *
- * Central configuration for the application.
- * Loads environment variables and provides defaults.
+ * Central configuration for the application that provides a unified interface
+ * for all application settings. Loads environment variables from .env file
+ * and provides sensible defaults when variables are not defined.
  */
 
 import dotenv from 'dotenv';
@@ -10,7 +11,7 @@ import dotenv from 'dotenv';
 // Load environment variables from .env file
 dotenv.config();
 
-// Envronment variables
+// Environment variables with destructuring
 const {
   PORT,
   HOST,
@@ -24,7 +25,7 @@ const {
   RATE_LIMIT_MAX_REQUESTS
 } = process.env;
 
-// System configuration
+// System configuration with defaults
 export const config = {
   // Server settings
   server: {
@@ -48,7 +49,7 @@ export const config = {
 
   // Rate limiter settings
   rateLimit: {
-    windowMs: parseInt(RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-    maxRequests: parseInt(RATE_LIMIT_MAX_REQUESTS) || 100 // Limit each IP to 100 requests per windowMs
+    windowMs: Number(RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+    maxRequests: Number(RATE_LIMIT_MAX_REQUESTS) || 100 // Limit each IP to 100 requests per windowMs
   }
 };

@@ -1,28 +1,33 @@
 /**
  * Helmet Security Configuration Utility
  *
- * This file provides Helmet security middleware configuration for the application.
- * Helmet helps secure Express apps by setting various HTTP headers to protect against common web vulnerabilities.
+ * Configures Helmet security middleware to protect the application from common web vulnerabilities.
+ * Provides environment-specific security settings with enhanced protection in production.
+ *
+ * @module utils/helmet
  */
 
-// Node third-party modules
+// Third-party modules
 import helmet from 'helmet';
 
-// Import central configuration and constants
+// Application configuration
 import { config } from '../config.js';
+
+// Application constants
 import { HELMET_CONFIG } from '../constants.js';
 
 /**
- * Configure and return the Helmet middleware with application-specific security settings
+ * Creates and returns configured Helmet middleware
+ *
+ * Applies different security configurations based on the current environment.
+ * Production settings are more restrictive for maximum security, while
+ * development settings are relaxed to facilitate debugging and testing.
+ *
  * @returns {Function} Configured Helmet middleware
  */
 export function setupHelmet() {
-  // Return helmet configuration appropriate for the environment
-  if (config.server.env === 'production') {
-    // Enhanced security settings for production
-    return helmet(HELMET_CONFIG.PRODUCTION);
-  }
-
-  // Basic configuration for development
-  return helmet(HELMET_CONFIG.DEVELOPMENT);
+  // Apply environment-specific security configuration
+  return config.server.env === 'production'
+    ? helmet(HELMET_CONFIG.PRODUCTION) // Strict security for production
+    : helmet(HELMET_CONFIG.DEVELOPMENT); // Relaxed settings for development
 }

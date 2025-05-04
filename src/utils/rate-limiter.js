@@ -1,26 +1,33 @@
 /**
- * Rate Limiter Configuration Utility
+ * Rate Limiter Configuration
  *
- * This file provides rate limiting functionality for the application.
- * Rate limiting helps protect the API from abuse by limiting the number of
- * requests a client can make in a given time period.
+ * Configures and exports an Express rate limiter middleware to protect the API
+ * from excessive requests. This helps prevent abuse and ensures service availability.
+ *
+ * The rate limiter tracks requests by IP address and applies configured limits
+ * from application settings.
  */
 
-// Node third-party modules
+// Third-party dependencies
 import rateLimit from 'express-rate-limit';
 
-// Import central configuration module
+// Application configuration
 import { config } from '../config.js';
+
+// Rate limiter specific constants
 import { RATE_LIMITER_CONFIG } from '../constants.js';
 
 /**
- * Configure and return the rate limiter middleware with application-specific settings
- * @returns {Function} Configured rate limiter middleware
+ * Creates and configures a rate limiter middleware instance
+ *
+ * @returns {Function} Configured Express rate limiter middleware
  */
 export function setupRateLimiter() {
   return rateLimit({
-    windowMs: config.rateLimit.windowMs, // Request window (e.g., 15 minutes)
-    max: config.rateLimit.maxRequests, // Maximum number of requests allowed within this period
-    message: RATE_LIMITER_CONFIG.ERROR_MESSAGE
+    windowMs: config.rateLimit.windowMs, // Time window for tracking requests
+    max: config.rateLimit.maxRequests, // Maximum requests per window per IP
+    message: RATE_LIMITER_CONFIG.ERROR_MESSAGE,
+    standardHeaders: RATE_LIMITER_CONFIG.STANDARD_HEADERS, // Return rate limit info in standard headers
+    legacyHeaders: RATE_LIMITER_CONFIG.LEGACY_HEADERS // Disable the `X-RateLimit-*` headers
   });
 }

@@ -4,6 +4,24 @@
  * This file defines constants used throughout the application
  */
 
+// Time constants
+export const TIME_CONSTANTS = {
+  ONE_HOUR_MS: 60 * 60 * 1000, // 1 hour in milliseconds
+  FORCE_SHUTDOWN_TIMEOUT_MS: 10000, // 10 seconds for forced shutdown
+  SHUTDOWN_DELAY_MS: 3000 // 3 seconds delay before application shutdown
+};
+
+/**
+ * Memory Constants
+ *
+ * Constants related to memory calculations and conversions
+ */
+export const MEMORY_CONSTANTS = {
+  BYTES_TO_KB: 1024,
+  BYTES_TO_MB: 1024 * 1024,
+  BYTES_TO_GB: 1024 * 1024 * 1024
+};
+
 /**
  * Scraper Speed Modes
  *
@@ -117,7 +135,7 @@ const HEADLESS = process.env.NODE_ENV === 'development' ? false : 'new';
 export const BROWSER_CONFIG = {
   HEADLESS,
   USER_AGENT:
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
   ACCEPT_LANGUAGE: 'en-US,en;q=0.9',
   ARGS: {
     NO_SANDBOX: '--no-sandbox',
@@ -145,11 +163,15 @@ export const JSON_PARSER_CONFIG = {
  * ORIGIN: Allowed origins for CORS
  * METHODS: Allowed HTTP methods
  * ALLOWED_HEADERS: Allowed headers in requests
+ * CREDENTIALS: Whether to enable cookies and authorization headers
+ * MAX_AGE: Cache preflight requests duration (in seconds)
  */
 export const CORS_CONFIG = {
   ORIGIN: '*',
   METHODS: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  ALLOWED_HEADERS: ['Content-Type', 'Authorization']
+  ALLOWED_HEADERS: ['Content-Type', 'Authorization'],
+  CREDENTIALS: true,
+  MAX_AGE: 86400 // Cache preflight requests for 24 hours
 };
 
 /**
@@ -158,7 +180,10 @@ export const CORS_CONFIG = {
  * General API-related configuration
  */
 export const API_CONFIG = {
-  // API general settings
+  PORT: process.env.PORT || 3000,
+  HOST: process.env.HOST || '0.0.0.0',
+  BASE_PATH: '/api/v1',
+  VERSION: '1.0.0'
 };
 
 /**
@@ -246,6 +271,8 @@ export const HEALTH_CHECK_CONFIG = {
  * WINDOW_MS: Time window for rate limiting in milliseconds
  * MAX_REQUESTS: Maximum number of requests allowed per IP in the time window
  * ERROR_MESSAGE: Structured error message object to return when rate limit is exceeded
+ * STANDARD_HEADERS: Return rate limit info in the `RateLimit-*` headers
+ * LEGACY_HEADERS: Controls the `X-RateLimit-*` headers (deprecated)
  */
 export const RATE_LIMITER_CONFIG = {
   WINDOW_MS: 15 * 60 * 1000, // 15 minutes
@@ -256,7 +283,9 @@ export const RATE_LIMITER_CONFIG = {
       message: 'Too many requests made, please try again later',
       code: 'ERROR_RATE_LIMIT_EXCEEDED'
     }
-  }
+  },
+  STANDARD_HEADERS: true, // Return rate limit info in standard headers
+  LEGACY_HEADERS: false // Disable the `X-RateLimit-*` headers
 };
 
 /**
@@ -337,5 +366,22 @@ export const HELMET_CONFIG = {
       action: 'deny'
     }
   },
-  DEVELOPMENT: {} // Basic configuration for development
+  DEVELOPMENT: {
+    contentSecurityPolicy: false, // Disabled for development
+    frameguard: false, // Disabled for development to allow iframe embedding
+    dnsPrefetchControl: false, // Allow DNS prefetching in development
+    referrerPolicy: { policy: 'no-referrer' }
+  }
+};
+
+/**
+ * Static File Server Configuration for Temporary Files
+ *
+ * Settings for serving static files from the temporary directory
+ */
+export const TMP_STATIC_CONFIG = {
+  MAX_AGE: '1h', // Cache files for 1 hour
+  ETAG: true, // Enable ETags for caching
+  LAST_MODIFIED: true, // Send Last-Modified header
+  INDEX: false // Disable directory listing
 };

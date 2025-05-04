@@ -11,24 +11,31 @@
  * @returns {Object} JSON response confirming shutdown initiation
  * @throws {Error} If an error occurs during the shutdown process
  */
+import { TIME_CONSTANTS } from '../../../constants.js';
+
 export function controllerApiAppShutdown(_req, res, next) {
   try {
-    console.log('Application shutdown request received. Shutting down in 3 seconds...');
+    console.log(
+      `Application shutdown request received. Shutting down in ${TIME_CONSTANTS.SHUTDOWN_DELAY_MS / 1000} seconds...`
+    );
 
     // Send immediate response confirming shutdown initiation
     res.json({
       success: true,
       data: {
-        message: 'Application is shutting down in 3 seconds...'
+        message: `Application is shutting down in ${TIME_CONSTANTS.SHUTDOWN_DELAY_MS / 1000} seconds...`
       }
     });
 
     // Set a timeout to allow any pending responses to complete
     setTimeout(() => {
       console.log('Application is shutting down now...');
-      process.exit(0); // Exit with success code
-    }, 3000);
+      // Exit with success code - process.exit(0) is appropriate here
+      // as we're performing a controlled shutdown
+      process.exit(0);
+    }, TIME_CONSTANTS.SHUTDOWN_DELAY_MS);
   } catch (error) {
+    // Append error code for easier debugging and error tracking
     error.message = `${error.message} - Code: ERROR_APP_SHUTDOWN`;
     next(error); // Pass any errors to the global error handler
   }

@@ -1,15 +1,15 @@
 // Node third-party modules
 import express from 'express';
 
-// Import Swagger setup
+// Utility imports for API setup
 import { setupSwagger } from '../../utils/swagger.js';
 import { setupTmp } from '../../utils/tmp.js';
 import { setupBasicAuth } from '../../utils/basic-auth.js';
 
-// Controllers imports
+// Controllers import
 import { controllerApiIndex } from '../../controllers/api/index.js';
 
-// Routes imports
+// Route imports
 import { routerApiScrape } from './scrape.js';
 import { routerApiOs } from './os.js';
 import { routerApiApp } from './app.js';
@@ -20,24 +20,27 @@ const router = express.Router();
 /**
  * Set up Swagger API documentation
  * Makes API documentation available at /api/docs
- * This should be done before applying routes to ensure proper documentation
+ * This must be done before applying routes for proper documentation generation
  */
 setupSwagger(router);
 
 /**
  * Serve static files from tmp directory
- * This allows accessing screenshots via HTTP requests
+ * Enables HTTP access to screenshots and other temporary files
  */
 setupTmp(router);
 
 // Define API index route
 router.get('/', controllerApiIndex);
 
-// Basic auth middleware - Secures all routes with username/password authentication
-// Uses environment variables or defaults to defined constants if not set
+/**
+ * Apply basic authentication middleware
+ * Secures all routes with username/password authentication
+ * Uses environment variables or falls back to constants if not set
+ */
 setupBasicAuth(router);
 
-// Define API routes
+// Register API route modules
 router.use('/scrape', routerApiScrape);
 router.use('/app', routerApiApp);
 router.use('/os', routerApiOs);

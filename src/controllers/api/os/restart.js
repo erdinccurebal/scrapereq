@@ -1,18 +1,23 @@
 // Node core modules
 import { exec } from 'child_process';
+import { platform } from 'os';
 
 /**
  * Operating System Restart Controller
  *
  * Provides an endpoint to safely restart the operating system.
- * This should be used with caution as it affects the entire system.
- * Typically used during major maintenance or when the system requires a full restart.
+ * This should be used with extreme caution as it affects the entire system.
  *
- * @param {Object} _req - Express request object
- * @param {Object} res - Express response object (unused but kept for middleware signature consistency)
- * @param {Function} next - Express next middleware function
+ * Use cases:
+ * - During scheduled maintenance windows
+ * - When system requires a full restart for updates or configuration changes
+ * - After major software deployments that need system reinitialization
+ *
+ * @param {Object} _req - Express request object (unused but kept for potential future authentication)
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function for error handling
  * @returns {void}
- * @throws {Error} - Throws an error if the restart command fails
+ * @throws {Error} Passes error to Express error handler if restart command fails
  */
 export function controllerApiOsRestart(_req, res, next) {
   try {
@@ -31,14 +36,15 @@ export function controllerApiOsRestart(_req, res, next) {
     setTimeout(() => {
       // Use the appropriate command based on the operating system
       const cmd =
-        process.platform === 'win32'
+        platform() === 'win32'
           ? 'shutdown /r /t 0 /f /c "Scheduled restart via API"'
           : 'sudo shutdown -r now "Scheduled restart via API"';
 
-      exec(cmd, error => {
+      exec(cmd, (error) => {
         if (error) {
-          console.error('Restart failed:', error);
+          console.error(`Restart failed: ${error.message}`);
           // Cannot send response here as it's already sent
+          // Log the error for monitoring systems to detect
         }
       });
     }, 1000);

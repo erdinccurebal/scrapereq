@@ -1,8 +1,8 @@
 /**
  * Health Check Controller
- * Provides a detailed endpoint to verify that the service and its dependencies are up and running
- * Often used by monitoring tools and load balancers
- * Returns system information and status metrics
+ * Provides a detailed endpoint to verify that the service and its dependencies are operational.
+ * Used by monitoring tools and load balancers to check system health.
+ * Returns comprehensive system information and status metrics.
  */
 
 // Node core modules
@@ -12,22 +12,24 @@ import process from 'process';
 // Import package.json as JSON module for version information
 import packageJson from '../../../../package.json' with { type: 'json' };
 
-// Custom helpers
+// Helpers
 import { helperFormatUptime } from '../../../helpers/format-uptime.js';
+
+// Constants
+import { MEMORY_CONSTANTS } from '../../../constants.js';
 
 /**
  * Health check controller function - GET /health endpoint handler
  * @param {Object} _req - Express request object (unused, prefixed with underscore)
  * @param {Object} res - Express response object
  * @param {Function} next - Express next middleware function
- * @returns {Promise<void>} - Returns a promise that resolves when the response is sent
- * @throws {Error} - Throws an error if the health check fails
+ * @returns {Promise<void>} - Resolves when the response is sent
  */
 export async function controllerApiAppHealth(_req, res, next) {
   try {
     // Prepare comprehensive health check response
     const result = {
-      success: true, // Overall status indicator
+      success: true,
       data: {
         project: loadProjectData(),
         app: loadAppData({ res }),
@@ -43,13 +45,10 @@ export async function controllerApiAppHealth(_req, res, next) {
 
 /**
  * Load project data from package.json
- *
- * @returns {Object} - Project data including name, description, version, author, and license
- * @throws {Error} - Throws an error if loading project data fails
+ * @returns {Object} Project metadata
  */
 function loadProjectData() {
   try {
-    // Load project data from package.json
     return {
       name: packageJson.name,
       description: packageJson.description,
@@ -65,21 +64,16 @@ function loadProjectData() {
 
 /**
  * Load application data from the Express app
- *
  * @param {Object} options - Options object
  * @param {Object} options.res - Express response object with app context
- * @returns {Object} - Application data including environment, port, host, uptime, and process ID
- * @throws {Error} - Throws an error if loading application data fails
+ * @returns {Object} Application runtime information
  */
 function loadAppData({ res }) {
   try {
-    // Get system info
     const uptime = process.uptime();
-
-    // Format uptime to be more readable
     const uptimeFormatted = helperFormatUptime(uptime);
 
-    // Get the application name from the request object
+    // Get application configuration from Express app settings
     return {
       environment: res.app.get('env'),
       port: res.app.get('port'),
@@ -95,13 +89,10 @@ function loadAppData({ res }) {
 
 /**
  * Load system data using the os module
- *
- * @returns {Object} - System data including timestamp, timezone, platform, architecture, release, CPU count, total memory, and free memory
- * @throws {Error} - Throws an error if loading system data fails
+ * @returns {Object} Host system information
  */
 function loadSystemData() {
   try {
-    // Get system information using the os module
     return {
       timestamp: new Date().toISOString(),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -109,8 +100,8 @@ function loadSystemData() {
       arch: os.arch(),
       release: os.release(),
       cpus: os.cpus().length,
-      totalmem: (os.totalmem() / 1024 / 1024).toFixed(2), // Total memory in MB
-      freemem: (os.freemem() / 1024 / 1024).toFixed(2) // Free memory in MB
+      totalmem: (os.totalmem() / MEMORY_CONSTANTS.BYTES_TO_MB).toFixed(2), // Total memory in MB
+      freemem: (os.freemem() / MEMORY_CONSTANTS.BYTES_TO_MB).toFixed(2) // Free memory in MB
     };
   } catch (error) {
     error.message = `${error.message} - Code: ERROR_API_APP_HEALTH_CHECK_LOAD_SYSTEM_DATA`;

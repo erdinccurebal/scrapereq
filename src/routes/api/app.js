@@ -12,14 +12,14 @@ import { controllerApiAppShutdown } from '../../controllers/api/app/shutdown.js'
  * @swagger
  * /api/app/health:
  *   get:
- *     summary: Checks system status
- *     description: Verifies that API is operational
+ *     summary: Checks system status and health
+ *     description: Verifies that API is operational and returns detailed system information
  *     tags: [App]
  *     security:
  *       - basicAuth: []
  *     responses:
  *       200:
- *         description: API is working
+ *         description: API is working properly
  *         content:
  *           application/json:
  *             schema:
@@ -96,7 +96,7 @@ import { controllerApiAppShutdown } from '../../controllers/api/app/shutdown.js'
  *                           type: string
  *                           example: "7096.45"
  *       500:
- *         description: System error
+ *         description: System error occurred
  *         content:
  *           application/json:
  *             schema:
@@ -110,7 +110,7 @@ import { controllerApiAppShutdown } from '../../controllers/api/app/shutdown.js'
  *                   properties:
  *                     message:
  *                       type: string
- *                       example: "lorem is not a function"
+ *                       example: "Internal server error occurred"
  *                     stack:
  *                       type: array
  *                       items:
@@ -130,13 +130,27 @@ router.get('/health', controllerApiAppHealth);
  * /api/app/shutdown:
  *   post:
  *     summary: Shuts down the application
- *     description: Terminates the current application process
+ *     description: Terminates the current application process with a configurable delay
  *     tags: [App]
  *     security:
  *       - basicAuth: []
  *     responses:
  *       200:
  *         description: Application shutdown initiated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Application is shutting down in 3 seconds..."
  *       500:
  *         description: Server error during shutdown
  *         content:
@@ -152,7 +166,7 @@ router.get('/health', controllerApiAppHealth);
  *                   properties:
  *                     message:
  *                       type: string
- *                       example: "lorem is not a function"
+ *                       example: "Error initiating shutdown process"
  *                     stack:
  *                       type: array
  *                       items:

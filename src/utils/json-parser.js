@@ -1,23 +1,28 @@
 /**
  * JSON Parser Configuration Utility
  *
- * This file provides JSON parsing middleware configuration for the application.
- * It centralizes all JSON-related parsing settings in one place.
+ * Configures Express JSON body parsing middleware with appropriate settings.
+ * Centralizes request body handling and ensures consistent payload size limits.
+ *
+ * @module utils/json-parser
  */
 
 // Node third-party modules
 import express from 'express';
 
-// Import central configuration and constants
+// Application constants
 import { JSON_PARSER_CONFIG } from '../constants.js';
 
 /**
- * Configure and return the JSON parsing middleware with application-specific settings
- * @returns {Function} Configured JSON parsing middleware
+ * Creates and returns a configured JSON body parsing middleware
+ *
+ * Applies application-wide settings for parsing JSON request bodies,
+ * with payload size limits defined in constants.
+ *
+ * @returns {Function} Configured express.json middleware
  */
 export function setupJsonParser() {
-  // Return express.json middleware with configured size limit
   return express.json({
-    limit: JSON_PARSER_CONFIG.JSON_LIMIT
+    limit: JSON_PARSER_CONFIG.JSON_LIMIT // Maximum JSON payload size (50mb)
   });
 }

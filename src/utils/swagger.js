@@ -1,24 +1,29 @@
 /**
- * Swagger Configuration
- * Sets up API documentation based on JSDoc annotations
+ * Swagger/OpenAPI Documentation Configuration
+ *
+ * Configures and initializes Swagger documentation for the API.
+ * Scans JSDoc annotations in route and controller files to generate
+ * interactive API documentation with proper security definitions.
+ *
+ * @module utils/swagger
  */
 
 // Node core modules
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-// Node third-party modules
+// Third-party modules
 import swaggerJsDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
 // Application constants
 import { SWAGGER_CONFIG } from '../constants.js';
 
-// Get current file and directory paths
+// Get directory path in ESM context
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Swagger definition options
+// Swagger definition with OpenAPI 3.0 specification
 const swaggerOptions = {
   definition: {
     openapi: SWAGGER_CONFIG.OPENAPI_VERSION,
@@ -36,7 +41,7 @@ const swaggerOptions = {
         url: SWAGGER_CONFIG.INFO.LICENSE.URL
       }
     },
-    servers: SWAGGER_CONFIG.SERVERS.map(server => ({
+    servers: SWAGGER_CONFIG.SERVERS.map((server) => ({
       url: server.URL,
       description: server.DESCRIPTION
     })),
@@ -50,41 +55,48 @@ const swaggerOptions = {
         }
       }
     },
-    security: [{ basicAuth: [] }]
+    security: [{ basicAuth: [] }] // Apply basic auth globally
   },
+  // Scan these paths for JSDoc annotations
   apis: [join(__dirname, '../routes/**/*.js'), join(__dirname, '../controllers/**/*.js')]
 };
 
-// Initialize swagger-jsdoc
+// Generate OpenAPI specification from JSDoc comments
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
-// Swagger UI setup options
+// Customize Swagger UI appearance and behavior
 const swaggerUiOptions = {
-  explorer: SWAGGER_CONFIG.OPTIONS.EXPLORER,
-  customCss: SWAGGER_CONFIG.OPTIONS.CUSTOM_CSS,
+  explorer: SWAGGER_CONFIG.OPTIONS.EXPLORER, // Enable API explorer
+  customCss: SWAGGER_CONFIG.OPTIONS.CUSTOM_CSS, // Custom styling
   swaggerOptions: {
-    docExpansion: 'list',
-    filter: true,
-    displayRequestDuration: true
+    docExpansion: 'list', // Expand/collapse tag groups
+    filter: true, // Enable filtering operations
+    displayRequestDuration: true // Show API request execution time
   }
 };
 
 /**
- * Setup Swagger documentation for Express app
+ * Sets up Swagger documentation endpoints
+ *
+ * Mounts the Swagger UI interface and JSON specification to the provided router,
+ * making API documentation available for developers and consumers.
  *
  * @param {Object} router - Express router instance
- * @returns {void}
+ * @throws {Error} If router parameter is missing
  */
 export function setupSwagger(router) {
-  const path = '/docs';
-
   if (!router) {
     throw new Error('Express router instance is required');
   }
 
-  router.use(path, swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
+  const basePath = '/docs';
 
-  router.get(`${path}.json`, (_req, res) => {
+  // Serve Swagger UI at /docs
+  router.use(basePath, swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerUiOptions));
+
+  // Serve raw OpenAPI specification as JSON at /docs.json
+  // Useful for automated tools and code generators
+  router.get(`${basePath}.json`, (_req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerDocs);
   });
