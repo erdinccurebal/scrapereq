@@ -35,16 +35,29 @@ export function controllerApiOsRestart(_req, res, next) {
     // Schedule the restart with a minimal delay to allow response to be sent
     setTimeout(() => {
       // Use the appropriate command based on the operating system
-      const cmd =
-        platform() === 'win32'
-          ? 'shutdown /r /t 0 /f /c "Scheduled restart via API"'
-          : 'sudo shutdown -r now "Scheduled restart via API"';
+      let cmd;
+      if (platform() === 'win32') {
+        // Windows komutunu daha güvenilir hale getiriyoruz
+        // Not: Bu komutun çalışması için PowerShell veya CMD'nin yönetici haklarıyla çalışması gerekiyor
+        cmd = 'shutdown /r /t 1 /f';
 
-      exec(cmd, (error) => {
+        // Alternatif olarak PowerShell ile de deneyebiliriz
+        // cmd = 'powershell -Command "Restart-Computer -Force"';
+      } else {
+        cmd = 'sudo shutdown -r now';
+      }
+
+      console.log(`Executing restart command: ${cmd}`);
+
+      exec(cmd, (error, stdout, stderr) => {
         if (error) {
           console.error(`Restart failed: ${error.message}`);
+          console.error(`Stderr: ${stderr}`);
           // Cannot send response here as it's already sent
           // Log the error for monitoring systems to detect
+        }
+        if (stdout) {
+          console.log(`Restart command output: ${stdout}`);
         }
       });
     }, 1000);
