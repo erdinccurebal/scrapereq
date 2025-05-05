@@ -1,10 +1,13 @@
 /**
  * Application Constants
  *
- * This file defines constants used throughout the application
+ * This file defines all constants used throughout the application.
+ * Organized by functional category for better maintainability.
  */
 
-// Time constants
+// ===========================================
+// Time and Duration Constants
+// ===========================================
 export const TIME_CONSTANTS = {
   ONE_HOUR_MS: 60 * 60 * 1000, // 1 hour in milliseconds
   FORCE_SHUTDOWN_TIMEOUT_MS: 10000, // 10 seconds for forced shutdown
@@ -12,9 +15,15 @@ export const TIME_CONSTANTS = {
 };
 
 /**
- * Memory Constants
+ * Browser Concurrency Control
  *
- * Constants related to memory calculations and conversions
+ * Maximum number of concurrent browser instances allowed.
+ * Can be overridden with environment variable MAX_CONCURRENT_BROWSERS.
+ */
+export const MAX_CONCURRENT_BROWSERS = parseInt(process.env.MAX_CONCURRENT_BROWSERS, 10) || 1;
+
+/**
+ * Memory Conversion Constants
  */
 export const MEMORY_CONSTANTS = {
   BYTES_TO_KB: 1024,
@@ -22,31 +31,36 @@ export const MEMORY_CONSTANTS = {
   BYTES_TO_GB: 1024 * 1024 * 1024
 };
 
+// ===========================================
+// Scraper Performance Configuration
+// ===========================================
+
 /**
- * Scraper Speed Modes
+ * Scraper Speed Modes (in milliseconds)
  *
- * TURBO: No delay between steps - fastest mode
- * FAST: Minimal delay for quick scraping
- * NORMAL: Moderate delay for balanced scraping
- * SLOW: Medium delay to reduce detection risk
- * SLOWEST: Significant delay for careful scraping
- * CRAWL: Very slow speed like crawling
- * STEALTH: Maximum delay for absolute stealth
+ * Controls delay between scraping steps for different scenarios:
+ * - TURBO: No delay - fastest possible execution
+ * - FAST: Minimal delay for quick scraping
+ * - NORMAL: Moderate delay for balanced scraping
+ * - SLOW: Medium delay to reduce detection risk
+ * - SLOWEST: Significant delay for careful scraping
+ * - CRAWL: Very slow speed like crawling
+ * - STEALTH: Maximum delay for absolute stealth
  */
 export const SPEED_MODES = {
-  TURBO: 0, // 0ms delay between steps
-  FAST: 500, // 500ms delay between steps
-  NORMAL: 1000, // 1000ms (1 second) delay between steps
-  SLOW: 1500, // 1500ms (1.5 seconds) delay between steps
-  SLOWEST: 2000, // 2000ms (2 seconds) delay between steps
-  CRAWL: 2500, // 2500ms (2.5 seconds) delay between steps
-  STEALTH: 3000 // 3000ms (3 seconds) delay between steps
+  TURBO: 0, // 0ms - No delay
+  FAST: 500, // 500ms delay
+  NORMAL: 1000, // 1 second delay
+  SLOW: 1500, // 1.5 seconds delay
+  SLOWEST: 2000, // 2 seconds delay
+  CRAWL: 2500, // 2.5 seconds delay
+  STEALTH: 3000 // 3 seconds delay
 };
 
 /**
- * Speed Mode Names as Enum
+ * Speed Mode Names Enum
  */
-export const SPEED_MODE_NAMES = {
+export const SPEED_MODE_NAMES = Object.freeze({
   TURBO: 'TURBO',
   FAST: 'FAST',
   NORMAL: 'NORMAL',
@@ -54,83 +68,71 @@ export const SPEED_MODE_NAMES = {
   SLOWEST: 'SLOWEST',
   CRAWL: 'CRAWL',
   STEALTH: 'STEALTH'
-};
+});
+
+/** Default speed mode if none specified */
+export const DEFAULT_SPEED_MODE = SPEED_MODE_NAMES.NORMAL;
+
+/* Default title for recording */
+export const DEFAULT_TITLE = 'Default Title';
 
 /**
- * Default speed mode if none is specified
- */
-export const DEFAULT_SPEED_MODE = 'NORMAL';
-
-/**
- * Timeout Configuration
- *
- * SHORT: 10 seconds for shorter operations
- * NORMAL: 30 seconds default timeout
- * LONG: 60 seconds for longer operations
+ * Timeout Configuration (in milliseconds)
  */
 export const TIMEOUT_MODES = {
-  SHORT: 10000, // 10 seconds for shorter operations
-  NORMAL: 30000, // 30 seconds default timeout
-  LONG: 60000 // 60 seconds for longer operations
+  SHORT: 10000, // 10 seconds
+  NORMAL: 30000, // 30 seconds
+  LONG: 60000 // 60 seconds
 };
 
 /**
- * Timeout Mode Names as Enum
+ * Timeout Mode Names Enum
  */
-export const TIMEOUT_MODE_NAMES = {
+export const TIMEOUT_MODE_NAMES = Object.freeze({
   SHORT: 'SHORT',
   NORMAL: 'NORMAL',
   LONG: 'LONG'
-};
+});
+
+/** Default timeout mode if none specified */
+export const DEFAULT_TIMEOUT_MODE = TIMEOUT_MODE_NAMES.NORMAL;
+
+// ===========================================
+// Response and Data Handling
+// ===========================================
 
 /**
- * Default timeout mode if none is specified
+ * Response Type Enum
  */
-export const DEFAULT_TIMEOUT_MODE = 'NORMAL';
+export const RESPONSE_TYPE_NAMES = Object.freeze({
+  NONE: 'NONE', // No response expected
+  JSON: 'JSON', // JSON response expected
+  RAW: 'RAW' // Raw response expected
+});
+
+/** Default response type if none specified */
+export const DEFAULT_RESPONSE_TYPE = RESPONSE_TYPE_NAMES.NONE;
 
 /**
- * Response Types
- *
- * NONE: No response expected
- * JSON: JSON response expected
- * RAW: Raw response expected
+ * Selector Types for DOM Element Selection
  */
-export const RESPONSE_TYPE_NAMES = {
-  NONE: 'NONE',
-  JSON: 'JSON',
-  RAW: 'RAW'
-};
+export const SELECTOR_TYPE_NAMES = Object.freeze({
+  CSS: 'CSS', // CSS selector
+  XPATH: 'XPATH', // XPath selector
+  FULL: 'FULL' // Full selector
+});
 
-/**
- * Default response type if none is specified
- */
-export const DEFAULT_RESPONSE_TYPE = 'NONE';
+// ===========================================
+// Browser Configuration
+// ===========================================
 
-/**
- * Selector Types
- *
- * CSS: CSS selector type
- * XPATH: XPath selector type
- * FULL: Full selector type
- */
-export const SELECTOR_TYPE_NAMES = {
-  CSS: 'CSS',
-  XPATH: 'XPATH',
-  FULL: 'FULL'
-};
-
-// Headless mode configuration
-// In development mode, headless mode is disabled for debugging purposes
-// In production mode, headless 'new' mode is enabled for performance
+// Determine headless mode based on environment
+// In development, show browser UI for easier debugging
+// In production, use 'new' headless mode for better performance
 const HEADLESS = process.env.NODE_ENV === 'development' ? false : 'new';
 
 /**
  * Browser Configuration
- *
- * HEADLESS: Whether the browser runs in headless mode ('new' for modern versions)
- * USER_AGENT: The user agent string for the browser
- * ACCEPT_LANGUAGE: Language preferences for the browser
- * ARGS: Additional arguments for browser configuration
  */
 export const BROWSER_CONFIG = {
   HEADLESS,
@@ -148,23 +150,19 @@ export const BROWSER_CONFIG = {
   }
 };
 
+// ===========================================
+// API and Server Configuration
+// ===========================================
+
 /**
  * JSON Parser Configuration
- *
- * JSON_LIMIT: Maximum size for JSON payloads
  */
 export const JSON_PARSER_CONFIG = {
-  JSON_LIMIT: '50mb'
+  JSON_LIMIT: '50mb' // Maximum size for JSON payloads
 };
 
 /**
  * CORS Configuration
- *
- * ORIGIN: Allowed origins for CORS
- * METHODS: Allowed HTTP methods
- * ALLOWED_HEADERS: Allowed headers in requests
- * CREDENTIALS: Whether to enable cookies and authorization headers
- * MAX_AGE: Cache preflight requests duration (in seconds)
  */
 export const CORS_CONFIG = {
   ORIGIN: '*',
@@ -176,8 +174,6 @@ export const CORS_CONFIG = {
 
 /**
  * API Configuration
- *
- * General API-related configuration
  */
 export const API_CONFIG = {
   PORT: process.env.PORT || 3000,
@@ -188,95 +184,82 @@ export const API_CONFIG = {
 
 /**
  * Authentication Defaults
- *
- * USERNAME: Default username for authentication
- * PASSWORD: Default password for authentication
  */
 export const AUTH_DEFAULTS = {
-  USERNAME: 'admin',
-  PASSWORD: 'admin'
+  USERNAME: process.env.AUTH_USERNAME || 'admin',
+  PASSWORD: process.env.AUTH_PASSWORD || 'admin',
+  CHALLENGE: true // Display browser authentication prompt
 };
 
+// ===========================================
+// Scraper Operation Constants
+// ===========================================
+
 /**
- * Step Types for Scraper
- *
- * NAVIGATE: Navigate to a URL
- * CLICK: Perform a click action
- * WAIT: Wait for a specified duration
- * SET_VIEWPORT: Set the browser viewport size
- * CHANGE: Change the value of an input element
- * WAIT_FOR_ELEMENT: Wait for a specific element to appear on the page
+ * Step Types for Scraper Operations
  */
-export const STEP_TYPES = {
-  NAVIGATE: 'navigate',
-  CLICK: 'click',
-  WAIT: 'wait',
-  SET_VIEWPORT: 'setViewport',
-  CHANGE: 'change',
-  WAIT_FOR_ELEMENT: 'waitForElement'
-};
+export const STEP_TYPES = Object.freeze({
+  NAVIGATE: 'navigate', // Navigate to a URL
+  CLICK: 'click', // Perform a click action
+  WAIT: 'wait', // Wait for a specified duration
+  SET_VIEWPORT: 'setViewport', // Set the browser viewport size
+  CHANGE: 'change', // Change the value of an input element
+  WAIT_FOR_ELEMENT: 'waitForElement' // Wait for element to appear
+});
 
 /**
  * Proxy Protocol Types
- *
- * HTTP: HTTP protocol for proxy
- * HTTPS: HTTPS protocol for proxy
- * SOCKS4: SOCKS4 protocol for proxy
- * SOCKS5: SOCKS5 protocol for proxy
  */
-export const PROXY_PROTOCOLS = {
+export const PROXY_PROTOCOLS = Object.freeze({
   HTTP: 'http',
   HTTPS: 'https',
   SOCKS4: 'socks4',
   SOCKS5: 'socks5'
-};
+});
+
+// ===========================================
+// Logging and Monitoring
+// ===========================================
 
 /**
  * Logging Configuration
- *
- * FORMATS: Different log formats for different environments
- * OPTIONS: Additional options for morgan logger
  */
 export const LOGGER_CONFIG = {
   FORMATS: {
-    DEVELOPMENT: 'dev', // Concise colored output for development
-    PRODUCTION: 'combined', // Apache-style logging for production
-    SHORT: 'short', // Shorter than default, includes response time
+    DEVELOPMENT: 'dev', // Concise colored output
+    PRODUCTION: 'combined', // Apache-style logging
+    SHORT: 'short', // Shorter than default, with response time
     TINY: 'tiny', // Minimal output
-    CUSTOM: ':method :url :status :res[content-length] - :response-time ms' // Example custom format
+    CUSTOM: ':method :url :status :res[content-length] - :response-time ms'
   },
   OPTIONS: {
-    SKIP_HEALTH: (req) => req.url.includes('/health'), // Skip logging health check requests
-    SKIP_FAVICON: (req) => req.url.includes('/favicon.ico'), // Skip logging favicon requests
+    SKIP_HEALTH: (req) => req.url.includes('/health'),
+    SKIP_FAVICON: (req) => req.url.includes('/favicon.ico'),
     SKIP_HEALTH_AND_FAVICON: (req) =>
-      req.url.includes('/health') || req.url.includes('/favicon.ico'), // Skip both health and favicon
+      req.url.includes('/health') || req.url.includes('/favicon.ico'),
     SKIP_NONE: () => false // Log all requests
   }
 };
 
 /**
  * Health Check Configuration
- *
- * Settings for health check operations
  */
 export const HEALTH_CHECK_CONFIG = {
-  TIMEOUT: TIMEOUT_MODES.NORMAL, // 30 seconds timeout for health check operations
+  TIMEOUT: TIMEOUT_MODES.NORMAL,
   TEST_URL: 'https://www.google.com', // URL to test puppeteer functionality
-  HEADLESS: HEADLESS // Run health check browser in headless mode
+  HEADLESS
 };
+
+// ===========================================
+// Security and Rate Limiting
+// ===========================================
 
 /**
  * Rate Limiter Configuration
- *
- * WINDOW_MS: Time window for rate limiting in milliseconds
- * MAX_REQUESTS: Maximum number of requests allowed per IP in the time window
- * ERROR_MESSAGE: Structured error message object to return when rate limit is exceeded
- * STANDARD_HEADERS: Return rate limit info in the `RateLimit-*` headers
- * LEGACY_HEADERS: Controls the `X-RateLimit-*` headers (deprecated)
  */
 export const RATE_LIMITER_CONFIG = {
   WINDOW_MS: 15 * 60 * 1000, // 15 minutes
-  MAX_REQUESTS: 100, // limit each IP to 100 requests per windowMs
+  MAX_REQUESTS: 100, // 100 requests per window
   ERROR_MESSAGE: {
     success: false,
     data: {
@@ -290,8 +273,6 @@ export const RATE_LIMITER_CONFIG = {
 
 /**
  * Swagger Documentation Configuration
- *
- * Settings for API documentation with OpenAPI 3.0 standards
  */
 export const SWAGGER_CONFIG = {
   OPENAPI_VERSION: '3.0.0',
@@ -344,8 +325,6 @@ export const SWAGGER_CONFIG = {
 
 /**
  * Helmet Security Configuration
- *
- * Settings for Helmet security middleware in different environments
  */
 export const HELMET_CONFIG = {
   PRODUCTION: {
@@ -368,7 +347,7 @@ export const HELMET_CONFIG = {
   },
   DEVELOPMENT: {
     contentSecurityPolicy: false, // Disabled for development
-    frameguard: false, // Disabled for development to allow iframe embedding
+    frameguard: false, // Disabled for development
     dnsPrefetchControl: false, // Allow DNS prefetching in development
     referrerPolicy: { policy: 'no-referrer' }
   }
@@ -376,8 +355,6 @@ export const HELMET_CONFIG = {
 
 /**
  * Static File Server Configuration for Temporary Files
- *
- * Settings for serving static files from the temporary directory
  */
 export const TMP_STATIC_CONFIG = {
   MAX_AGE: '1h', // Cache files for 1 hour

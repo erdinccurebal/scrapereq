@@ -4,10 +4,6 @@ import express from 'express';
 // Controller imports
 import { controllerApiScrapeStart } from '../../controllers/api/scrape/start.js';
 import { controllerApiScrapeTest } from '../../controllers/api/scrape/test.js';
-import {
-  controllerApiScrapeMetrics,
-  controllerApiScrapeMetricsReset
-} from '../../controllers/api/scrape/metrics.js';
 
 // Initialize Express Router
 const router = express.Router();
@@ -17,7 +13,9 @@ const router = express.Router();
  * /api/scrape/start:
  *   post:
  *     summary: Execute web scraping operations
- *     description: Perform web scraping based on defined steps and selectors
+ *     description: |
+ *       Perform web scraping based on defined steps and selectors.
+ *       Supports proxy configuration, different response formats, and customizable browser behavior.
  *     tags: [Scrape]
  *     security:
  *       - basicAuth: []
@@ -96,7 +94,11 @@ const router = express.Router();
  *                     type:
  *                       type: string
  *                       enum: [CSS, XPATH, FULL]
- *                       description: Type of selector to use
+ *                       description: |
+ *                         Type of selector to use:
+ *                         - CSS: Standard CSS selectors
+ *                         - XPATH: XPath expressions
+ *                         - FULL: Retrieves the full page HTML content
  *                       example: "XPATH"
  *                     value:
  *                       type: string
@@ -131,7 +133,10 @@ const router = express.Router();
  *                     example: "password"
  *               proxies:
  *                 type: array
- *                 description: Array of proxy configurations for web requests
+ *                 description: |
+ *                   Array of proxy configurations for web requests.
+ *                   A random proxy will be selected from this list.
+ *                   Required unless accessPasswordWithoutProxy is provided and valid.
  *                 items:
  *                   type: object
  *                   required:
@@ -310,6 +315,19 @@ const router = express.Router();
  *                       type: string
  *                       description: URL to the success screenshot if successScreenshot was enabled
  *                       example: "http://localhost:3000/tmp/success-2025-04-21T14-32-48.png"
+ *                     proxy:
+ *                       type: object
+ *                       description: Information about the proxy used for this request
+ *                       properties:
+ *                         server:
+ *                           type: string
+ *                           example: "proxy1.example.com"
+ *                         port:
+ *                           type: number
+ *                           example: 8080
+ *                         protocol:
+ *                           type: string
+ *                           example: "HTTP"
  *       400:
  *         description: Invalid request parameters
  *         content:
@@ -326,10 +344,34 @@ const router = express.Router();
  *                     message:
  *                       type: string
  *                       example: "ValidationError: 'title' is required. Selectors cannot be provided when responseType is NONE"
+ *                     code:
+ *                       type: string
+ *                       description: Standardized error code for easier error handling
+ *                       example: "ERROR_REQUEST_BODY_VALIDATION"
  *                     stack:
  *                       type: array
  *                       items:
  *                         type: string
+ *       401:
+ *         description: Unauthorized - Authentication failed or proxy requirements not met
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Access denied. Valid proxy configuration is required for this request."
+ *                     code:
+ *                       type: string
+ *                       description: Standardized error code for easier error handling
+ *                       example: "ERROR_PROXY_SETUP"
  *       500:
  *         description: Server error during scraping operation
  *         content:
@@ -359,9 +401,18 @@ const router = express.Router();
  *                       description: URL to the error screenshot if errorScreenshot was enabled
  *                       example: "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
  *                     proxy:
- *                       type: string
- *                       description: Proxy details used during the failed request
- *                       example: "--proxy-server=http://proxy1.example.com:8080"
+ *                       type: object
+ *                       description: Information about the proxy used for this failed request
+ *                       properties:
+ *                         server:
+ *                           type: string
+ *                           example: "proxy1.example.com"
+ *                         port:
+ *                           type: number
+ *                           example: 8080
+ *                         protocol:
+ *                           type: string
+ *                           example: "HTTP"
  */
 router.post('/start', controllerApiScrapeStart);
 
@@ -411,132 +462,6 @@ router.post('/start', controllerApiScrapeStart);
  *                       example: "ERROR_UNKNOWN"
  */
 router.post('/test', controllerApiScrapeTest);
-
-/**
- * @swagger
- * /api/scrape/metrics:
- *   get:
- *     summary: Get scraping operation metrics
- *     description: Retrieve performance and success metrics for scraping operations
- *     tags: [Scrape]
- *     security:
- *       - basicAuth: []
- *     parameters:
- *       - in: query
- *         name: detailed
- *         schema:
- *           type: boolean
- *         description: Whether to include detailed metrics (proxy, URL, response type breakdowns)
- *     responses:
- *       200:
- *         description: Metrics retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     operations:
- *                       type: number
- *                       example: 120
- *                       description: Total number of scraping operations
- *                     successful:
- *                       type: number
- *                       example: 105
- *                       description: Number of successful operations
- *                     failed:
- *                       type: number
- *                       example: 15
- *                       description: Number of failed operations
- *                     successRate:
- *                       type: string
- *                       example: "87.50%"
- *                       description: Success rate as percentage
- *                     averageDuration:
- *                       type: string
- *                       example: "1255ms"
- *                       description: Average operation duration
- *                     timestamp:
- *                       type: string
- *                       format: date-time
- *                       example: "2025-05-01T12:30:45.123Z"
- *                       description: Time when metrics were retrieved
- *       500:
- *         description: Server error retrieving metrics
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 data:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: "Error retrieving metrics"
- *                     code:
- *                       type: string
- *                       description: Standardized error code
- *                       example: "ERROR_API_SCRAPE_METRICS"
- */
-router.get('/metrics', controllerApiScrapeMetrics);
-
-/**
- * @swagger
- * /api/scrape/metrics/reset:
- *   post:
- *     summary: Reset scraping metrics
- *     description: Clear all collected scraping metrics and start fresh
- *     tags: [Scrape]
- *     security:
- *       - basicAuth: []
- *     responses:
- *       200:
- *         description: Metrics reset successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: "Scraping metrics have been reset"
- *       500:
- *         description: Server error resetting metrics
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 data:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: "Error resetting metrics"
- *                     code:
- *                       type: string
- *                       description: Standardized error code
- *                       example: "ERROR_API_SCRAPE_METRICS_RESET"
- */
-router.post('/metrics/reset', controllerApiScrapeMetricsReset);
 
 // Export the router for use in the application
 export const routerApiScrape = router;

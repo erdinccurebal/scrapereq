@@ -62,7 +62,7 @@ export function controllerApiOsRestart(_req, res, next) {
       });
     }, 1000);
   } catch (error) {
-    error.message = `${error.message} - Code: ERROR_API_OS_RESTART`;
+    error.code = 'ERROR_API_OS_RESTART';
     next(error);
   }
 }

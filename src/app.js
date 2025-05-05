@@ -16,7 +16,7 @@ import { config } from './config.js';
 import { routerParent } from './routes/index.js';
 
 // Utilities
-import { setupLogger } from './utils/logger.js';
+import { setupReqLogger } from './utils/req-logger.js';
 import { setupCors } from './utils/cors.js';
 import { setupHelmet } from './utils/helmet.js';
 import { setupJsonParser } from './utils/json-parser.js';
@@ -51,7 +51,7 @@ app.use(setupHelmet());
 app.use(setupCors());
 
 // HTTP request logging
-app.use(setupLogger());
+app.use(setupReqLogger());
 
 // Rate limiting to prevent API abuse
 app.use(setupRateLimiter());

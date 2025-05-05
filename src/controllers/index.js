@@ -18,8 +18,7 @@ export function controllerIndex(_req, res, next) {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    // Add standardized error code for easier debugging
-    error.message = `${error.message} - Code: ERROR_INDEX`;
+    error.code = 'ERROR_INDEX';
     next(error);
   }
 }

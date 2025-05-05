@@ -73,7 +73,7 @@ export async function controllerApiScrapeTest(req, res, next) {
     });
   } catch (error) {
     // Provide detailed error information
-    error.message = `Scraper test failed: ${error.message} - Code: ERROR_SCRAPER_TEST`;
+    error.code = 'ERROR_SCRAPER_TEST';
 
     // Ensure browser is closed if an error occurs
     if (browser) {

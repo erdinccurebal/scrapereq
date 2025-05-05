@@ -1,92 +1,84 @@
 /**
  * Global Error Handler Middleware
  *
- * This middleware captures all errors thrown during request processing
- * and formats them into a consistent JSON response structure.
- * It's customized to hide framework-specific information for security purposes.
+ * Captures all Express errors and transforms them into a consistent JSON response.
+ * Hides implementation details for security while providing useful error information.
  *
- * @param {Error} error - The error object captured by Express
- * @param {Request} _req - Express request object
+ * @param {Error} error - The caught error object
+ * @param {Request} _req - Express request object (unused but required by Express)
  * @param {Response} res - Express response object
- * @param {Function} _next - Express next middleware function
- * @returns {void} - Sends a JSON response with the error details
+ * @param {Function} _next - Express next middleware function (unused but required by Express)
+ * @returns {void} - Sends a JSON response with structured error details
  */
 export function controllerErrorHandler(error, _req, res, _next) {
-  // Log the complete error to server console for debugging
+  // Log full error for server-side debugging
   console.error(error);
 
-  // Create standardized error response structure
+  // Initialize standardized error response
   const result = {
     success: false,
     data: {
-      message: null
+      message: null,
+      code: error.code || 'ERROR_UNKNOWN'
     }
   };
 
-  // Format error message based on error type
-  if (error.name === 'ValidationError') {
-    // Handle Joi validation errors with more details
-    result.data.message = formatValidationError(error);
-  } else if (error.message) {
-    // For general errors with messages
-    result.data.message = formatErrorMessage(error.message);
-  } else {
-    // Default message if error doesn't contain one
-    result.data.message = 'Internal Server Error';
-  }
+  // Determine appropriate HTTP status code
+  const statusCode = error.status ? Number(error.status) : 500;
+
+  // Set appropriate error message based on error type
+  result.data.message =
+    error.name === 'ValidationError'
+      ? formatValidationError(error)
+      : error.message
+        ? formatErrorMessage(error.message)
+        : 'Internal Server Error';
 
   // Include stack trace only in development environment
   if (process.env.NODE_ENV === 'development' && error.stack) {
     result.data.stack = formatStackTrace(error.stack);
   }
 
-  // Add screenshot path to data object (if exists)
+  // Add additional error context if available
   if (error.screenshotUrl) {
     result.data.screenshotUrl = error.screenshotUrl;
   }
 
-  // Extract error code if available, otherwise use a default
-  if (result.data.message.includes('Code: ERROR_')) {
-    result.data.code = 'ERROR_' + result.data.message.split('Code: ERROR_')[1].split(' ')[0];
-  } else {
-    result.data.code = 'ERROR_UNKNOWN';
-  }
-
-  // Include proxy information if available
   if (error.proxy) {
     result.data.proxy = error.proxy;
   }
 
-  // Send response with appropriate status code
-  // Use existing status code if set, otherwise default to 500
-  res.status(res.statusCode || 500).json(result);
+  // Send response with determined status code
+  res.status(statusCode).json(result);
 }
 
 /**
- * Format validation error messages to be more user-friendly
+ * Format validation errors into user-friendly messages
+ * Handles both Joi validation errors and custom validation errors
  *
- * @param {Error} error - Validation error object (typically Joi validation error)
+ * @param {Error} error - Validation error object
  * @returns {string} Formatted validation error message
  */
 function formatValidationError(error) {
-  // For Joi validation errors with details array
+  // Handle Joi validation errors with details array
   if (error.details && Array.isArray(error.details)) {
     return error.details.map((detail) => formatErrorMessage(detail.message)).join(', ');
   }
 
-  // For custom validation errors that include the ValidationError text
+  // Handle custom validation errors
   if (error.message && error.message.includes('ValidationError')) {
     return formatErrorMessage(error.message.replace('ValidationError: ', ''));
   }
 
-  // Fallback for other validation errors
+  // Fallback for other validation error types
   return formatErrorMessage(error.message) || 'Validation failed';
 }
 
 /**
- * Format any error message to remove escape characters and improve readability
+ * Sanitize error messages for consistent display and improved security
+ * Removes escape characters and converts quotes for better readability
  *
- * @param {string} message - The error message to format
+ * @param {string} message - Raw error message
  * @returns {string} Cleaned error message
  */
 function formatErrorMessage(message) {
@@ -99,16 +91,15 @@ function formatErrorMessage(message) {
 }
 
 /**
- * Format stack trace for error responses
- * Returns a simplified version of the stack trace for better readability
+ * Create a simplified stack trace for better debugging in development
+ * Limits stack trace to first 10 lines to prevent excessive response size
  *
- * @param {string} stackTrace - Raw stack trace string
- * @returns {Array<string>|null} Formatted stack trace as array of lines or null if not available
+ * @param {string} stackTrace - Raw error stack trace
+ * @returns {Array<string>|null} Formatted stack trace array or null if unavailable
  */
 function formatStackTrace(stackTrace) {
   if (!stackTrace) return null;
 
-  // Split stack by lines and take first 10 lines for conciseness
   return stackTrace
     .split('\n')
     .map((line) => line.trim())

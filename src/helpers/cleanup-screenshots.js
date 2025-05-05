@@ -1,6 +1,6 @@
 /**
  * Screenshot Cleanup Helper
- * Removes screenshot files from the tmp directory that are older than 24 hours
+ * Removes screenshot files from the tmp directory that are older than the specified retention period
  */
 
 // Node core modules
@@ -12,7 +12,6 @@ import path from 'path';
  *
  * @param {string} filename - Screenshot filename (e.g. "error-2025-03-20T00-12-26-829Z.png")
  * @returns {Date|null} - Date object or null if date couldn't be extracted
- * @throws {Error} - Throws error if filename format is invalid
  */
 function extractDateFromFilename(filename) {
   try {
@@ -30,7 +29,6 @@ function extractDateFromFilename(filename) {
     const seconds = parseInt(dateMatch[6]);
 
     // Create date from extracted components as UTC
-    // Use Date.UTC to create the date in UTC timezone
     const timestamp = Date.UTC(year, month, day, hours, minutes, seconds);
     const date = new Date(timestamp);
 
@@ -68,13 +66,10 @@ export async function helperCleanupOldScreenshots(retentionHours = 24) {
     // Calculate cutoff time (current time minus retention period)
     const now = new Date();
     const cutoffTime = new Date(now.getTime() - retentionHours * 60 * 60 * 1000);
-
     console.log(`Cutoff time for deletion: ${cutoffTime.toISOString()}`);
-    console.log('Files older than this time will be deleted.');
 
     // Get all files in the tmp directory
     const files = fs.readdirSync(screenshotDir);
-
     let deletedCount = 0;
     let errorCount = 0;
 
@@ -99,14 +94,6 @@ export async function helperCleanupOldScreenshots(retentionHours = 24) {
         // Use filename date if available, otherwise use modification time
         const fileCreationTime = fileNameDate || fileModificationTime;
 
-        // Debug output
-        console.log(`File: ${file}`);
-        console.log(`  - Filesystem date: ${fileModificationTime.toISOString()}`);
-        console.log(
-          `  - Filename date: ${fileNameDate ? fileNameDate.toISOString() : 'Not available'}`
-        );
-        console.log(`  - Using date: ${fileCreationTime.toISOString()}`);
-
         // If file is older than the cutoff time, delete it
         if (fileCreationTime < cutoffTime) {
           fs.unlinkSync(filePath);
@@ -114,12 +101,10 @@ export async function helperCleanupOldScreenshots(retentionHours = 24) {
           console.log(
             `Deleted old screenshot: ${file} (created: ${fileCreationTime.toISOString()})`
           );
-        } else {
-          console.log(`Keeping file: ${file} (created: ${fileCreationTime.toISOString()})`);
         }
       } catch (error) {
         errorCount++;
-        console.error(`Error processing file ${file}:`, error.message);
+        console.error(`Error processing file ${file}: ${error.message}`);
       }
     }
 

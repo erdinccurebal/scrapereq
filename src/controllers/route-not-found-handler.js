@@ -15,14 +15,13 @@ export function controllerRouteNotFoundHandler(req, res, next) {
   res.status(404);
 
   // Create error with detailed route information and standardized error code
-  const error = new Error(
-    `Route not found - ${req.method} ${req.originalUrl} - Code: ERROR_ROUTE_NOT_FOUND`
-  );
+  const error = new Error(`Route not found - ${req.method} ${req.originalUrl}`);
 
   // Add additional context for debugging
   error.statusCode = 404;
   error.path = req.originalUrl;
   error.method = req.method;
+  error.code = 'ERROR_ROUTE_NOT_FOUND';
 
   // Forward to the central error handler middleware
   next(error);

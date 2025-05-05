@@ -12,14 +12,14 @@
  * @returns {Object} - Randomly selected proxy configuration object
  * @throws {Error} If the proxies array is empty or not provided
  */
-export function helperProxiesRandomGetOne({ proxies }) {
+export function helperProxiesRandomGetOne({ servers }) {
   // Validate the proxies array
-  if (!Array.isArray(proxies) || proxies.length === 0) {
+  if (!Array.isArray(servers) || servers.length === 0) {
     throw new Error('Proxy list is empty or not valid');
   }
 
   // Randomly select a proxy from the provided list
-  return proxies[Math.floor(Math.random() * proxies.length)];
+  return servers[Math.floor(Math.random() * servers.length)];
 }
 
 /**

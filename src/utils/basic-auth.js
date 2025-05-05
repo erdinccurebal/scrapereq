@@ -34,8 +34,7 @@ export function setupBasicAuth(router) {
         [process.env.AUTH_USERNAME || AUTH_DEFAULTS.USERNAME]:
           process.env.AUTH_PASSWORD || AUTH_DEFAULTS.PASSWORD
       },
-      challenge: true, // Display browser authentication prompt
-      unauthorizedResponse: 'Authentication required to access the API'
+      challenge: AUTH_DEFAULTS.CHALLENGE // Use challenge setting from constants
     })
   );
 }

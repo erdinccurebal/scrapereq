@@ -33,7 +33,7 @@ export function setupTmp(router) {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
   // Define tmp directory path - use environment variable or fallback to default
-  const TMP_DIR = process.env.TMP_DIR || path.join(__dirname, '..', '..', '..', 'tmp');
+  const TMP_DIR = process.env.TMP_DIR || path.join(__dirname, '..', '..', 'tmp');
 
   // Ensure tmp directory exists with proper permissions
   if (!existsSync(TMP_DIR)) {

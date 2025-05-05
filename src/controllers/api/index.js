@@ -22,7 +22,7 @@ export function controllerApiIndex(_req, res, next) {
       }
     });
   } catch (error) {
-    error.message = `${error.message} - Code: ERROR_API_INDEX`;
+    error.code = 'ERROR_API_INDEX';
     next(error); // Fixed: was incorrectly passing 'next' instead of 'error'
   }
 }

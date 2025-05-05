@@ -57,7 +57,7 @@ function loadProjectData() {
       license: packageJson.license
     };
   } catch (error) {
-    error.message = `${error.message} - Code: ERROR_API_APP_HEALTH_CHECK_LOAD_PROJECT_DATA`;
+    error.code = 'ERROR_API_APP_HEALTH_CHECK_LOAD_PROJECT_DATA';
     throw error;
   }
 }
@@ -82,7 +82,7 @@ function loadAppData({ res }) {
       pid: process.pid
     };
   } catch (error) {
-    error.message = `${error.message} - Code: ERROR_API_APP_HEALTH_CHECK_LOAD_APP_DATA`;
+    error.code = 'ERROR_API_APP_HEALTH_CHECK_LOAD_APP_DATA';
     throw error;
   }
 }
@@ -104,7 +104,7 @@ function loadSystemData() {
       freemem: (os.freemem() / MEMORY_CONSTANTS.BYTES_TO_MB).toFixed(2) // Free memory in MB
     };
   } catch (error) {
-    error.message = `${error.message} - Code: ERROR_API_APP_HEALTH_CHECK_LOAD_SYSTEM_DATA`;
+    error.code = 'ERROR_API_APP_HEALTH_CHECK_LOAD_SYSTEM_DATA';
     throw error;
   }
 }

@@ -5,9 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node start.js",
-    "dev": "node start.js dev",
-    "prod": "node start.js prod",
+    "start": "node .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write . --single-quote --no-bracket-spacing=false --quote-props=preserve",

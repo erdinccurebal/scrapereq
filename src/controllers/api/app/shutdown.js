@@ -35,8 +35,7 @@ export function controllerApiAppShutdown(_req, res, next) {
       process.exit(0);
     }, TIME_CONSTANTS.SHUTDOWN_DELAY_MS);
   } catch (error) {
-    // Append error code for easier debugging and error tracking
-    error.message = `${error.message} - Code: ERROR_APP_SHUTDOWN`;
-    next(error); // Pass any errors to the global error handler
+    error.code = 'ERROR_APP_SHUTDOWN';
+    next(error);
   }
 }

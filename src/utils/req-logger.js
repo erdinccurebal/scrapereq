@@ -27,7 +27,7 @@ import { LOGGER_CONFIG } from '../constants.js';
  *
  * @returns {Function} Configured Morgan middleware
  */
-export function setupLogger() {
+export function setupReqLogger() {
   // Select format based on environment
   const format =
     config.server.env === 'production'

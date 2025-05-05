@@ -5,10 +5,12 @@
  * All browser requests are queued and processed based on available slots
  */
 
+import { MAX_CONCURRENT_BROWSERS } from '../constants.js';
+
 // Configuration - can be moved to environment variables
-const MAX_CONCURRENT_BROWSERS = process.env.MAX_CONCURRENT_BROWSERS
+const MAX_BROWSERS = process.env.MAX_CONCURRENT_BROWSERS
   ? parseInt(process.env.MAX_CONCURRENT_BROWSERS, 10)
-  : 1;
+  : MAX_CONCURRENT_BROWSERS;
 
 // Browser semaphore mechanism with support for configurable concurrency
 export const helperBrowserSemaphore = {
@@ -25,48 +27,25 @@ export const helperBrowserSemaphore = {
   queue: [],
 
   /**
-   * Statistics for monitoring
-   */
-  stats: {
-    totalAcquired: 0,
-    totalReleased: 0,
-    maxQueueLength: 0,
-    totalWaitTime: 0,
-    requests: 0
-  },
-
-  /**
    * Acquires a browser slot for an operation
    * If all slots are in use, adds the request to the queue
    * @returns {Promise<void>} - Resolves when a slot is acquired
    */
   async acquire() {
-    const startTime = Date.now();
-    this.stats.requests++;
-
-    return new Promise(resolve => {
-      if (this.activeOperations < MAX_CONCURRENT_BROWSERS) {
+    return new Promise((resolve) => {
+      if (this.activeOperations < MAX_BROWSERS) {
         this.activeOperations++;
-        this.stats.totalAcquired++;
-        console.log(
-          `Browser slot acquired. Active: ${this.activeOperations}/${MAX_CONCURRENT_BROWSERS}`
-        );
+        console.log(`Browser slot acquired. Active: ${this.activeOperations}/${MAX_BROWSERS}`);
         resolve();
       } else {
         console.log(
           `All browser slots busy. Request added to queue. Queue length: ${this.queue.length + 1}`
         );
         this.queue.push(() => {
-          const waitTime = Date.now() - startTime;
-          this.stats.totalWaitTime += waitTime;
-          console.log(`Request from queue acquired a browser slot after ${waitTime}ms wait`);
+          console.log(`Request from queue acquired a browser slot`);
           this.activeOperations++;
-          this.stats.totalAcquired++;
           resolve();
         });
-
-        // Update max queue length statistic
-        this.stats.maxQueueLength = Math.max(this.stats.maxQueueLength, this.queue.length);
       }
     });
   },
@@ -77,8 +56,6 @@ export const helperBrowserSemaphore = {
    * @returns {void}
    */
   release() {
-    this.stats.totalReleased++;
-
     if (this.queue.length > 0) {
       const nextResolve = this.queue.shift();
       console.log(
@@ -87,43 +64,7 @@ export const helperBrowserSemaphore = {
       nextResolve();
     } else {
       this.activeOperations--;
-      console.log(
-        `Browser slot released. Active: ${this.activeOperations}/${MAX_CONCURRENT_BROWSERS}`
-      );
+      console.log(`Browser slot released. Active: ${this.activeOperations}/${MAX_BROWSERS}`);
     }
-  },
-
-  /**
-   * Get current semaphore statistics
-   * @returns {Object} Current statistics
-   */
-  getStats() {
-    return {
-      ...this.stats,
-      activeOperations: this.activeOperations,
-      queueLength: this.queue.length,
-      avgWaitTime: this.stats.requests
-        ? Math.round(this.stats.totalWaitTime / this.stats.requests)
-        : 0,
-      timestamp: new Date().toISOString()
-    };
-  },
-
-  /**
-   * Reset semaphore statistics
-   * @returns {Object} Previous statistics
-   */
-  resetStats() {
-    const previousStats = { ...this.stats };
-
-    this.stats = {
-      totalAcquired: 0,
-      totalReleased: 0,
-      maxQueueLength: 0,
-      totalWaitTime: 0,
-      requests: 0
-    };
-
-    return previousStats;
   }
 };

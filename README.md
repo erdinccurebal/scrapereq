@@ -4,7 +4,7 @@
   <h3>A powerful and flexible web scraping API built with Express.js and Puppeteer</h3>
   <p>
     <img src="https://img.shields.io/badge/Express-5.1.0-000000?style=flat-square&logo=express" alt="Express.js" />
-    <img src="https://img.shields.io/badge/Puppeteer-24.7.2-40B5A4?style=flat-square&logo=puppeteer" alt="Puppeteer" />
+    <img src="https://img.shields.io/badge/Puppeteer-24.8.0-40B5A4?style=flat-square&logo=puppeteer" alt="Puppeteer" />
     <img src="https://img.shields.io/badge/Node.js-v20+-339933?style=flat-square&logo=node.js" alt="Node.js" />
     <img src="https://img.shields.io/badge/License-ISC-blue?style=flat-square" alt="License" />
   </p>
@@ -33,7 +33,7 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 
 - **🔐 Built-in Security**: Basic authentication, helmet protection, and CORS configuration
 - **🌐 Enhanced Proxy Support**: Advanced proxy configuration with authentication and multiple proxy rotation
-- **🔄 Error Handling**: Comprehensive error reporting with step indexing
+- **🛡️ Error Handling**: Consistent JSON error responses with contextual details and optional stack traces for debugging
 - **💪 Browser Resilience**: Automatic disconnection detection and resource management
 
 ### Advanced Features
@@ -52,7 +52,7 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 
 - **📦 Node.js**: JavaScript runtime
 - **🚀 Express.js v5.1.0**: Web application framework
-- **🤖 Puppeteer v24.7.2**: Headless Chrome browser automation
+- **🤖 Puppeteer v24.8.0**: Headless Chrome browser automation
 - **🧩 Puppeteer-Extra v3.3.6**: Plugin system for Puppeteer
 - **⏺️ @puppeteer/replay v3.1.1**: Record and replay browser interactions
 - **✅ Joi v17.13.3**: Request validation
@@ -106,12 +106,33 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
    # Rate Limiting
    RATE_LIMIT_WINDOW_MS=900000 # 15 minutes in milliseconds
    RATE_LIMIT_MAX_REQUESTS=100 # Maximum requests per window
+
+   # Proxy Configuration (Optional)
+   ACCESS_PASSWORD_WITHOUT_PROXY=your_secure_password # Password to bypass proxy requirement
    ```
 
 4. **Start the application**:
    ```bash
    npm start
    ```
+
+## 🐳 Docker Deployment
+
+You can easily run the application using Docker:
+
+```bash
+# Build the Docker image
+npm run docker:build
+
+# Run the container
+npm run docker:run
+```
+
+Or use the provided docker-compose.yml:
+
+```bash
+docker-compose up -d
+```
 
 ## 🔌 API Endpoints
 
@@ -158,6 +179,37 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
       "value": "title"
     }
   ],
+  "proxy": {
+    "bypassCode": "optional_bypass_code",
+    "auth": {
+      "enabled": true,
+      "username": "proxyuser",
+      "password": "proxypass"
+    },
+    "servers": [
+      {
+        "server": "proxy1.example.com",
+        "port": 8080,
+        "protocol": "HTTP"
+      },
+      {
+        "server": "proxy2.example.com",
+        "port": 8081,
+        "protocol": "HTTPS"
+      }
+    ]
+  },
+  "browser": {
+    "acceptLanguage": "en-US,en;q=0.9",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36"
+  },
+  "output": {
+    "screenshots": {
+      "onError": true,
+      "onSuccess": true
+    },
+    "responseType": "JSON"
+  },
   "steps": [
     {
       "type": "navigate",
@@ -171,6 +223,23 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
       "type": "setViewport",
       "width": 1366,
       "height": 768
+    },
+    {
+      "type": "click",
+      "selectors": [["#L2AGLb"]]
+    },
+    {
+      "type": "change",
+      "selectors": [["input[name='q']"]],
+      "value": "web scraping api"
+    },
+    {
+      "type": "click",
+      "selectors": [["input[name='btnK']"]]
+    },
+    {
+      "type": "waitForElement",
+      "selectors": [["#search"]]
     }
   ]
 }
@@ -185,12 +254,6 @@ GET /api/scrape/metrics
 ```
 
 Returns performance metrics for all scraping operations.
-
-```http
-POST /api/scrape/metrics/reset
-```
-
-Resets all collected metrics.
 
 ### 🔧 System Management
 
@@ -234,16 +297,38 @@ The scraper supports multiple response formats:
 | `RAW`  | Returns raw content from the first selector          |
 | `NONE` | No response content (useful for headless operations) |
 
+## ⚠️ Error Handling
+
+The API implements a consistent error handling pattern:
+
+- **Standardized Format**: All errors return a consistent JSON structure
+- **Contextual Information**: Includes error code, message, and related data
+- **Debug Support**: Stack traces included in development mode
+- **Visual Evidence**: Error screenshots for visual debugging
+- **Step Identification**: Clear indication of which step in the process failed
+- **Proxy Errors**: Detailed information about proxy-related issues
+
+Example error response:
+
+```json
+{
+  "success": false,
+  "data": {
+    "message": "Failed to execute click operation on element",
+    "code": "ERROR_ELEMENT_NOT_FOUND",
+    "stepIndex": 3,
+    "screenshotUrl": "/tmp/error-screenshot-123456.png"
+  }
+}
+```
+
 ## 🛠️ CLI Startup Options
 
-The project includes several command-line utility scripts for easy startup and management:
+The project includes several command-line utility scripts:
 
 ```bash
-# Start in development mode with auto-reload
-npm run dev
-
-# Start in production mode
-npm run prod
+# Start the application
+npm start
 
 # Run tests
 npm test
@@ -260,7 +345,6 @@ npm run format
 # Docker operations
 npm run docker:build   # Build Docker image
 npm run docker:run     # Run Docker container
-npm run docker:start   # Start with Docker configuration
 ```
 
 ## 📁 Project Structure
@@ -268,12 +352,15 @@ npm run docker:start   # Start with Docker configuration
 ```
 .
 ├── index.js                # Entry point
-├── start.js                # CLI startup script
+├── docker-compose.yml      # Docker Compose configuration
+├── Dockerfile              # Docker configuration
 ├── src/                    # Application source code
 │   ├── app.js              # Express app configuration
 │   ├── config.js           # Configuration module
 │   ├── constants.js        # Constants and enums
 │   ├── controllers/        # Request handlers
+│   │   ├── error-handler.js # Global error handling middleware
+│   │   └── api/            # API controllers
 │   ├── helpers/            # Helper functions
 │   ├── routes/             # API route definitions
 │   └── utils/              # Utility middleware
@@ -291,4 +378,4 @@ This project is licensed under the ISC License - see the LICENSE file for detail
 
 ## 🔄 Last Updated
 
-May 4, 2025
+May 5, 2025
