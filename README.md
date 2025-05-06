@@ -108,7 +108,7 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
    RATE_LIMIT_MAX_REQUESTS=100 # Maximum requests per window
 
    # Proxy Configuration (Optional)
-   ACCESS_PASSWORD_WITHOUT_PROXY=your_secure_password # Password to bypass proxy requirement
+   SCRAPE_PROXY_BYPASS_CODE=your_secure_password # Password to bypass proxy requirement
    ```
 
 4. **Start the application**:
@@ -161,26 +161,8 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
 
 ```json
 {
-  "title": "Google Search Example",
-  "speedMode": "NORMAL",
-  "timeoutMode": "NORMAL",
-  "responseType": "JSON",
-  "errorScreenshot": true,
-  "successScreenshot": true,
-  "selectors": [
-    {
-      "key": "search_results",
-      "type": "CSS",
-      "value": "#search"
-    },
-    {
-      "key": "page_title",
-      "type": "CSS",
-      "value": "title"
-    }
-  ],
   "proxy": {
-    "bypassCode": "optional_bypass_code",
+    "bypassCode": "your_secure_password",
     "auth": {
       "enabled": true,
       "username": "proxyuser",
@@ -189,19 +171,68 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
     "servers": [
       {
         "server": "proxy1.example.com",
-        "port": 8080,
-        "protocol": "HTTP"
+        "port": 8080
       },
       {
         "server": "proxy2.example.com",
-        "port": 8081,
-        "protocol": "HTTPS"
+        "port": 8081
       }
     ]
   },
-  "browser": {
-    "acceptLanguage": "en-US,en;q=0.9",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36"
+  "record": {
+    "title": "Google Search Example",
+    "speedMode": "NORMAL",
+    "timeoutMode": "NORMAL",
+    "steps": [
+      {
+        "type": "navigate",
+        "url": "https://www.google.com"
+      },
+      {
+        "type": "wait",
+        "value": "1000"
+      },
+      {
+        "type": "setViewport",
+        "width": 1366,
+        "height": 768
+      },
+      {
+        "type": "click",
+        "selectors": [["#L2AGLb"]]
+      },
+      {
+        "type": "change",
+        "selectors": [["input[name='q']"]],
+        "value": "web scraping api"
+      },
+      {
+        "type": "click",
+        "selectors": [["input[name='btnK']"]]
+      },
+      {
+        "type": "waitForElement",
+        "selectors": [["#search"]]
+      }
+    ]
+  },
+  "capture": {
+    "selectors": [
+      {
+        "key": "search_results",
+        "type": "CSS",
+        "value": "#search"
+      },
+      {
+        "key": "page_title",
+        "type": "CSS",
+        "value": "title"
+      }
+    ]
+  },
+  "headers": {
+    "Accept-Language": "en-US,en;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36"
   },
   "output": {
     "screenshots": {
@@ -209,43 +240,25 @@ Main endpoint for web scraping operations. Configure your scraping workflow with
       "onSuccess": true
     },
     "responseType": "JSON"
-  },
-  "steps": [
-    {
-      "type": "navigate",
-      "url": "https://www.google.com"
-    },
-    {
-      "type": "wait",
-      "value": "1000"
-    },
-    {
-      "type": "setViewport",
-      "width": 1366,
-      "height": 768
-    },
-    {
-      "type": "click",
-      "selectors": [["#L2AGLb"]]
-    },
-    {
-      "type": "change",
-      "selectors": [["input[name='q']"]],
-      "value": "web scraping api"
-    },
-    {
-      "type": "click",
-      "selectors": [["input[name='btnK']"]]
-    },
-    {
-      "type": "waitForElement",
-      "selectors": [["#search"]]
-    }
-  ]
+  }
 }
 ```
 
 </details>
+
+### 🧪 Test Endpoint
+
+```http
+POST /api/scrape/test
+```
+
+Runs a predefined scraping test using a fixed configuration. This endpoint is useful for:
+
+- Testing if the scraping service is working correctly
+- Checking proxy connectivity
+- Validating browser functionality
+
+The test endpoint uses a predefined configuration from `constants.js` with a sample scrape request that checks your IP address using a proxied connection.
 
 ### 📊 Performance Metrics
 
@@ -362,6 +375,12 @@ npm run docker:run     # Run Docker container
 │   │   ├── error-handler.js # Global error handling middleware
 │   │   └── api/            # API controllers
 │   ├── helpers/            # Helper functions
+│   │   ├── browser-semaphore.js   # Browser instance management
+│   │   ├── cleanup-screenshots.js # Screenshot cleanup utility
+│   │   ├── do-scraping.js         # Main scraping logic
+│   │   ├── proxies-random-get-one.js # Proxy rotation utility
+│   │   ├── scrape-validate-req-body.js # Request validation
+│   │   └── validators.js          # Schema validation definitions
 │   ├── routes/             # API route definitions
 │   └── utils/              # Utility middleware
 ├── __tests__/              # Test files
@@ -378,4 +397,4 @@ This project is licensed under the ISC License - see the LICENSE file for detail
 
 ## 🔄 Last Updated
 
-May 5, 2025
+May 6, 2025

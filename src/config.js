@@ -19,7 +19,6 @@ const {
   WEB_ADDRESS,
   AUTH_USERNAME,
   AUTH_PASSWORD,
-  ACCESS_PASSWORD_WITHOUT_PROXY,
   TMP_DIR,
   RATE_LIMIT_WINDOW_MS,
   RATE_LIMIT_MAX_REQUESTS
@@ -38,8 +37,7 @@ export const config = {
   // Authentication settings
   auth: {
     username: AUTH_USERNAME || 'admin',
-    password: AUTH_PASSWORD || 'admin',
-    accessPasswordWithoutProxy: ACCESS_PASSWORD_WITHOUT_PROXY || null
+    password: AUTH_PASSWORD || 'admin'
   },
 
   // File system settings

@@ -1,89 +1,37 @@
 /**
  * Test Scraper Controller
  *
- * Advanced endpoint for testing scraper functionality
- * Performs a basic browser test to validate Puppeteer is working correctly
+ * Runs a predefined scraping test using a fixed configuration from constants.
+ * Uses a preset configuration for testing the scraping functionality.
  */
 
-// Import packages
-import puppeteer from 'puppeteer';
+// Helpers
+import { helperDoScraping } from '../../../helpers/do-scraping.js';
+import { helperScrapeValidateRequestBody } from '../../../helpers/scrape-validate-req-body.js';
 
-// Import central configuration
-import { config } from '../../../config.js';
+// Constants
+import { SCRAPE_TEST_REQ_BODY } from '../../../constants.js';
 
 /**
- * Test endpoint controller - POST /api/scrape/test handler
- * @param {Object} req - Express request object
+ * Test controller for web scraping functionality
+ *
+ * @param {Object} _req - Express request object (not used in this controller)
  * @param {Object} res - Express response object
  * @param {Function} next - Express next middleware function
- * @returns {Promise<void>} - Returns detailed test results or error information
+ * @returns {Promise<void>} - Returns scraping test results
+ * @throws {Error} - Forwards errors to the error handler middleware
  */
-export async function controllerApiScrapeTest(req, res, next) {
-  let browser = null;
-
+export async function controllerApiScrapeTest(_req, res, next) {
   try {
-    // Launch options for test browser
-    const launchOptions = {
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-web-security'],
-      ignoreHTTPSErrors: true
-    };
+    // Validate the predefined test configuration
+    const validateValue = helperScrapeValidateRequestBody({ body: SCRAPE_TEST_REQ_BODY });
 
-    // Add chromium path from config if available
-    if (config.browser.chromePath) {
-      launchOptions.executablePath = config.browser.chromePath;
-    }
+    // Execute the scraping operation
+    const result = await helperDoScraping(validateValue);
 
-    // Testing a simple website load
-    const testUrl = 'https://example.com';
-
-    // Launch browser and open a page
-    browser = await puppeteer.launch(launchOptions);
-    const page = await browser.newPage();
-
-    // Set a reasonable timeout
-    page.setDefaultTimeout(10000);
-
-    // Navigate to test URL
-    await page.goto(testUrl, { waitUntil: 'domcontentloaded' });
-
-    // Get page title and URL for verification
-    const pageTitle = await page.title();
-    const pageUrl = page.url();
-
-    // Take a small screenshot for visual verification
-    const screenshot = await page.screenshot({ encoding: 'base64', type: 'jpeg', quality: 50 });
-
-    // Close browser
-    await browser.close();
-    browser = null;
-
-    // Return detailed success response
-    res.json({
-      success: true,
-      data: {
-        message: 'Scraper test completed successfully',
-        test_url: testUrl,
-        result_url: pageUrl,
-        page_title: pageTitle,
-        browser_version: await puppeteer.browser.version(),
-        timestamp: new Date().toISOString(),
-        screenshot: `data:image/jpeg;base64,${screenshot}`
-      }
-    });
+    // Return results
+    res.send(result);
   } catch (error) {
-    // Provide detailed error information
-    error.code = 'ERROR_SCRAPER_TEST';
-
-    // Ensure browser is closed if an error occurs
-    if (browser) {
-      try {
-        await browser.close();
-      } catch (closeError) {
-        console.error('Error closing browser during error handling:', closeError);
-      }
-    }
-
     next(error);
   }
 }

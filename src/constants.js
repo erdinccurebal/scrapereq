@@ -362,3 +362,92 @@ export const TMP_STATIC_CONFIG = {
   LAST_MODIFIED: true, // Send Last-Modified header
   INDEX: false // Disable directory listing
 };
+
+/**
+ * Scrape Test Request Body
+ * Example configuration for testing the scraper functionality
+ */
+export const SCRAPE_TEST_REQ_BODY = {
+  proxy: {
+    bypassCode: process.env.SCRAPE_PROXY_BYPASS_CODE,
+    auth: {
+      enabled: true,
+      username: 'test_user', // Changed for security - don't use real credentials
+      password: 'test_password' // Changed for security - don't use real credentials
+    },
+    servers: [
+      {
+        server: '86.38.234.176',
+        port: 6630
+      }
+    ]
+  },
+  record: {
+    title: 'Recording 22.04.2025 at 02:54:51',
+    speedMode: 'NORMAL',
+    timeoutMode: 'NORMAL',
+    steps: [
+      {
+        type: 'setViewport',
+        width: 1226,
+        height: 911,
+        deviceScaleFactor: 1,
+        isMobile: false,
+        hasTouch: false,
+        isLandscape: false
+      },
+      {
+        type: 'navigate',
+        url: 'https://whatismyipaddress.com/tr/ip-im'
+      }
+    ]
+  },
+  capture: {
+    request: {
+      data: [
+        {
+          key: 'IP',
+          address: 'https://whatismyipaddress.com/tr/ip-im',
+          method: 'GET'
+        }
+      ],
+      queries: [
+        {
+          key: 'IP',
+          address: 'https://whatismyipaddress.com/tr/ip-im',
+          method: 'GET'
+        }
+      ]
+    },
+    response: {
+      cookies: ['PHPSESSID', 'session_id', 'session'],
+      data: [
+        {
+          key: 'IP',
+          address: 'https://whatismyipaddress.com/tr/ip-im',
+          method: 'GET'
+        }
+      ]
+    },
+    selectors: [
+      {
+        key: 'IP',
+        type: 'XPATH',
+        value:
+          '/html/body/div[1]/div/div/div/div/article/div/div/div[1]/div/div[2]/div/div/div/div/div/div[2]/div[1]/div[1]/p[2]/span[2]/a'
+      }
+    ]
+  },
+  headers: {
+    'Accept-Language': 'en-US,en;q=0.9',
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome'
+  },
+  output: {
+    screenshots: {
+      onError: true,
+      onSuccess: true
+    },
+    responseType: 'JSON'
+  }
+};

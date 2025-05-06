@@ -312,17 +312,16 @@ function generateLaunchOptions({ proxy }) {
     const { auth, bypassCode, servers } = proxy;
 
     // Check if proxy bypass is enabled via password
-    const checkAccessPasswordWithoutProxy =
-      bypassCode === process.env.ACCESS_PASSWORD_WITHOUT_PROXY;
+    const proxyBypassCode = bypassCode === process.env.SCRAPE_PROXY_BYPASS_CODE;
 
     // Validate proxy requirements
-    if (!checkAccessPasswordWithoutProxy && servers.length === 0) {
+    if (!proxyBypassCode && servers.length === 0) {
       res.status(401);
       throw new Error('Access denied. Valid proxy configuration is required for this request.');
     }
 
     // Setup proxy if required and available
-    if (!checkAccessPasswordWithoutProxy && servers.length > 0) {
+    if (!proxyBypassCode && servers.length > 0) {
       try {
         // Use the helper to get a random proxy from the list
         getProxy = helperProxiesRandomGetOne({ servers });
@@ -345,7 +344,7 @@ function generateLaunchOptions({ proxy }) {
     const { enabled, username, password } = auth;
 
     // Setup proxy authentication if enabled and credentials are provided
-    if (!checkAccessPasswordWithoutProxy && enabled === true && username && password) {
+    if (!proxyBypassCode && enabled === true && username && password) {
       pageAuthenticateEnabled = true;
       pageAuthenticateParams = { username, password };
       console.log(`Proxy authentication enabled for user: ${username}`);

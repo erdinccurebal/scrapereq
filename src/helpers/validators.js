@@ -41,7 +41,7 @@ const selectorSchema = Joi.object({
  * Defines the structure and validation rules for incoming scraper API requests.
  * Ensures all required fields are present and validates data types and formats.
  */
-export const helperValidatorsApiScrapeStart = Joi.object({
+export const helperValidatorsApiScrape = Joi.object({
   // Proxy configuration - Controls how requests are routed through proxies
   proxy: Joi.object({
     bypassCode: Joi.string().default(''),
