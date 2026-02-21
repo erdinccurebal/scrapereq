@@ -377,8 +377,8 @@ export const SCRAPE_TEST_REQ_BODY = {
     },
     servers: [
       {
-        server: '86.38.234.176',
-        port: 6630
+        server: 'proxy.example.com',
+        port: 8080
       }
     ]
   },

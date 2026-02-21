@@ -22,6 +22,17 @@
   ],
   "author": "Erdinç Cürebal",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erdinccurebal/scrapereq.git"
+  },
+  "bugs": {
+    "url": "https://github.com/erdinccurebal/scrapereq/issues"
+  },
+  "homepage": "https://github.com/erdinccurebal/scrapereq#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "@puppeteer/replay": "^3.1.1",
     "cors": "^2.8.5",

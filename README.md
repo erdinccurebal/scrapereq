@@ -7,12 +7,13 @@
     <img src="https://img.shields.io/badge/Puppeteer-24.8.0-40B5A4?style=flat-square&logo=puppeteer" alt="Puppeteer" />
     <img src="https://img.shields.io/badge/Node.js-v20+-339933?style=flat-square&logo=node.js" alt="Node.js" />
     <img src="https://img.shields.io/badge/License-ISC-blue?style=flat-square" alt="License" />
+    <img src="https://img.shields.io/github/actions/workflow/status/erdinccurebal/scrapereq/ci.yml?branch=master&style=flat-square&label=CI" alt="CI" />
   </p>
   <p>
     <a href="#-api-endpoints">API Documentation</a> •
     <a href="#-installation">Installation</a> •
     <a href="#-features">Features</a> •
-    <a href="#-tech-stack">Tech Stack</a>
+    <a href="#-contributing">Contributing</a>
   </p>
 </div>
 
@@ -69,7 +70,7 @@ Scrapereq is a RESTful API service that allows you to perform web scraping opera
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/yourusername/scrapereq.git
+   git clone https://github.com/erdinccurebal/scrapereq.git
    cd scrapereq
    ```
 
@@ -389,12 +390,14 @@ npm run docker:run     # Run Docker container
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) before submitting a Pull Request.
+
+By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## 🔒 Security
+
+For security vulnerabilities, please see our [Security Policy](SECURITY.md). Do **not** open a public issue for security concerns.
 
 ## 📄 License
 
-This project is licensed under the ISC License - see the LICENSE file for details.
-
-## 🔄 Last Updated
-
-May 6, 2025
+This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
