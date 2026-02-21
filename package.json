@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write . --single-quote --no-bracket-spacing=false --quote-props=preserve",
-    "test": "node start.js test",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "docker:build": "docker build -t scrapereq .",
     "docker:run": "docker run -p 3000:3000 -d --name scrapereq-container scrapereq",
     "docker:start": "node start.js docker"
