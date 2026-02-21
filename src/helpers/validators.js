@@ -58,7 +58,7 @@ export const helperValidatorsApiScrape = Joi.object({
       .items(
         Joi.object({
           server: Joi.string().required(),
-          port: Joi.number().required(),
+          port: Joi.number().integer().min(1).max(65535).required(),
           protocol: Joi.string()
             .valid(
               PROXY_PROTOCOLS.HTTP,
@@ -250,4 +250,30 @@ export const helperValidatorsApiScrape = Joi.object({
     },
     responseType: DEFAULT_RESPONSE_TYPE
   })
+}).custom((value, helpers) => {
+  const { output, capture } = value;
+  const responseType = output?.responseType;
+  const selectors = capture?.selectors || [];
+
+  // RAW requires exactly one selector
+  if (responseType === RESPONSE_TYPE_NAMES.RAW) {
+    if (selectors.length !== 1) {
+      return helpers.message('responseType RAW requires exactly one selector');
+    }
+  }
+
+  // JSON requires at least one selector
+  if (responseType === RESPONSE_TYPE_NAMES.JSON) {
+    if (selectors.length === 0) {
+      return helpers.message('responseType JSON requires at least one selector');
+    }
+  }
+
+  // Only one FULL selector allowed
+  const fullSelectors = selectors.filter((s) => s.type === SELECTOR_TYPE_NAMES.FULL);
+  if (fullSelectors.length > 1) {
+    return helpers.message('Only one selector with type FULL is allowed');
+  }
+
+  return value;
 });

@@ -26,270 +26,135 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - title
- *               - steps
+ *               - proxy
+ *               - record
  *             properties:
- *               title:
- *                 type: string
- *                 description: Title or name of the scraping task (required)
- *                 example: "Amazon Product Price Scraper"
- *               responseType:
- *                 type: string
- *                 enum: [NONE, JSON, RAW]
- *                 description: |
- *                   Output format of the scraped data:
- *                   - NONE: No data is returned (for background operations)
- *                   - JSON: Returns structured JSON with success status, data, proxy info, screenshots
- *                   - RAW: Returns raw content directly from the first selector without any wrapping structure
- *                 example: "JSON"
- *               speedMode:
- *                 type: string
- *                 enum: [TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH]
- *                 description: Controls execution speed between scraping steps
- *                 example: "NORMAL"
- *               errorScreenshot:
- *                 type: boolean
- *                 description: Take screenshots on error occurrences
- *                 example: true
- *               successScreenshot:
- *                 type: boolean
- *                 description: Take screenshots after successful steps
- *                 example: false
- *               timeoutMode:
- *                 type: string
- *                 enum: [SHORT, NORMAL, LONG]
- *                 description: Sets timeout duration for operations
- *                 example: "NORMAL"
- *               accessPasswordWithoutProxy:
- *                 type: string
- *                 description: Password to allow requests without proxy
- *                 example: "secure_password_123"
- *               acceptLanguage:
- *                 type: string
- *                 description: Language header for browser requests
- *                 example: "en-US,en;q=0.9"
- *               userAgent:
- *                 type: string
- *                 description: Browser user-agent string
- *                 example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36"
- *               selectors:
- *                 type: array
- *                 description: |
- *                   Data extraction selector configurations for scraping.
- *                   - Required when responseType is not NONE, forbidden when responseType is NONE
- *                   - When responseType is RAW, only one selector is allowed and its content will be returned directly
- *                   - When responseType is JSON, all selectors will be processed and returned in a structured format
- *                   - Only one selector with type FULL is allowed
- *                 items:
- *                   type: object
- *                   required:
- *                     - key
- *                     - type
- *                     - value
- *                   properties:
- *                     key:
- *                       type: string
- *                       description: Unique identifier for the selector
- *                       example: "price"
- *                     type:
- *                       type: string
- *                       enum: [CSS, XPATH, FULL]
- *                       description: |
- *                         Type of selector to use:
- *                         - CSS: Standard CSS selectors
- *                         - XPATH: XPath expressions
- *                         - FULL: Retrieves the full page HTML content
- *                       example: "XPATH"
- *                     value:
- *                       type: string
- *                       description: Selector string to locate elements
- *                       example: "/html/body/div[1]/div/div/div[4]/div[1]/div[6]/div/div[1]/div/div/div/form/div/div/div/div/div[3]/div/div[1]/div/div/span[1]/span[2]/span[2]/text()"
- *                 example:
- *                   - key: "price"
- *                     type: "XPATH"
- *                     value: "/html/body/div[1]/div/div/div[4]/div[1]/div[6]/div/div[1]/div/div/div/form/div/div/div/div/div[3]/div/div[1]/div/div/span[1]/span[2]/span[2]/text()"
- *                   - key: "title"
- *                     type: "CSS"
- *                     value: "#productTitle"
- *               proxyAuth:
+ *               proxy:
  *                 type: object
- *                 description: Proxy authentication settings
  *                 required:
- *                   - enabled
- *                   - username
- *                   - password
+ *                   - auth
+ *                   - servers
  *                 properties:
- *                   enabled:
- *                     type: boolean
- *                     description: Enable/disable proxy authentication (required)
- *                     example: true
- *                   username:
+ *                   bypassCode:
  *                     type: string
- *                     description: Proxy authentication username (required when enabled is true)
- *                     example: "username"
- *                   password:
- *                     type: string
- *                     description: Proxy authentication password (required when enabled is true)
- *                     example: "password"
- *               proxies:
- *                 type: array
- *                 description: |
- *                   Array of proxy configurations for web requests.
- *                   A random proxy will be selected from this list.
- *                   Required unless accessPasswordWithoutProxy is provided and valid.
- *                 items:
- *                   type: object
- *                   required:
- *                     - server
- *                     - port
- *                     - protocol
- *                   properties:
- *                     server:
- *                       type: string
- *                       description: Proxy server hostname or IP (required)
- *                       example: "proxy.example.com"
- *                     port:
- *                       type: number
- *                       description: Proxy server port (required)
- *                       example: 8080
- *                     protocol:
- *                       type: string
- *                       description: Proxy protocol (required)
- *                       enum: [HTTP, HTTPS, SOCKS4, SOCKS5]
- *                       example: "HTTP"
- *                 example:
- *                   - server: "proxy1.example.com"
- *                     port: 8080
- *                     protocol: "HTTP"
- *                   - server: "proxy2.example.com"
- *                     port: 8081
- *                     protocol: "HTTPS"
- *               steps:
- *                 type: array
- *                 description: |
- *                   Sequence of browser actions to perform.
- *                   Requires at least one navigate step with a valid URL.
- *                 items:
- *                   type: object
- *                   required:
- *                     - type
- *                   properties:
- *                     type:
- *                       type: string
- *                       description: Type of browser action
- *                       enum: [navigate, click, wait, setViewport, change, waitForElement]
- *                       example: "navigate"
- *                     url:
- *                       type: string
- *                       format: uri
- *                       description: URL for navigation steps
- *                       example: "https://www.amazon.com/dp/B00IJ0ALYS"
- *                     value:
- *                       type: string
- *                       description: Value to set for input fields (for change action) or URL for navigation when url is not provided
- *                       example: "search keyword"
- *                     width:
- *                       type: number
- *                       description: Browser viewport width (for setViewport)
- *                       example: 1356
- *                     height:
- *                       type: number
- *                       description: Browser viewport height (for setViewport)
- *                       example: 963
- *                     deviceScaleFactor:
- *                       type: number
- *                       description: Device scale factor (for setViewport)
- *                       example: 1
- *                     isMobile:
- *                       type: boolean
- *                       description: Mobile device emulation (for setViewport)
- *                       example: false
- *                     hasTouch:
- *                       type: boolean
- *                       description: Touch support emulation (for setViewport)
- *                       example: false
- *                     isLandscape:
- *                       type: boolean
- *                       description: Landscape orientation (for setViewport)
- *                       example: false
- *                     selectors:
- *                       type: array
- *                       description: Element selectors for click operations
- *                       example: [["#glow-ingress-line2"]]
- *                     target:
- *                       type: string
- *                       description: Target frame for the action
- *                       example: "main"
- *                     offsetX:
- *                       type: number
- *                       description: X-coordinate offset for click operations
- *                       example: 28
- *                     offsetY:
- *                       type: number
- *                       description: Y-coordinate offset for click operations
- *                       example: 9
- *                     frame:
- *                       oneOf:
- *                         - type: string
- *                         - type: array
- *                           items:
- *                             type: number
- *                       description: Frame identifier for actions in iframes (string or array)
- *                       example: [0]
- *                     duration:
- *                       type: number
- *                       description: Duration of action in milliseconds
- *                       example: 50
- *                     deviceType:
- *                       type: string
- *                       description: Type of device simulated for interaction
- *                       example: "mouse"
- *                     button:
- *                       type: string
- *                       description: Mouse button used for click
- *                       example: "primary"
- *                     timeout:
- *                       type: number
- *                       description: Timeout duration for the step in milliseconds
- *                       example: 5000
- *                     operator:
- *                       type: string
- *                       description: Comparison operator for waitForElement
- *                       example: ">="
- *                     count:
- *                       type: number
- *                       description: Element count for waitForElement
- *                       example: 1
- *                     visible:
- *                       type: boolean
- *                       description: Whether element should be visible for waitForElement
- *                       example: true
- *                     attributes:
- *                       type: object
- *                       description: Attributes to check for waitForElement
- *                       example: {"attribute": "value"}
+ *                     description: Password to bypass proxy requirement
+ *                   auth:
+ *                     type: object
  *                     properties:
+ *                       enabled:
+ *                         type: boolean
+ *                         example: false
+ *                       username:
+ *                         type: string
+ *                       password:
+ *                         type: string
+ *                   servers:
+ *                     type: array
+ *                     items:
  *                       type: object
- *                       description: Properties to check for waitForElement
- *                       example: {}
- *                     assertedEvents:
- *                       type: array
- *                       description: Expected events after step execution
- *                       items:
- *                         type: object
- *                         properties:
- *                           type:
- *                             type: string
- *                             description: Type of event
- *                             example: "navigation"
- *                           url:
- *                             type: string
- *                             description: Expected URL after event
- *                             example: "https://www.amazon.com/dp/B00IJ0ALYS"
- *                           title:
- *                             type: string
- *                             description: Expected page title after event
- *                             example: "Product Page"
+ *                       required: [server, port]
+ *                       properties:
+ *                         server:
+ *                           type: string
+ *                           example: "proxy.example.com"
+ *                         port:
+ *                           type: integer
+ *                           minimum: 1
+ *                           maximum: 65535
+ *                           example: 8080
+ *                         protocol:
+ *                           type: string
+ *                           enum: [HTTP, HTTPS, SOCKS4, SOCKS5]
+ *                           default: HTTP
+ *               record:
+ *                 type: object
+ *                 required: [title, steps]
+ *                 properties:
+ *                   title:
+ *                     type: string
+ *                     example: "Product Scraper"
+ *                   speedMode:
+ *                     type: string
+ *                     enum: [TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH]
+ *                     default: NORMAL
+ *                   timeoutMode:
+ *                     type: string
+ *                     enum: [SHORT, NORMAL, LONG]
+ *                     default: NORMAL
+ *                   steps:
+ *                     type: array
+ *                     description: Sequence of browser actions. At least one navigate step required.
+ *                     items:
+ *                       type: object
+ *                       required: [type]
+ *                       properties:
+ *                         type:
+ *                           type: string
+ *                           enum: [navigate, click, wait, setViewport, change, waitForElement]
+ *                         url:
+ *                           type: string
+ *                           format: uri
+ *                         value:
+ *                           type: string
+ *                         selectors:
+ *                           type: array
+ *                         width:
+ *                           type: number
+ *                         height:
+ *                           type: number
+ *                         duration:
+ *                           type: number
+ *                         timeout:
+ *                           type: number
+ *               capture:
+ *                 type: object
+ *                 properties:
+ *                   selectors:
+ *                     type: array
+ *                     description: |
+ *                       Data extraction selectors. Required for JSON (1+) and RAW (exactly 1).
+ *                       Only one FULL type selector allowed.
+ *                     items:
+ *                       type: object
+ *                       required: [key, type, value]
+ *                       properties:
+ *                         key:
+ *                           type: string
+ *                           example: "price"
+ *                         type:
+ *                           type: string
+ *                           enum: [CSS, XPATH, FULL]
+ *                         value:
+ *                           type: string
+ *                           example: "#productTitle"
+ *               headers:
+ *                 type: object
+ *                 properties:
+ *                   Accept-Language:
+ *                     type: string
+ *                     default: "en-US,en;q=0.9"
+ *                   User-Agent:
+ *                     type: string
+ *               output:
+ *                 type: object
+ *                 properties:
+ *                   screenshots:
+ *                     type: object
+ *                     properties:
+ *                       onError:
+ *                         type: boolean
+ *                         default: true
+ *                       onSuccess:
+ *                         type: boolean
+ *                         default: false
+ *                   responseType:
+ *                     type: string
+ *                     enum: [NONE, JSON, RAW]
+ *                     default: JSON
+ *                     description: |
+ *                       - NONE: Returns success status only
+ *                       - JSON: Structured response with all selector results
+ *                       - RAW: Raw content from the single selector
  *     responses:
  *       200:
  *         description: Scraping completed successfully
@@ -306,113 +171,24 @@ const router = express.Router();
  *                   properties:
  *                     catch:
  *                       type: object
- *                       example: {
- *                         "money": "26 TL",
- *                         "name": "Whiskas Pouch Kuzulu Yetişkin Kedi Maması 85 G"
- *                       }
- *                       description: Scraped data based on provided selectors
+ *                       description: Scraped data keyed by selector key
  *                     screenshotUrl:
  *                       type: string
- *                       description: URL to the success screenshot if successScreenshot was enabled
- *                       example: "http://localhost:3000/tmp/success-2025-04-21T14-32-48.png"
  *                     proxy:
  *                       type: object
- *                       description: Information about the proxy used for this request
  *                       properties:
  *                         server:
  *                           type: string
- *                           example: "proxy1.example.com"
  *                         port:
  *                           type: number
- *                           example: 8080
  *                         protocol:
  *                           type: string
- *                           example: "HTTP"
  *       400:
- *         description: Invalid request parameters
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 data:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: "ValidationError: 'title' is required. Selectors cannot be provided when responseType is NONE"
- *                     code:
- *                       type: string
- *                       description: Standardized error code for easier error handling
- *                       example: "ERROR_REQUEST_BODY_VALIDATION"
- *                     stack:
- *                       type: array
- *                       items:
- *                         type: string
+ *         description: Validation error
  *       401:
- *         description: Unauthorized - Authentication failed or proxy requirements not met
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 data:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: "Access denied. Valid proxy configuration is required for this request."
- *                     code:
- *                       type: string
- *                       description: Standardized error code for easier error handling
- *                       example: "ERROR_PROXY_SETUP"
+ *         description: Unauthorized - authentication or proxy requirements not met
  *       500:
- *         description: Server error during scraping operation
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 data:
- *                   type: object
- *                   properties:
- *                     message:
- *                       type: string
- *                       example: "Protocol error (Emulation.setDeviceMetricsOverride): Invalid parameters Failed to deserialize params.width - BINDINGS: int32 value expected at position 22"
- *                     stack:
- *                       type: array
- *                       items:
- *                         type: string
- *                     code:
- *                       type: string
- *                       description: Standardized error code for easier error handling
- *                       example: "ERROR_UNKNOWN"
- *                     screenshotUrl:
- *                       type: string
- *                       description: URL to the error screenshot if errorScreenshot was enabled
- *                       example: "http://localhost:3000/tmp/error-2025-04-21T14-35-18.png"
- *                     proxy:
- *                       type: object
- *                       description: Information about the proxy used for this failed request
- *                       properties:
- *                         server:
- *                           type: string
- *                           example: "proxy1.example.com"
- *                         port:
- *                           type: number
- *                           example: 8080
- *                         protocol:
- *                           type: string
- *                           example: "HTTP"
+ *         description: Server error during scraping
  */
 router.post('/start', controllerApiScrapeStart);
 
