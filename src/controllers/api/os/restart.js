@@ -37,12 +37,8 @@ export function controllerApiOsRestart(_req, res, next) {
       // Use the appropriate command based on the operating system
       let cmd;
       if (platform() === 'win32') {
-        // Windows komutunu daha güvenilir hale getiriyoruz
-        // Not: Bu komutun çalışması için PowerShell veya CMD'nin yönetici haklarıyla çalışması gerekiyor
+        // Requires administrator privileges to execute
         cmd = 'shutdown /r /t 1 /f';
-
-        // Alternatif olarak PowerShell ile de deneyebiliriz
-        // cmd = 'powershell -Command "Restart-Computer -Force"';
       } else {
         cmd = 'sudo shutdown -r now';
       }

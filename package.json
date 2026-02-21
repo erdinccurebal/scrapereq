@@ -12,7 +12,7 @@
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "docker:build": "docker build -t scrapereq .",
     "docker:run": "docker run -p 3000:3000 -d --name scrapereq-container scrapereq",
-    "docker:start": "node start.js docker"
+    "docker:start": "node ."
   },
   "keywords": [
     "puppeteer",

@@ -186,7 +186,14 @@ export async function helperDoScraping({ headers, proxy, record, capture, output
 
     const { selectors } = capture;
 
-    if (responseType === RESPONSE_TYPE_NAMES.RAW) {
+    if (responseType === RESPONSE_TYPE_NAMES.NONE) {
+      // For NONE responseType, return a simple success response without data
+      result = { success: true };
+
+      if (getProxy) {
+        result.proxy = getProxy;
+      }
+    } else if (responseType === RESPONSE_TYPE_NAMES.RAW) {
       // For RAW responseType, we've already validated there's only one selector
       const selector = selectors[0];
       result = await processSelectorData({ page, selector });
@@ -221,8 +228,8 @@ export async function helperDoScraping({ headers, proxy, record, capture, output
 
     await exitBrowserAndPage(browser, page); // Close browser and page if not taking screenshots
 
-    // Send the successful response
-    res.send(result);
+    // Return the successful result to the controller
+    return result;
   } catch (error) {
     // Take error screenshot if enabled and not already taken
     if (responseType === RESPONSE_TYPE_NAMES.JSON && screenshots.onError && page) {
@@ -316,8 +323,9 @@ function generateLaunchOptions({ proxy }) {
 
     // Validate proxy requirements
     if (!proxyBypassCode && servers.length === 0) {
-      res.status(401);
-      throw new Error('Access denied. Valid proxy configuration is required for this request.');
+      const error = new Error('Access denied. Valid proxy configuration is required for this request.');
+      error.status = 401;
+      throw error;
     }
 
     // Setup proxy if required and available

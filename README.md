@@ -261,14 +261,6 @@ Runs a predefined scraping test using a fixed configuration. This endpoint is us
 
 The test endpoint uses a predefined configuration from `constants.js` with a sample scrape request that checks your IP address using a proxied connection.
 
-### 📊 Performance Metrics
-
-```http
-GET /api/scrape/metrics
-```
-
-Returns performance metrics for all scraping operations.
-
 ### 🔧 System Management
 
 ```http
