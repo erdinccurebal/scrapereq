@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scrapereq - Web Scraping API Documentation</title>
+  <meta name="description" content="A powerful and flexible web scraping API built with Express.js and Puppeteer. Step-based scraping, proxy support, speed control, and more.">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-alt: #f6f8fa;
+      --bg-code: #1e1e2e;
+      --text: #1f2937;
+      --text-muted: #6b7280;
+      --text-code: #e2e8f0;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-light: #eef2ff;
+      --border: #e5e7eb;
+      --sidebar-bg: #111827;
+      --sidebar-text: #9ca3af;
+      --sidebar-active: #ffffff;
+      --sidebar-hover: #d1d5db;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --info: #3b82f6;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 260px;
+      height: 100vh;
+      background: var(--sidebar-bg);
+      overflow-y: auto;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .sidebar-header h2 {
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .sidebar-header p {
+      color: var(--sidebar-text);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .sidebar nav {
+      padding: 12px 0;
+      flex: 1;
+    }
+
+    .sidebar nav a {
+      display: block;
+      padding: 8px 20px;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.15s, background 0.15s;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar nav a:hover {
+      color: var(--sidebar-hover);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .sidebar nav a.active {
+      color: var(--sidebar-active);
+      border-left-color: var(--accent);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .sidebar nav .nav-group {
+      padding: 16px 20px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .sidebar-footer a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.15s;
+    }
+
+    .sidebar-footer a:hover { color: #fff; }
+
+    /* Main content */
+    .main {
+      margin-left: 260px;
+      min-height: 100vh;
+    }
+
+    .content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 48px 80px;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 60px 0 48px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero .tagline {
+      font-size: 20px;
+      color: var(--text-muted);
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .badge.accent {
+      background: var(--accent-light);
+      color: var(--accent);
+      border-color: transparent;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Sections */
+    section {
+      margin-bottom: 56px;
+    }
+
+    section > h2 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--accent-light);
+    }
+
+    section > h3, .subsection h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 28px 0 12px;
+    }
+
+    section > h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 20px 0 8px;
+    }
+
+    p { margin-bottom: 12px; }
+
+    /* Feature grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .feature-card {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .feature-card .icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .feature-card h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .feature-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* Code blocks */
+    pre {
+      background: var(--bg-code);
+      color: var(--text-code);
+      padding: 16px 20px;
+      border-radius: var(--radius);
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 12px 0 16px;
+    }
+
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+      font-size: 0.9em;
+    }
+
+    :not(pre) > code {
+      background: var(--bg-alt);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--accent);
+    }
+
+    /* Syntax highlighting */
+    .kw { color: #c678dd; }
+    .str { color: #98c379; }
+    .num { color: #d19a66; }
+    .cm { color: #5c6370; font-style: italic; }
+    .fn { color: #61afef; }
+    .op { color: #56b6c2; }
+    .key { color: #e06c75; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 10px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--bg-alt);
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    tr:hover td { background: var(--bg-alt); }
+
+    /* Method badges */
+    .method {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+    }
+
+    .method-get { background: #dcfce7; color: #166534; }
+    .method-post { background: #dbeafe; color: #1e40af; }
+
+    .endpoint {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--bg-alt);
+      border-radius: var(--radius);
+      margin: 12px 0;
+      font-family: monospace;
+      font-size: 14px;
+      border-left: 3px solid var(--accent);
+    }
+
+    /* Collapsible */
+    details {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin: 12px 0;
+    }
+
+    details summary {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      background: var(--bg-alt);
+      border-radius: var(--radius);
+      user-select: none;
+    }
+
+    details[open] summary {
+      border-bottom: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    details .details-content {
+      padding: 16px;
+    }
+
+    /* Steps list */
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+    }
+
+    .steps li {
+      counter-increment: step;
+      position: relative;
+      padding: 0 0 24px 48px;
+      margin-bottom: 0;
+    }
+
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .steps li h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 4px 0 8px;
+    }
+
+    /* Note/callout boxes */
+    .callout {
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      margin: 16px 0;
+      font-size: 14px;
+      border-left: 4px solid;
+    }
+
+    .callout-info {
+      background: #eff6ff;
+      border-color: var(--info);
+      color: #1e40af;
+    }
+
+    .callout-warning {
+      background: #fffbeb;
+      border-color: var(--warning);
+      color: #92400e;
+    }
+
+    .callout-success {
+      background: #f0fdf4;
+      border-color: var(--success);
+      color: #166534;
+    }
+
+    /* Footer */
+    .site-footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      margin-top: 48px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .site-footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .site-footer a:hover { text-decoration: underline; }
+
+    /* Mobile hamburger */
+    .mobile-toggle {
+      display: none;
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 200;
+      width: 40px;
+      height: 40px;
+      background: var(--sidebar-bg);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 90;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .mobile-toggle { display: flex; }
+
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar.open { transform: translateX(0); }
+
+      .overlay.open { display: block; }
+
+      .main { margin-left: 0; }
+
+      .content { padding: 24px 20px 60px; }
+
+      .hero { padding: 80px 0 32px; }
+
+      .hero h1 { font-size: 32px; }
+
+      .hero .tagline { font-size: 16px; }
+
+      .feature-grid { grid-template-columns: 1fr; }
+
+      .hero-actions { flex-direction: column; }
+    }
+
+    /* Scrollbar for sidebar */
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+    /* Smooth anchor links */
+    a { color: var(--accent); }
+    a:hover { color: var(--accent-hover); }
+
+    ul, ol { padding-left: 20px; margin-bottom: 12px; }
+    li { margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+<button class="mobile-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">&#9776;</button>
+<div class="overlay" onclick="toggleSidebar()"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h2>Scrapereq</h2>
+    <p>v1.0.0 &middot; Web Scraping API</p>
+  </div>
+  <nav>
+    <div class="nav-group">Getting Started</div>
+    <a href="#features">Features</a>
+    <a href="#quick-start">Quick Start</a>
+    <a href="#docker">Docker</a>
+
+    <div class="nav-group">API Reference</div>
+    <a href="#api-overview">Overview</a>
+    <a href="#api-scrape">Scrape Endpoint</a>
+    <a href="#api-test">Test Endpoint</a>
+    <a href="#api-health">Health Check</a>
+    <a href="#api-system">System Endpoints</a>
+
+    <div class="nav-group">Configuration</div>
+    <a href="#env-vars">Environment Variables</a>
+    <a href="#speed-modes">Speed Modes</a>
+    <a href="#timeout-modes">Timeout Modes</a>
+    <a href="#selectors">Selector Types</a>
+    <a href="#response-types">Response Types</a>
+    <a href="#step-types">Step Types</a>
+
+    <div class="nav-group">More</div>
+    <a href="#error-handling">Error Handling</a>
+    <a href="#contributing">Contributing</a>
+    <a href="#changelog">Changelog</a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="https://github.com/erdinccurebal/scrapereq" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="content">
+
+    <!-- Hero -->
+    <div class="hero" id="top">
+      <h1>Scrapereq</h1>
+      <p class="tagline">A powerful and flexible web scraping API built with Express.js and Puppeteer</p>
+      <div class="badges">
+        <span class="badge accent">Express 5.1</span>
+        <span class="badge accent">Puppeteer 24.8</span>
+        <span class="badge">Node.js v20+</span>
+        <span class="badge">ISC License</span>
+      </div>
+      <div class="hero-actions">
+        <a href="#quick-start" class="btn btn-primary">Get Started</a>
+        <a href="https://github.com/erdinccurebal/scrapereq" class="btn btn-outline" target="_blank" rel="noopener">View on GitHub</a>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <section id="features">
+      <h2>Features</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon">&#x1f504;</div>
+          <h4>Step-Based Scraping</h4>
+          <p>Define workflows as a series of steps: navigate, click, wait, setViewport, change, and more.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">&#x26a1;</div>
+          <h4>Speed Control</h4>
+          <p>Seven speed modes from TURBO (0ms) to STEALTH (3s delay) between steps.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">&#x1f50d;</div>
+          <h4>Flexible Selectors</h4>
+          <p>Extract data using CSS selectors, XPath expressions, or full page HTML.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">&#x1f310;</div>
+          <h4>Proxy Support</h4>
+          <p>Advanced proxy configuration with authentication and multi-server rotation.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">&#x1f512;</div>
+          <h4>Security</h4>
+          <p>Basic auth, Helmet middleware, CORS, and rate limiting out of the box.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">&#x1f4f8;</div>
+          <h4>Screenshots</h4>
+          <p>Capture screenshots on success and error for visual debugging.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">&#x1f4ca;</div>
+          <h4>Health Monitoring</h4>
+          <p>Detailed health check endpoint with system metrics and status info.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">&#x1f4dd;</div>
+          <h4>Swagger Docs</h4>
+          <p>Interactive API documentation with live request/response testing.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">&#x1f501;</div>
+          <h4>Retry Mechanism</h4>
+          <p>Intelligent retry functionality for handling transient errors.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section id="quick-start">
+      <h2>Quick Start</h2>
+      <ol class="steps">
+        <li>
+          <h4>Clone the repository</h4>
+<pre><code><span class="fn">git</span> clone https://github.com/erdinccurebal/scrapereq.git
+<span class="fn">cd</span> scrapereq</code></pre>
+        </li>
+        <li>
+          <h4>Install dependencies</h4>
+<pre><code><span class="fn">npm</span> install</code></pre>
+        </li>
+        <li>
+          <h4>Configure environment</h4>
+          <p>Create a <code>.env</code> file in the root directory:</p>
+<pre><code><span class="cm"># Server Configuration</span>
+<span class="key">PORT</span>=<span class="num">3000</span>
+<span class="key">HOST</span>=<span class="str">localhost</span>
+<span class="key">NODE_ENV</span>=<span class="str">development</span>
+<span class="key">WEB_ADDRESS</span>=<span class="str">http://localhost:3000</span>
+
+<span class="cm"># Authentication</span>
+<span class="key">AUTH_USERNAME</span>=<span class="str">admin</span>
+<span class="key">AUTH_PASSWORD</span>=<span class="str">secretpassword</span>
+
+<span class="cm"># Browser Concurrency</span>
+<span class="key">MAX_CONCURRENT_BROWSERS</span>=<span class="num">2</span></code></pre>
+        </li>
+        <li>
+          <h4>Start the application</h4>
+<pre><code><span class="fn">npm</span> start</code></pre>
+          <p>The API will be available at <code>http://localhost:3000</code>. Visit <code>/api/docs</code> for the Swagger UI.</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- Docker -->
+    <section id="docker">
+      <h2>Docker Deployment</h2>
+      <p>Run Scrapereq in a container with zero local setup.</p>
+
+      <h3>Using npm scripts</h3>
+<pre><code><span class="cm"># Build the Docker image</span>
+<span class="fn">npm</span> run docker:build
+
+<span class="cm"># Run the container</span>
+<span class="fn">npm</span> run docker:run</code></pre>
+
+      <h3>Using Docker Compose</h3>
+<pre><code><span class="fn">docker-compose</span> up -d</code></pre>
+
+      <div class="callout callout-info">
+        Docker Compose will handle port mapping, environment variables, and volume mounts for persistent screenshot storage.
+      </div>
+    </section>
+
+    <!-- API Overview -->
+    <section id="api-overview">
+      <h2>API Reference</h2>
+      <p>All endpoints require Basic Authentication. Set your credentials via <code>AUTH_USERNAME</code> and <code>AUTH_PASSWORD</code> environment variables.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Endpoint</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td><code>/api/scrape/start</code></td>
+            <td>Execute a scraping workflow</td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td><code>/api/scrape/test</code></td>
+            <td>Run a predefined scraping test</td>
+          </tr>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td><code>/api/app/health</code></td>
+            <td>Health check with system info</td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td><code>/api/app/shutdown</code></td>
+            <td>Graceful application shutdown</td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td><code>/api/os/restart</code></td>
+            <td>OS restart (requires permissions)</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Scrape Endpoint -->
+    <section id="api-scrape">
+      <h2>Scrape Endpoint</h2>
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span>/api/scrape/start</span>
+      </div>
+      <p>The main endpoint for web scraping. Send a JSON body describing the proxy settings, recording steps, capture selectors, headers, and output preferences.</p>
+
+      <h3>Request Body Structure</h3>
+      <table>
+        <thead>
+          <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>proxy</code></td><td>Object</td><td>Proxy configuration (optional)</td></tr>
+          <tr><td><code>proxy.bypassCode</code></td><td>String</td><td>Password to bypass proxy requirement</td></tr>
+          <tr><td><code>proxy.auth</code></td><td>Object</td><td>Proxy authentication (<code>enabled</code>, <code>username</code>, <code>password</code>)</td></tr>
+          <tr><td><code>proxy.servers</code></td><td>Array</td><td>List of proxy servers (<code>server</code>, <code>port</code>)</td></tr>
+          <tr><td><code>record</code></td><td>Object</td><td>Recording configuration (required)</td></tr>
+          <tr><td><code>record.title</code></td><td>String</td><td>Title for this scraping session</td></tr>
+          <tr><td><code>record.speedMode</code></td><td>String</td><td>Speed mode (see <a href="#speed-modes">Speed Modes</a>)</td></tr>
+          <tr><td><code>record.timeoutMode</code></td><td>String</td><td>Timeout mode (see <a href="#timeout-modes">Timeout Modes</a>)</td></tr>
+          <tr><td><code>record.steps</code></td><td>Array</td><td>Ordered list of steps (see <a href="#step-types">Step Types</a>)</td></tr>
+          <tr><td><code>capture</code></td><td>Object</td><td>Data extraction configuration</td></tr>
+          <tr><td><code>capture.selectors</code></td><td>Array</td><td>Selectors to extract data (<code>key</code>, <code>type</code>, <code>value</code>)</td></tr>
+          <tr><td><code>headers</code></td><td>Object</td><td>Custom HTTP headers</td></tr>
+          <tr><td><code>output</code></td><td>Object</td><td>Output preferences</td></tr>
+          <tr><td><code>output.screenshots</code></td><td>Object</td><td>Screenshot settings (<code>onError</code>, <code>onSuccess</code>)</td></tr>
+          <tr><td><code>output.responseType</code></td><td>String</td><td>Response format: JSON, RAW, or NONE</td></tr>
+        </tbody>
+      </table>
+
+      <details>
+        <summary>Full Example Request</summary>
+        <div class="details-content">
+<pre><code>{
+  <span class="key">"proxy"</span>: {
+    <span class="key">"bypassCode"</span>: <span class="str">"your_secure_password"</span>,
+    <span class="key">"auth"</span>: {
+      <span class="key">"enabled"</span>: <span class="kw">true</span>,
+      <span class="key">"username"</span>: <span class="str">"proxyuser"</span>,
+      <span class="key">"password"</span>: <span class="str">"proxypass"</span>
+    },
+    <span class="key">"servers"</span>: [
+      { <span class="key">"server"</span>: <span class="str">"proxy1.example.com"</span>, <span class="key">"port"</span>: <span class="num">8080</span> },
+      { <span class="key">"server"</span>: <span class="str">"proxy2.example.com"</span>, <span class="key">"port"</span>: <span class="num">8081</span> }
+    ]
+  },
+  <span class="key">"record"</span>: {
+    <span class="key">"title"</span>: <span class="str">"Google Search Example"</span>,
+    <span class="key">"speedMode"</span>: <span class="str">"NORMAL"</span>,
+    <span class="key">"timeoutMode"</span>: <span class="str">"NORMAL"</span>,
+    <span class="key">"steps"</span>: [
+      { <span class="key">"type"</span>: <span class="str">"navigate"</span>, <span class="key">"url"</span>: <span class="str">"https://www.google.com"</span> },
+      { <span class="key">"type"</span>: <span class="str">"wait"</span>, <span class="key">"value"</span>: <span class="str">"1000"</span> },
+      { <span class="key">"type"</span>: <span class="str">"setViewport"</span>, <span class="key">"width"</span>: <span class="num">1366</span>, <span class="key">"height"</span>: <span class="num">768</span> },
+      { <span class="key">"type"</span>: <span class="str">"click"</span>, <span class="key">"selectors"</span>: [[<span class="str">"#L2AGLb"</span>]] },
+      {
+        <span class="key">"type"</span>: <span class="str">"change"</span>,
+        <span class="key">"selectors"</span>: [[<span class="str">"input[name='q']"</span>]],
+        <span class="key">"value"</span>: <span class="str">"web scraping api"</span>
+      },
+      { <span class="key">"type"</span>: <span class="str">"click"</span>, <span class="key">"selectors"</span>: [[<span class="str">"input[name='btnK']"</span>]] },
+      { <span class="key">"type"</span>: <span class="str">"waitForElement"</span>, <span class="key">"selectors"</span>: [[<span class="str">"#search"</span>]] }
+    ]
+  },
+  <span class="key">"capture"</span>: {
+    <span class="key">"selectors"</span>: [
+      { <span class="key">"key"</span>: <span class="str">"search_results"</span>, <span class="key">"type"</span>: <span class="str">"CSS"</span>, <span class="key">"value"</span>: <span class="str">"#search"</span> },
+      { <span class="key">"key"</span>: <span class="str">"page_title"</span>, <span class="key">"type"</span>: <span class="str">"CSS"</span>, <span class="key">"value"</span>: <span class="str">"title"</span> }
+    ]
+  },
+  <span class="key">"headers"</span>: {
+    <span class="key">"Accept-Language"</span>: <span class="str">"en-US,en;q=0.9"</span>
+  },
+  <span class="key">"output"</span>: {
+    <span class="key">"screenshots"</span>: { <span class="key">"onError"</span>: <span class="kw">true</span>, <span class="key">"onSuccess"</span>: <span class="kw">true</span> },
+    <span class="key">"responseType"</span>: <span class="str">"JSON"</span>
+  }
+}</code></pre>
+        </div>
+      </details>
+
+      <h3>Success Response</h3>
+<pre><code>{
+  <span class="key">"success"</span>: <span class="kw">true</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"search_results"</span>: <span class="str">"&lt;div id=\"search\"&gt;...&lt;/div&gt;"</span>,
+    <span class="key">"page_title"</span>: <span class="str">"web scraping api - Google Search"</span>
+  }
+}</code></pre>
+    </section>
+
+    <!-- Test Endpoint -->
+    <section id="api-test">
+      <h2>Test Endpoint</h2>
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span>/api/scrape/test</span>
+      </div>
+      <p>Runs a predefined scraping test using a fixed configuration. Useful for:</p>
+      <ul>
+        <li>Verifying the scraping service is working correctly</li>
+        <li>Checking proxy connectivity</li>
+        <li>Validating browser functionality</li>
+      </ul>
+      <p>No request body required &mdash; the test uses a built-in configuration that navigates to an IP-checking service.</p>
+    </section>
+
+    <!-- Health Check -->
+    <section id="api-health">
+      <h2>Health Check</h2>
+      <div class="endpoint">
+        <span class="method method-get">GET</span>
+        <span>/api/app/health</span>
+      </div>
+      <p>Returns detailed system information including uptime, memory usage, CPU metrics, and component health status.</p>
+    </section>
+
+    <!-- System Endpoints -->
+    <section id="api-system">
+      <h2>System Endpoints</h2>
+
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span>/api/app/shutdown</span>
+      </div>
+      <p>Gracefully shuts down the application. Closes all active browser instances and connections before exiting.</p>
+
+      <div class="endpoint">
+        <span class="method method-post">POST</span>
+        <span>/api/os/restart</span>
+      </div>
+      <p>Initiates an operating system restart. Requires appropriate OS-level permissions.</p>
+
+      <div class="callout callout-warning">
+        These endpoints perform destructive actions. Use with caution in production environments.
+      </div>
+    </section>
+
+    <!-- Environment Variables -->
+    <section id="env-vars">
+      <h2>Environment Variables</h2>
+      <table>
+        <thead>
+          <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>PORT</code></td><td>3000</td><td>Server port</td></tr>
+          <tr><td><code>HOST</code></td><td>0.0.0.0</td><td>Server host</td></tr>
+          <tr><td><code>NODE_ENV</code></td><td>development</td><td>Environment (development/production)</td></tr>
+          <tr><td><code>WEB_ADDRESS</code></td><td>http://localhost:3000</td><td>Public URL for Swagger docs</td></tr>
+          <tr><td><code>AUTH_USERNAME</code></td><td>admin</td><td>Basic auth username</td></tr>
+          <tr><td><code>AUTH_PASSWORD</code></td><td>admin</td><td>Basic auth password</td></tr>
+          <tr><td><code>CHROME_PATH</code></td><td><em>(auto)</em></td><td>Custom Chrome/Chromium binary path</td></tr>
+          <tr><td><code>MAX_CONCURRENT_BROWSERS</code></td><td>1</td><td>Max simultaneous browser instances</td></tr>
+          <tr><td><code>TMP_DIR</code></td><td>./tmp</td><td>Directory for screenshots and temp files</td></tr>
+          <tr><td><code>RATE_LIMIT_WINDOW_MS</code></td><td>900000</td><td>Rate limit window (ms, default 15 min)</td></tr>
+          <tr><td><code>RATE_LIMIT_MAX_REQUESTS</code></td><td>100</td><td>Max requests per window</td></tr>
+          <tr><td><code>SCRAPE_PROXY_BYPASS_CODE</code></td><td><em>(none)</em></td><td>Password to bypass proxy requirement</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Speed Modes -->
+    <section id="speed-modes">
+      <h2>Speed Modes</h2>
+      <p>Control the delay between each scraping step. Choose a mode based on your target site's sensitivity to automated traffic.</p>
+      <table>
+        <thead>
+          <tr><th>Mode</th><th>Delay</th><th>Use Case</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>TURBO</code></td><td>0 ms</td><td>Fastest execution, no delay</td></tr>
+          <tr><td><code>FAST</code></td><td>500 ms</td><td>Quick scraping with minimal pauses</td></tr>
+          <tr><td><code>NORMAL</code></td><td>1,000 ms</td><td>Balanced speed and reliability (default)</td></tr>
+          <tr><td><code>SLOW</code></td><td>1,500 ms</td><td>Reduced detection risk</td></tr>
+          <tr><td><code>SLOWEST</code></td><td>2,000 ms</td><td>Careful, conservative scraping</td></tr>
+          <tr><td><code>CRAWL</code></td><td>2,500 ms</td><td>Very slow, mimics manual browsing</td></tr>
+          <tr><td><code>STEALTH</code></td><td>3,000 ms</td><td>Maximum delay for stealth operations</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Timeout Modes -->
+    <section id="timeout-modes">
+      <h2>Timeout Modes</h2>
+      <p>Set the maximum time to wait for navigation and element operations.</p>
+      <table>
+        <thead>
+          <tr><th>Mode</th><th>Timeout</th><th>Use Case</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>SHORT</code></td><td>10 s</td><td>Fast-loading pages</td></tr>
+          <tr><td><code>NORMAL</code></td><td>30 s</td><td>Standard pages (default)</td></tr>
+          <tr><td><code>LONG</code></td><td>60 s</td><td>Slow or heavy pages</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Selector Types -->
+    <section id="selectors">
+      <h2>Selector Types</h2>
+      <p>Define how to extract data from the scraped page.</p>
+      <table>
+        <thead>
+          <tr><th>Type</th><th>Description</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>CSS</code></td><td>Standard CSS selectors</td><td><code>#search .result-title</code></td></tr>
+          <tr><td><code>XPATH</code></td><td>XPath expressions</td><td><code>//div[@id='search']//h3</code></td></tr>
+          <tr><td><code>FULL</code></td><td>Full page HTML content</td><td><em>(no value needed)</em></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Response Types -->
+    <section id="response-types">
+      <h2>Response Types</h2>
+      <table>
+        <thead>
+          <tr><th>Type</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>JSON</code></td><td>Structured JSON with extracted data and metadata</td></tr>
+          <tr><td><code>RAW</code></td><td>Raw HTML content from the first matching selector</td></tr>
+          <tr><td><code>NONE</code></td><td>No response body (useful for screenshot-only or side-effect operations)</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Step Types -->
+    <section id="step-types">
+      <h2>Step Types</h2>
+      <p>Steps are executed sequentially to define your scraping workflow.</p>
+      <table>
+        <thead>
+          <tr><th>Type</th><th>Parameters</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>navigate</code></td>
+            <td><code>url</code></td>
+            <td>Navigate the browser to a URL</td>
+          </tr>
+          <tr>
+            <td><code>click</code></td>
+            <td><code>selectors</code></td>
+            <td>Click an element on the page</td>
+          </tr>
+          <tr>
+            <td><code>wait</code></td>
+            <td><code>value</code> (ms)</td>
+            <td>Wait for a specified duration</td>
+          </tr>
+          <tr>
+            <td><code>setViewport</code></td>
+            <td><code>width</code>, <code>height</code></td>
+            <td>Set the browser viewport dimensions</td>
+          </tr>
+          <tr>
+            <td><code>change</code></td>
+            <td><code>selectors</code>, <code>value</code></td>
+            <td>Set the value of an input element</td>
+          </tr>
+          <tr>
+            <td><code>waitForElement</code></td>
+            <td><code>selectors</code></td>
+            <td>Wait until an element appears in the DOM</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Error Handling -->
+    <section id="error-handling">
+      <h2>Error Handling</h2>
+      <p>All errors follow a consistent JSON structure with contextual information for debugging.</p>
+
+<pre><code>{
+  <span class="key">"success"</span>: <span class="kw">false</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"message"</span>: <span class="str">"Failed to execute click operation on element"</span>,
+    <span class="key">"code"</span>: <span class="str">"ERROR_ELEMENT_NOT_FOUND"</span>,
+    <span class="key">"stepIndex"</span>: <span class="num">3</span>,
+    <span class="key">"screenshotUrl"</span>: <span class="str">"/tmp/error-screenshot-123456.png"</span>
+  }
+}</code></pre>
+
+      <p>Error responses include:</p>
+      <ul>
+        <li><strong>Error code</strong> &mdash; machine-readable identifier</li>
+        <li><strong>Message</strong> &mdash; human-readable description</li>
+        <li><strong>Step index</strong> &mdash; which step in the workflow failed</li>
+        <li><strong>Screenshot URL</strong> &mdash; visual evidence when <code>onError</code> screenshots are enabled</li>
+        <li><strong>Stack trace</strong> &mdash; included in development mode only</li>
+      </ul>
+    </section>
+
+    <!-- Contributing -->
+    <section id="contributing">
+      <h2>Contributing</h2>
+      <p>Contributions are welcome! Here's how to get started:</p>
+
+      <ol class="steps">
+        <li>
+          <h4>Fork &amp; clone</h4>
+<pre><code><span class="fn">git</span> clone https://github.com/YOUR_USERNAME/scrapereq.git
+<span class="fn">cd</span> scrapereq && <span class="fn">npm</span> install
+<span class="fn">cp</span> .env.example .env</code></pre>
+        </li>
+        <li>
+          <h4>Create a feature branch</h4>
+<pre><code><span class="fn">git</span> checkout -b feature/your-feature-name</code></pre>
+        </li>
+        <li>
+          <h4>Make changes &amp; verify</h4>
+<pre><code><span class="fn">npm</span> run lint    <span class="cm"># Check linting</span>
+<span class="fn">npm</span> test        <span class="cm"># Run tests</span></code></pre>
+        </li>
+        <li>
+          <h4>Submit a Pull Request</h4>
+          <p>Push your branch and open a PR against <code>master</code>. Use <a href="https://www.conventionalcommits.org/" target="_blank" rel="noopener">Conventional Commits</a> format: <code>feat:</code>, <code>fix:</code>, <code>docs:</code>, <code>refactor:</code>, <code>test:</code>, <code>chore:</code>.</p>
+        </li>
+      </ol>
+
+      <p>See the full <a href="https://github.com/erdinccurebal/scrapereq/blob/master/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing Guide</a> and <a href="https://github.com/erdinccurebal/scrapereq/blob/master/CODE_OF_CONDUCT.md" target="_blank" rel="noopener">Code of Conduct</a> for details.</p>
+    </section>
+
+    <!-- Changelog -->
+    <section id="changelog">
+      <h2>Changelog</h2>
+
+      <h3>v1.0.0 <span style="color: var(--text-muted); font-weight: 400; font-size: 14px;">&mdash; 2025-05-06</span></h3>
+      <p>Initial release with full feature set:</p>
+      <ul>
+        <li>Step-based web scraping with Puppeteer (navigate, click, wait, setViewport, change, waitForElement)</li>
+        <li>Seven speed modes: TURBO, FAST, NORMAL, SLOW, SLOWEST, CRAWL, STEALTH</li>
+        <li>Timeout modes: SHORT, NORMAL, LONG</li>
+        <li>Proxy support with authentication and multi-server rotation (HTTP, HTTPS, SOCKS4, SOCKS5)</li>
+        <li>Data extraction via CSS, XPath, and full page HTML selectors</li>
+        <li>Multiple response types: JSON, RAW, NONE</li>
+        <li>Screenshot capture on error and success with automatic hourly cleanup</li>
+        <li>Browser concurrency control via semaphore-based limiting</li>
+        <li>Basic authentication, Helmet, CORS, rate limiting</li>
+        <li>Request validation with Joi schemas</li>
+        <li>Interactive Swagger API documentation at <code>/api/docs</code></li>
+        <li>Health check endpoint with system metrics</li>
+        <li>Docker support with multi-stage build and docker-compose</li>
+        <li>CI/CD pipeline with GitHub Actions</li>
+      </ul>
+
+      <p>See the full <a href="https://github.com/erdinccurebal/scrapereq/blob/master/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a> on GitHub.</p>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <p>
+        <strong>Scrapereq</strong> &middot; Licensed under <a href="https://opensource.org/licenses/ISC" target="_blank" rel="noopener">ISC</a> &middot;
+        <a href="https://github.com/erdinccurebal/scrapereq" target="_blank" rel="noopener">GitHub</a> &middot;
+        <a href="https://github.com/erdinccurebal/scrapereq/issues" target="_blank" rel="noopener">Issues</a>
+      </p>
+    </footer>
+
+  </div>
+</main>
+
+<script>
+  // Mobile sidebar toggle
+  function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('open');
+    document.querySelector('.overlay').classList.toggle('open');
+  }
+
+  // Active nav highlighting on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+
+  function updateActiveNav() {
+    const scrollPos = window.scrollY + 100;
+
+    let current = '';
+    sections.forEach(section => {
+      if (section.offsetTop <= scrollPos) {
+        current = section.getAttribute('id');
+      }
+    });
+
+    navLinks.forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + current) {
+        link.classList.add('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveNav);
+  updateActiveNav();
+
+  // Close sidebar on nav click (mobile)
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        toggleSidebar();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
