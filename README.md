@@ -10,6 +10,7 @@
     <img src="https://img.shields.io/github/actions/workflow/status/erdinccurebal/scrapereq/ci.yml?branch=master&style=flat-square&label=CI" alt="CI" />
   </p>
   <p>
+    <a href="https://scrapereq.erdinc.curebal.dev">Website</a> •
     <a href="#-api-endpoints">API Documentation</a> •
     <a href="#-installation">Installation</a> •
     <a href="#-features">Features</a> •
