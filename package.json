@@ -41,7 +41,7 @@
     "express-basic-auth": "^1.2.1",
     "express-rate-limit": "^8.5.2",
     "helmet": "^8.2.0",
-    "joi": "^18.2.1",
+    "joi": "^18.2.3",
     "morgan": "^1.11.0",
     "puppeteer": "^25.0.3",
     "puppeteer-extra": "^3.3.6",
